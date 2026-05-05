@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, MapPin, Users, Calendar, BookOpen } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Users, Calendar, BookOpen, } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
 import { motion, AnimatePresence } from 'framer-motion'; // Upar add kar
-import { X, Send, CheckCircle2 } from 'lucide-react'; // Inhe bhi icons mein add kar lo
+import { X, Send, CheckCircle2, AlertCircle } from 'lucide-react'; // Inhe bhi icons mein add kar lo
 
 const formatLocalDate = (date) => {
   const year = date.getFullYear();
@@ -13,6 +13,22 @@ const formatLocalDate = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+const getNextDateForDay = (targetDay) => {
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const today = new Date();
+  const todayIndex = today.getDay();
+  const targetIndex = days.indexOf(targetDay);
+
+  let diff = targetIndex - todayIndex;
+
+  if (diff < 0) diff += 7;
+
+  const resultDate = new Date(today);
+  resultDate.setDate(today.getDate() + diff);
+
+  // Note: formatLocalDate function wahi hona chahiye jo aapne date format ke liye banaya hai
+  return formatLocalDate(resultDate);
+};
 const TeacherSchedule = () => {
   const navigate = useNavigate();
   const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
@@ -37,20 +53,31 @@ const TeacherSchedule = () => {
   const openDiaryModal = async (period) => {
     setSelectedPeriod(period);
     setDiaryContent("");
-    // Auto-set today's date
-    const todayStr = new Date().toISOString().split('T')[0];
-    setDiaryDate(todayStr);
+
+    // 1. Pehle ye dekho ki activeDay (Mon, Tue etc.) ke hisaab se date kya banti hai
+    const selectedDayDate = getNextDateForDay(activeDay);
+
+    // 2. State update karo taaki modal mein sahi date dikhe
+    setDiaryDate(selectedDayDate);
     setShowDiary(true);
 
     try {
-      // Latest check logic
-      const { data: latest } = await API.get(`/homework/latest?className=${period.grade}&subject=${period.subject}`);
-      if (latest) {
-        setDiaryContent(latest.content);
-        // Agar teacher ne purani date ki diary edit karni hai toh date wahi rehne do
-        // Warna aaj ki date default hai
+      // 3. API call mein 'selectedDayDate' bhejo, na ki 'todayStr'
+      const { data: existing } = await API.get(
+        `/homework/check?className=${period.grade}&subject=${period.subject}&date=${selectedDayDate}`
+      );
+
+      if (existing) {
+        // Agar us specific date (e.g. Tuesday) ko diary bhari thi, toh content dikhao
+        setDiaryContent(existing.content);
+      } else {
+        // Agar us din ki entry nahi hai, toh fresh (khali) diary dikhao
+        setDiaryContent("");
       }
-    } catch (err) { console.error("History fetch error"); }
+    } catch (err) {
+      console.error("Diary check error:", err);
+      setDiaryContent("");
+    }
   };
 
   const handleSaveDiary = async () => {
@@ -68,8 +95,16 @@ const TeacherSchedule = () => {
         date: diaryDate,
         content: diaryContent
       });
+      const newKey = `${selectedPeriod.grade}-${selectedPeriod.subject}-${diaryDate}`;
+      setSubmittedDiaries(prev => {
+        // Duplicate entry na ho isliye check kar rahe hain
+        if (prev.includes(newKey)) return prev;
+        return [...prev, newKey];
+      });
 
-      setSubmittedDiaries(prev => [...prev, `${selectedPeriod.grade}-${selectedPeriod.subject}`]);
+      // handleSaveDiary ke andar
+      // handleSaveDiary ke andar isey replace karein:
+      setSubmittedDiaries(prev => [...prev, `${selectedPeriod.grade}-${selectedPeriod.subject}-${diaryDate}`]);
 
       // Success Toast 📡
       setToast({ show: true, message: "Diary Submitted Successfully! 📡", type: 'success' });
@@ -85,54 +120,67 @@ const TeacherSchedule = () => {
       setIsSaving(false);
     }
   };
+
   useEffect(() => {
-  const fetchInitialData = async () => {
-    try {
-      setLoading(true);
+    const calculatedDate = getNextDateForDay(activeDay);
+    setDiaryDate(calculatedDate);
+  }, [activeDay]); // Jab bhi activeDay badle, date bhi badle
 
-      // Step 1: Sirf timetable load karo (fast open)
-      const { data: scheduleData } = await API.get(
-        '/timetable/teacher/personal-schedule'
-      );
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        setLoading(true);
 
-      setPersonalSchedule(scheduleData.schedule);
+        // STEP 1: Timetable Load Karna (Priority)
+        // Sabse pehle backend se teacher ka pura hafte ka schedule mangwaya.
+        const { data: scheduleData } = await API.get(
+          '/timetable/teacher/personal-schedule'
+        );
 
-      // Page open ho jaaye turant
-      setLoading(false);
+        // State update ki taaki UI par Periods dikhne lagein
+        setPersonalSchedule(scheduleData.schedule);
 
-      // Step 2: Diary status baad me load karo
-      const activeDiaries = [];
+        // Timetable aate hi loading screen hata di (Taki user ko wait na karna pade)
+        setLoading(false);
 
-      Promise.all(
-        scheduleData.schedule.flatMap(day =>
-          day.periods.map(async (period) => {
-            const key = `${period.grade}-${period.subject}`;
+        // STEP 2: Diary Status Check Karna (Background Process)
+        const activeDiaries = [];
+        const todayStr = formatLocalDate(new Date()); // Aaj ki date string format mein
 
-            if (!activeDiaries.includes(key)) {
-              try {
-                const { data: latest } = await API.get(
-                  `/homework/latest?className=${period.grade}&subject=${period.subject}`
-                );
+        // Hum saare periods par loop chala rahe hain check karne ke liye
+        Promise.all(
+          scheduleData.schedule.flatMap(day =>
+            day.periods.map(async (period) => {
+              const key = `${period.grade}-${period.subject}`;
 
-                if (latest) {
-                  activeDiaries.push(key);
+              if (!activeDiaries.includes(key)) {
+                try {
+                  // Backend se pucha: "Kya is class+subject ki aaj ki diary bhari hai?"
+                  const { data: existingToday } = await API.get(
+                    `/homework/check?className=${period.grade}&subject=${period.subject}&date=${todayStr}`
+                  );
+                  if (existingToday) {
+                    activeDiaries.push(`${period.grade}-${period.subject}-${todayStr}`);
+                  }
+                } catch (err) {
                 }
-              } catch (err) {}
-            }
-          })
-        )
-      ).then(() => {
-        setSubmittedDiaries(activeDiaries);
-      });
+              }
+            })
+          )
+        ).then(() => {
+          // Jab saare checks pure ho jayein, tab state update karo
+          // Isse UI par "Green Check" ya "Submitted" status dikhega
+          setSubmittedDiaries(activeDiaries);
+        });
 
-    } catch (err) {
-      console.error("Initial load failed");
-      setLoading(false);
-    }
-  };
+      } catch (err) {
+        console.error("Initial load failed", err);
+        setLoading(false);
+      }
+    };
 
-  fetchInitialData();
-}, []);
+    fetchInitialData();
+  }, []); // Empty dependency array matlab ye sirf page load par ek baar chalega
   // const isDoneToday = submittedDiaries.includes(`${item.grade}-${item.subject}`);
 
   const currentDayData = personalSchedule?.find(d => d.day === activeDay);
@@ -183,11 +231,11 @@ const TeacherSchedule = () => {
               return timeA - timeB;
             })
             .map((item, index) => {
-              // --- FIXED: isDoneToday ko map ke ANDAR hona chahiye ---
-              const isDoneToday = submittedDiaries.includes(`${item.grade}-${item.subject}`);
-              const hasActiveDiary = submittedDiaries.includes(`${item.grade}-${item.subject}`);
+              const diaryKey = `${item.grade}-${item.subject}-${diaryDate}`;
+              const hasActiveDiary = submittedDiaries.includes(diaryKey);
 
               return (
+                // ... baki card ka code
                 <div key={index} className="bg-white rounded-[3rem] p-6 border-l-[8px] border-l-[#42A5F5] shadow-xl border border-slate-100 flex gap-5 relative italic group hover:scale-[1.02] transition-transform">
                   <span className="absolute top-0 right-10 bg-blue-50 text-[#42A5F5] text-[15px] font-black px-5 py-1.5 rounded-b-2xl uppercase tracking-widest border-x border-b border-blue-100">
                     Class: {item.grade}
@@ -215,8 +263,8 @@ const TeacherSchedule = () => {
                     <button
                       onClick={() => openDiaryModal(item)}
                       className={`mt-5 flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-black text-[13px] uppercase tracking-widest active:scale-95 transition-all shadow-lg ${hasActiveDiary
-                        ? 'bg-emerald-500 text-white shadow-emerald-100' // Green if diary exists within 6 days
-                        : 'bg-[#42A5F5] text-white shadow-blue-100'    // Blue if reset or no entry
+                        ? 'bg-emerald-500 text-white shadow-emerald-100' // ✅ Green hi rahega
+                        : 'bg-[#42A5F5] text-white shadow-blue-100'
                         }`}
                     >
                       {hasActiveDiary ? (
@@ -228,7 +276,7 @@ const TeacherSchedule = () => {
                   </div>
                 </div>
               );
-            }) // map ends here
+            })
         ) : (
           <div className="text-center py-24 bg-white rounded-[4rem] border-2 border-dashed border-slate-100 shadow-sm mx-2">
             <BookOpen className="mx-auto text-slate-200 mb-6 animate-bounce" size={80} />
@@ -298,7 +346,7 @@ const TeacherSchedule = () => {
                               d.setMonth(d.getMonth() - 1);
                               setDiaryDate(formatLocalDate(d));
                             }}
-                            className="text-[#42A5F5] font-bold"
+                            className="text-[#42A5F5] font-bold p-2"
                           >
                             ←
                           </button>
@@ -316,25 +364,30 @@ const TeacherSchedule = () => {
                               d.setMonth(d.getMonth() + 1);
                               setDiaryDate(formatLocalDate(d));
                             }}
-                            className="text-[#42A5F5] font-bold"
+                            className="text-[#42A5F5] font-bold p-2"
                           >
                             →
                           </button>
                         </div>
 
-                        {/* Days */}
+                        {/* Days Header */}
                         <div className="grid grid-cols-7 gap-2 text-center text-[12px] font-bold text-slate-400 mb-2">
-                          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => <span key={d}>{d}</span>)}
+                          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => (
+                            <span key={d}>{d}</span>
+                          ))}
                         </div>
 
+                        {/* Days Grid */}
                         <div className="grid grid-cols-7 gap-2">
-                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => {
+                          {Array.from({
+                            length: new Date(new Date(diaryDate).getFullYear(), new Date(diaryDate).getMonth() + 1, 0).getDate()
+                          }, (_, i) => i + 1).map(day => {
                             const current = new Date(diaryDate);
                             const tempDate = new Date(
                               current.getFullYear(),
                               current.getMonth(),
                               day,
-                              12 // 👈 IMPORTANT (no timezone shift)
+                              12
                             );
 
                             const formatted = formatLocalDate(tempDate);
@@ -344,12 +397,12 @@ const TeacherSchedule = () => {
                               <button
                                 key={day}
                                 onClick={() => {
-                                  setDiaryDate(formatLocalDate(tempDate));
+                                  setDiaryDate(formatted);
                                   setIsCalendarOpen(false);
                                 }}
                                 className={`
-                p-2 rounded-xl text-[13px] font-black
-                ${isSelected ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-100'}
+                p-2 rounded-xl text-[13px] font-black transition-colors
+                ${isSelected ? 'bg-[#42A5F5] text-white shadow-md' : 'text-slate-600 hover:bg-blue-50'}
               `}
                               >
                                 {day}

@@ -47,28 +47,25 @@ router.get('/view', protect, async (req, res) => {
 });
 
 // 3. TEACHER: Get the most recent diary for a subject/class to edit
-router.get('/latest', protect, async (req, res) => {
+// 3. TEACHER: Check if diary exists for a SPECIFIC date
+router.get('/check', protect, async (req, res) => {
     try {
-        const { className, subject } = req.query;
+        const { className, subject, date } = req.query; // Date query se lo
         const schoolId = req.user.schoolId;
 
-        // Sabse latest entry dhundo is subject aur class ke liye
-        const latest = await Homework.findOne({ schoolId, className, subject })
-            .sort({ createdAt: -1 });
+        // Sirf us specific date, class aur subject ki diary dhundo
+        const entry = await Homework.findOne({ 
+            schoolId, 
+            className, 
+            subject, 
+            date: date // Ye wahi date hai jo frontend se aayegi (e.g. 2026-05-05)
+        });
 
-        if (!latest) return res.json(null);
+        if (!entry) return res.json(null);
 
-        // 6 Din wala Logic: Agar diary 6 din se purani hai, toh reset (null) bhej do
-        const diaryDate = new Date(latest.createdAt);
-        const today = new Date();
-        const diffTime = Math.abs(today - diaryDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        if (diffDays > 6) return res.json(null);
-
-        res.json(latest);
+        res.json(entry);
     } catch (error) {
-        res.status(500).json({ message: "Latest Fetch Error" });
+        res.status(500).json({ message: "Fetch Error" });
     }
 });
 
