@@ -491,17 +491,23 @@ const TeacherAssignments = ({ user }) => {
                     /* --- VIEW: SUBMISSIONS LIST --- */
                     <div className="space-y-6">
                         <button onClick={() => setView('history')} className="text-[10px] font-black text-[#42A5F5] uppercase tracking-widest bg-white px-6 py-2 rounded-full shadow-sm">Back to History</button>
+                        <div className="bg-blue-50 text-[#42A5F5] px-5 py-2 rounded-2xl font-black text-[14px] uppercase tracking-widest border border-blue-100">
+                            {submissions.length} Submitted
+                        </div>
                         <div className="bg-white rounded-[3rem] p-8 shadow-2xl border border-slate-100">
                             <h2 className="text-[25px] font-black italic text-slate-800 mb-6 uppercase">All Submissions</h2>
+
                             {submissions.length > 0 ? (
-                                submissions.map((sub) => (
-                                    <SubmissionCard
-                                        key={sub._id}
-                                        sub={sub}
-                                        handleGrade={handleGrade}
-                                        setToast={setToast}
-                                    />
-                                ))
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {submissions.map((sub) => (
+                                        <SubmissionCard
+                                            key={sub._id}
+                                            sub={sub}
+                                            handleGrade={handleGrade}
+                                            setToast={setToast}
+                                        />
+                                    ))}
+                                </div>
                             ) : (
                                 <p className="text-center font-black text-slate-300 py-10 uppercase italic tracking-widest">
                                     No Submissions Detected Yet ❄️

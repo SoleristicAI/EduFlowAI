@@ -17,21 +17,6 @@ const StudentAssignments = ({ user }) => {
     const [mySubmissions, setMySubmissions] = useState([]);
 
     useEffect(() => {
-        const fetchAssignments = async () => {
-            try {
-                // Thoda delay taaki loader smoothly dikhe
-                const { data } = await API.get(`/assignments/${user.grade}`);
-                setAssignments(data);
-            } catch (err) {
-                console.error("Link Error");
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchAssignments();
-    }, [user.grade]);
-
-    useEffect(() => {
         const fetchAllData = async () => {
             try {
                 setLoading(true);
@@ -71,11 +56,23 @@ const StudentAssignments = ({ user }) => {
 
     const confirmSubmit = async (id) => {
         try {
-            await API.post('/assignments/submit', { assignmentId: id, fileUrl: submitUrl });
+            await API.post('/assignments/submit', {
+                assignmentId: id,
+                fileUrl: submitUrl
+            });
+
+            setAssignments(prev => prev.filter(item => item._id !== id));
+
             setToast("Task Synchronized Successfully! ✅");
-            setSubmitFile(null); // Reset after submit
+
+            setSubmitFile(null);
+            setSubmitUrl('');
+
             setTimeout(() => setToast(null), 3000);
-        } catch (err) { alert("Submission Failed"); }
+
+        } catch (err) {
+            alert("Submission Failed");
+        }
     };
 
     if (loading) return <Loader />; // Tera Cat Loader yahan chalega
@@ -190,8 +187,10 @@ const StudentAssignments = ({ user }) => {
                                 {asgn.fileUrl && (
                                     <a
                                         href={`http://localhost:5000${asgn.fileUrl}`}
-                                        download
-                                        className="flex items-center justify-center gap-3 py-4 bg-slate-50 rounded-2xl font-black text-[#42A5F5] border border-blue-100 active:scale-95 transition-all uppercase text-[20px] tracking-widest"
+                                        download={asgn.title || "assignment-file"}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-center gap-3 py-4 bg-slate-50 rounded-2xl font-black text-[#42A5F5] border border-blue-100 active:scale-95 transition-all uppercase text-[15px] tracking-widest"
                                     >
                                         <Download size={18} /> Download Resource
                                     </a>
@@ -203,7 +202,7 @@ const StudentAssignments = ({ user }) => {
                                         {!submitFile ? (
                                             <label className="w-full py-6 border-2 border-dashed border-slate-200 rounded-[2rem] flex flex-col items-center cursor-pointer hover:bg-slate-50 transition-all group">
                                                 <Upload className="text-slate-300 group-hover:text-[#42A5F5] transition-colors mb-2" size={24} />
-                                                <span className="text-[20px] font-black text-slate-400 uppercase tracking-widest">Upload Assignment Sol.</span>
+                                                <span className="text-[15px] font-black text-slate-400 uppercase tracking-widest">Upload Assignment Sol.</span>
                                                 <input type="file" className="hidden" onChange={(e) => handleSubmission(e)} />
                                             </label>
                                         ) : (
@@ -263,29 +262,28 @@ const StudentAssignments = ({ user }) => {
                             {/* Status Bar */}
                             <div className="flex flex-col gap-2">
 
-  {/* Top Row → Date Right Side */}
-  <div className="flex justify-start">
-    <span className="text-[16px] font-bold text-slate-400 italic uppercase">
-      Sent: {new Date(sub.submittedAt).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })}
-    </span>
-  </div>
+                                {/* Top Row → Date Right Side */}
+                                <div className="flex justify-start">
+                                    <span className="text-[16px] font-bold text-slate-400 italic uppercase">
+                                        Sent: {new Date(sub.submittedAt).toLocaleDateString('en-GB', {
+                                            day: '2-digit',
+                                            month: 'short',
+                                            year: 'numeric'
+                                        })}
+                                    </span>
+                                </div>
 
-  {/* Bottom Row → Status Left Side */}
-  <div className="flex justify-start">
-    <span className={`px-4 py-1.5 rounded-full text-[16px] font-black uppercase border ${
-      sub.status === 'Graded'
-        ? 'bg-emerald-50 border-emerald-100 text-emerald-500'
-        : 'bg-blue-50 border-blue-100 text-[#42A5F5]'
-    }`}>
-      {sub.status === 'Graded' ? 'Evaluation Complete' : 'Under Review'}
-    </span>
-  </div>
+                                {/* Bottom Row → Status Left Side */}
+                                <div className="flex justify-start">
+                                    <span className={`px-4 py-1.5 rounded-full text-[16px] font-black uppercase border ${sub.status === 'Graded'
+                                        ? 'bg-emerald-50 border-emerald-100 text-emerald-500'
+                                        : 'bg-blue-50 border-blue-100 text-[#42A5F5]'
+                                        }`}>
+                                        {sub.status === 'Graded' ? 'Evaluation Complete' : 'Under Review'}
+                                    </span>
+                                </div>
 
-</div>
+                            </div>
 
                             <div>
                                 <h3 className="text-[22px] font-black text-slate-800 italic leading-tight uppercase">{sub.assignment?.title}</h3>

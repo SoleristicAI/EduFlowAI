@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { IndianRupee, User, Calendar, CreditCard, Zap, Layers, ChevronDown, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { IndianRupee, User, Calendar, CreditCard, Zap, Layers, ChevronDown, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // 👈 YE WALI LINE ADD KARO
 import API from '../../api';
@@ -8,12 +8,16 @@ import Toast from '../../components/Toast';
 const AddPayment = () => {
     const navigate = useNavigate();
     const [msg, setMsg] = useState('');
+    const [isMonthOpen, setIsMonthOpen] = useState(false);
     const [classes, setClasses] = useState([]);
     const [students, setStudents] = useState([]);
     const [activeFields, setActiveFields] = useState([]);
     const [openClass, setOpenClass] = useState(false);
     const [openStudent, setOpenStudent] = useState(false);
     const [openFee, setOpenFee] = useState(false);
+    const [selectedFees, setSelectedFees] = useState([]);
+    const wrapperRef = useRef(null);
+
 
     const [formData, setFormData] = useState({
         grade: '',
@@ -26,6 +30,23 @@ const AddPayment = () => {
         year: new Date().getFullYear(),
         remarks: ''
     });
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+                setOpenClass(false);
+                setOpenStudent(false);
+                setOpenFee(false);
+                setIsMonthOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchClasses = async () => {
@@ -44,8 +65,39 @@ const AddPayment = () => {
     };
 
     const handleAllSelect = () => {
-        const total = activeFields.reduce((sum, f) => sum + f.amount, 0);
-        setFormData({ ...formData, feeCategory: 'ALL', amountPaid: total, remarks: 'Full settlement' });
+        const allLabels = activeFields.map(f => f.label);
+        const total = activeFields.reduce((sum, f) => sum + Number(f.amount), 0);
+
+        setSelectedFees(allLabels);
+
+        setFormData({
+            ...formData,
+            feeCategory: allLabels.join(', '),
+            amountPaid: total,
+            remarks: 'Full settlement'
+        });
+    };
+
+    const handleFeeToggle = (fee) => {
+        let updated = [...selectedFees];
+
+        if (updated.includes(fee.label)) {
+            updated = updated.filter(item => item !== fee.label);
+        } else {
+            updated.push(fee.label);
+        }
+
+        const total = activeFields
+            .filter(f => updated.includes(f.label))
+            .reduce((sum, f) => sum + Number(f.amount), 0);
+
+        setSelectedFees(updated);
+
+        setFormData({
+            ...formData,
+            feeCategory: updated.join(', '),
+            amountPaid: total
+        });
     };
 
     const handlePayment = async (e) => {
@@ -58,7 +110,10 @@ const AddPayment = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans pb-32 px-5 pt-10 italic text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
+        <div
+            ref={wrapperRef}
+            className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans pb-32 px-5 pt-10 italic text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto"
+        >
             <div className="flex items-center gap-5 mb-10 border-l-4 border-[#42A5F5] pl-4">
                 <button
                     onClick={() => navigate(-1)}
@@ -81,7 +136,12 @@ const AddPayment = () => {
                     <div className="relative mt-3">
                         <button
                             type="button"
-                            onClick={() => setOpenClass(!openClass)}
+                            onClick={() => {
+                                setOpenClass(!openClass);
+                                setOpenStudent(false);
+                                setOpenFee(false);
+                                setIsMonthOpen(false);
+                            }}
                             className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center text-[16px] text-slate-700 font-bold italic"
                         >
                             <span>{formData.grade || "Choose class"}</span>
@@ -123,7 +183,12 @@ const AddPayment = () => {
                             <div className="relative mt-3">
                                 <button
                                     type="button"
-                                    onClick={() => setOpenStudent(!openStudent)}
+                                    onClick={() => {
+                                        setOpenStudent(!openStudent);
+                                        setOpenClass(false);
+                                        setOpenFee(false);
+                                        setIsMonthOpen(false);
+                                    }}
                                     className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center text-[16px] text-slate-700 font-bold italic transition-all focus:border-[#42A5F5]"
                                 >
                                     {/* Agar student select hai to uska naam dikhao, nahi to placeholder */}
@@ -202,11 +267,18 @@ const AddPayment = () => {
                                 {/* Dropdown Trigger */}
                                 <button
                                     type="button"
-                                    onClick={() => setOpenFee(!openFee)}
+                                    onClick={() => {
+                                        setOpenFee(!openFee);
+                                        setOpenClass(false);
+                                        setOpenStudent(false);
+                                        setIsMonthOpen(false);
+                                    }}
                                     className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center text-[16px] text-slate-700 font-bold italic"
                                 >
                                     <span className="truncate">
-                                        {formData.feeCategory || "Choose fee type"}
+                                        {selectedFees.length > 0
+                                            ? selectedFees.join(', ')
+                                            : "Choose fee type"}
                                     </span>
                                     <ChevronDown size={20} className={`text-slate-400 transition-transform ${openFee ? 'rotate-180' : ''}`} />
                                 </button>
@@ -231,26 +303,43 @@ const AddPayment = () => {
                                                 All payments (Full settlement)
                                             </div>
 
-                                            {/* Dynamic Options from activeFields */}
-                                            {activeFields.map(f => (
-                                                <div
-                                                    key={f.key}
-                                                    onClick={() => {
-                                                        setFormData({
-                                                            ...formData,
-                                                            feeCategory: f.label, // Database ke liye label
-                                                            amountPaid: f.amount   // Automatic amount set
-                                                        });
-                                                        setOpenFee(false);
-                                                    }}
-                                                    className="p-4 hover:bg-slate-50 rounded-2xl cursor-pointer text-slate-700 font-bold transition-colors border-b border-slate-50 last:border-none"
-                                                >
-                                                    <div className="flex justify-between items-center">
-                                                        <span>{f.label}</span>
-                                                        <span className="text-[#42A5F5]">₹{f.amount}</span>
+                                            {activeFields.map(f => {
+                                                const isSelected = selectedFees.includes(f.label);
+
+                                                return (
+                                                    <div
+                                                        key={f.key}
+                                                        onClick={() => handleFeeToggle(f)}
+                                                        className={`p-4 rounded-2xl cursor-pointer font-bold transition-all border-b border-slate-50 last:border-none mb-1
+            ${isSelected
+                                                                ? 'bg-blue-50 text-[#42A5F5]'
+                                                                : 'hover:bg-slate-50 text-slate-700'
+                                                            }`}
+                                                    >
+                                                        <div className="flex justify-between items-center">
+                                                            <span>{f.label}</span>
+
+                                                            <div className="flex items-center gap-3">
+                                                                <span className="text-[#42A5F5]">₹{f.amount}</span>
+
+                                                                {isSelected && (
+                                                                    <CheckCircle2 size={16} className="text-[#42A5F5]" />
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
+                                            {/* DONE BUTTON */}
+                                            <div className="sticky bottom-0 bg-white pt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setOpenFee(false)}
+                                                    className="w-full bg-[#42A5F5] text-white py-4 rounded-2xl font-black uppercase shadow-md active:scale-95 transition-all"
+                                                >
+                                                    Done
+                                                </button>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -274,10 +363,65 @@ const AddPayment = () => {
                             <div className="bg-white p-2 rounded-3xl border border-[#DDE3EA] shadow-sm">
                                 <input type="number" placeholder="Day" className="w-full bg-transparent p-4 text-[15px] font-bold text-center outline-none text-slate-700" value={formData.day} onChange={(e) => setFormData({ ...formData, day: e.target.value })} />
                             </div>
-                            <div className="bg-white p-2 rounded-3xl border border-[#DDE3EA] shadow-sm">
-                                <select className="w-full bg-transparent p-4 text-[15px] font-bold outline-none text-slate-700" value={formData.month} onChange={(e) => setFormData({ ...formData, month: e.target.value })}>
-                                    {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
+                            <div className="relative">
+                                <div
+                                    onClick={() => {
+                                        setIsMonthOpen(!isMonthOpen);
+                                        setOpenClass(false);
+                                        setOpenStudent(false);
+                                        setOpenFee(false);
+                                    }}
+                                    className="bg-white p-2 rounded-3xl border border-[#DDE3EA] shadow-sm cursor-pointer active:scale-[0.98] transition-all"
+                                >
+                                    <div className="w-full p-4 flex justify-between items-center">
+                                        <span className="text-[15px] font-bold text-slate-700">
+                                            {formData.month || "Select Month"}
+                                        </span>
+
+                                        <motion.div
+                                            animate={{ rotate: isMonthOpen ? 180 : 0 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <ChevronDown size={18} className="text-[#42A5F5]" />
+                                        </motion.div>
+                                    </div>
+                                </div>
+
+                                <AnimatePresence>
+                                    {isMonthOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 8, scale: 1 }}
+                                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                            className="absolute top-full left-0 right-0 z-50 bg-white rounded-[2rem] border border-slate-100 shadow-2xl p-3 mt-2 max-h-72 overflow-y-auto"
+                                        >
+                                            {[
+                                                "January", "February", "March", "April",
+                                                "May", "June", "July", "August",
+                                                "September", "October", "November", "December"
+                                            ].map((m) => (
+                                                <div
+                                                    key={m}
+                                                    onClick={() => {
+                                                        setFormData({ ...formData, month: m });
+                                                        setIsMonthOpen(false);
+                                                    }}
+                                                    className={`p-4 rounded-2xl mb-1 cursor-pointer font-bold text-[15px] transition-all flex justify-between items-center
+                        ${formData.month === m
+                                                            ? "bg-blue-50 text-[#42A5F5]"
+                                                            : "text-slate-600 hover:bg-slate-50"
+                                                        }`}
+                                                >
+                                                    {m}
+
+                                                    {formData.month === m && (
+                                                        <CheckCircle2 size={16} className="text-[#42A5F5]" />
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
                             <div className="bg-white p-2 rounded-3xl border border-[#DDE3EA] shadow-sm">
                                 <input type="number" placeholder="Year" className="w-full bg-transparent p-4 text-[15px] font-bold text-center outline-none text-slate-700" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })} />
