@@ -8,6 +8,7 @@ import Loader from '../components/Loader';
 const ClassDiary = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
     const [homeworkList, setHomeworkList] = useState([]);
 
     // Aj ki date set karo format: YYYY-MM-DD
@@ -32,20 +33,39 @@ const ClassDiary = () => {
     const datesMenu = getDates();
 
     useEffect(() => {
-        const fetchHomework = async () => {
-            setLoading(true);
-            try {
-                // User info se class nikaal lo (Assume user storage mein hai)
-                const user = JSON.parse(localStorage.getItem('user'));
-                const className = user?.grade;
 
-                const { data } = await API.get(`/homework/view?className=${className}&date=${selectedDate}`);
-                setHomeworkList(data);
-            } catch (err) { console.error("Diary Fetch Failed"); }
-            finally { setLoading(false); }
-        };
-        fetchHomework();
-    }, [selectedDate]);
+    const fetchHomework = async () => {
+
+        // 🔥 Sirf first time loading
+        if (isFirstLoad) {
+            setLoading(true);
+        }
+
+        try {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const className = user?.grade;
+
+            const { data } = await API.get(
+                `/homework/view?className=${className}&date=${selectedDate}`
+            );
+
+            setHomeworkList(data);
+
+        } catch (err) {
+            console.error("Diary Fetch Failed");
+        } finally {
+
+            // 🔥 First load complete
+            if (isFirstLoad) {
+                setLoading(false);
+                setIsFirstLoad(false);
+            }
+        }
+    };
+
+    fetchHomework();
+
+}, [selectedDate]);
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
@@ -80,7 +100,7 @@ const ClassDiary = () => {
             </div>
 
             {/* Homework List */}
-            <div className="px-6 -mt-10 space-y-6 relative z-20">
+            <div className="px-6 -mt-10 space-y-6 relative z-20 min-h-[70vh]">
                 {loading ? <div className="py-20"><Loader /></div> : (
                     <AnimatePresence mode='wait'>
                         {homeworkList.length > 0 ? (
@@ -90,7 +110,7 @@ const ClassDiary = () => {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="space-y-6"
+                               className="space-y-6 min-h-[420px]"
                             >
                                 {/* 🔥 Ek hi baar top heading */}
                                 <div className="bg-white rounded-[2.5rem] p-6 border border-slate-100 shadow-md text-center">
@@ -151,7 +171,7 @@ const ClassDiary = () => {
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0 }}
-                                className="bg-white rounded-[3.5rem] p-16 text-center border-2 border-dashed border-slate-100"
+                                className="bg-white rounded-[3.5rem] min-h-[420px] flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-100 px-8"
                             >
                                 <Sun size={60} className="mx-auto text-amber-300 mb-6 animate-spin-slow" />
                                 <h3 className="text-[21px] font-black text-slate-800 italic">No Homework Found</h3>

@@ -24,18 +24,20 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
     }, [isOpen]);
     const [showConfirm, setShowConfirm] = useState(false);
     // if (!isOpen) return null;
+
+
     const handleLogout = () => {
         const backup = localStorage.getItem('superadmin_backup');
+
         if (backup) {
             localStorage.setItem('user', backup);
             localStorage.removeItem('superadmin_backup');
-            window.location.href = '/superadmin/dashboard';
+
+            window.location.replace('/superadmin/dashboard');
         } else {
-            // Normal Logout Logic
             localStorage.removeItem('user');
 
-            // --- FIX: Redirect directly to /login ---
-            window.location.href = "/login";
+            window.location.replace('/login');
         }
     };
 
@@ -1000,7 +1002,7 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
             </AnimatePresence>
 
 
-            --- LOGOUT CONFIRMATION MODAL (CENTERED & BLURRED) ---
+            {/* --- LOGOUT CONFIRMATION MODAL (CENTERED & BLURRED) --- */}
             {/* --- STEP 3: PREMIUM LIGHT THEME LOGOUT MODAL --- */}
             <AnimatePresence>
                 {showConfirm && (

@@ -41,7 +41,7 @@ const TeacherHome = ({ user, searchQuery }) => {
   ];
 
   return (
-    <div className="px-5 -mt-19 space-y-5 relative z-10 pb-24 font-sans bg-[#F8FAFC] ">
+    <div className="px-5 -mt-13 space-y-5 relative z-10 pb-24 font-sans bg-[#F8FAFC] ">
       <div className="px-5  space-y-8 relative z-10 pb-24">
 
         {/* Main Icon Grid */}

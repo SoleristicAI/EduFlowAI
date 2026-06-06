@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Bell, Menu, Search, Headphones, LogOut, Cpu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import SidebarDrawer from './SidebarDrawer';
+import { motion, AnimatePresence } from 'framer-motion';
 import API from '../api';
 
 const Navbar = ({ user, searchQuery, setSearchQuery, onSupportClick }) => {
@@ -150,16 +151,36 @@ const Navbar = ({ user, searchQuery, setSearchQuery, onSupportClick }) => {
           <span className="inline-block mt-2 px-4 py-1 bg-white/20 border border-white/30 rounded-full text-[15px] font-bold tracking-wide text-white">
             {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).toLowerCase()} Portal
           </span>
-          <div className="mt-6 relative px-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+          <motion.div
+            className="mt-6 relative px-1"
+            whileTap={{
+              y: 4,
+              scale: 0.985
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 20
+            }}
+            whileHover={{
+              y: -2,
+              scale: 1.02,
+              boxShadow: "0px 10px 20px rgba(66, 165, 245, 0.3)"
+            }}
+          >
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 z-10 pointer-events-none"
+              size={20}
+            />
+
             <input
               type="text"
               placeholder="Search modules..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border-none text-slate-700 py-4 pl-12 pr-4 rounded-[1.5rem] shadow-lg outline-none placeholder:text-slate-400 transition-all font-bold text-sm"
+              className="w-full bg-white border-none text-slate-700 py-4 pl-12 pr-4 rounded-[1.5rem] shadow-lg outline-none placeholder:text-slate-400 font-bold text-sm"
             />
-          </div>
+          </motion.div>
         </div>
       </header>
 

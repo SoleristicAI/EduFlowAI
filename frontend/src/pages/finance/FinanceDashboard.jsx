@@ -61,7 +61,7 @@ const FinanceDashboard = ({ searchQuery }) => {
     ];
 
     return (
-        <div className="px-5 -mt-33 space-y-5 relative z-10 pb-24 font-sans bg-[#F8FAFC]">
+        <div className="px-5 -mt-25 space-y-5 relative z-10 pb-24 font-sans bg-[#F8FAFC]">
 
             {/* FLOATING NOTIFICATION UI */}
             <AnimatePresence>

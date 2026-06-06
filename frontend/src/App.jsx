@@ -192,8 +192,8 @@ function App() {
 
   if (checkingAuth) {
   return (
-    <div className="">
-      {/* Loading... */}
+    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+      <div className="w-10 h-10 border-4 border-[#42A5F5]/30 border-t-[#42A5F5] rounded-full animate-spin"></div>
     </div>
   );
 }
@@ -402,7 +402,7 @@ function App() {
           />
         </div>
       )}
-      <main className={`relative z-0 pb-32 ${isDashboard ? 'pt-20' : 'pt-6'} bg-[#F8FAFC]`}>
+      <main className={`relative z-0 pb-32 overflow-x-hidden ${isDashboard ? 'pt-20' : 'pt-6'} bg-[#F8FAFC]`}>
         <Routes>
           {/* Main Dashboard Logic based on Role */}
           <Route path="/" element={
