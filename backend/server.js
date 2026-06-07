@@ -34,8 +34,9 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-    // Isse 5173 aur 5174 dono allow ho jayenge
-    origin: ['http://localhost:5173', 'http://localhost:5174'], 
+    origin: '*', // Saari incoming production requests (Vercel + Local) ko allow karega
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 app.use(express.json());
