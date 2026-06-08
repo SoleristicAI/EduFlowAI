@@ -125,25 +125,25 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                         <motion.div
                             initial={{ x: -100, opacity: 0, scale: 0.98, filter: "blur(8px)" }}
                             animate={{ x: 0, opacity: 1, scale: 1, filter: "blur(0px)" }}
-                            exit={{ x: -120, opacity: 0, scale: 0.98, filter: "blur(6px)" }}
+                            exit={{ x: -100, opacity: 0, scale: 0.98, filter: "blur(6px)" }}
                             transition={{
                                 type: "spring",
                                 stiffness: 120,
                                 damping: 18,
                                 mass: 0.8
                             }}
-                            className="relative w-80 bg-[#F8FAFC] h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden"
+                            className="relative w-70 bg-[#F8FAFC] h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden"
                         >
 
                             {/* --- STEP 1: PREMIUM LIGHT BLUE HEADER (Fixed at Top) --- */}
-                            <div className="p-6 pb-8 bg-gradient-to-br from-[#42A5F5] to-[#1E88E5] rounded-br-[3rem] relative shadow-lg shrink-0">
+                            <div className="p-3 pb-4 bg-gradient-to-br from-[#42A5F5] to-[#1E88E5] rounded-br-[2rem] relative shadow-lg shrink-0">
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-16 h-16 bg-white p-1 rounded-full shadow-xl">
+                                    <div className="w-15 h-15 bg-white p-1 rounded-full shadow-xl">
                                         <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
                                             {user?.avatar ? (
                                                 <img src={`http://localhost:5000${user.avatar}`} alt="profile" className="w-full h-full object-cover" />
                                             ) : (
-                                                <User size={30} className="text-[#42A5F5]" />
+                                                <User size={22} className="text-[#42A5F5]" />
                                             )}
                                         </div>
                                     </div>
@@ -151,7 +151,7 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                         <h2 className="text-[20px] font-black text-white truncate drop-shadow-sm">
                                             {user?.name?.split(' ').map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase()).join(' ')}
                                         </h2>
-                                        <p className="text-[15px] font-bold text-white/80 tracking-wider">
+                                        <p className="text-[14px] font-bold text-white/80 tracking-wider">
                                             {user?.role === 'student' ? user?.enrollmentNo : user?.employeeId || 'ID: 001'}
                                         </p>
                                     </div>
@@ -161,18 +161,18 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                 </div>
 
                                 {/* --- ACTION BUTTONS (ACCOUNT, SUPPORT, LOGOUT) --- */}
-                                <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-3 rounded-[2rem] border border-white/20">
+                                <div className="grid grid-cols-3 gap-2 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20">
 
                                     <button onClick={() => handleNavigation('/my-account')} className="flex flex-col items-center gap-1 group">
                                         <div className="bg-white text-[#42A5F5] p-2.5 rounded-full shadow-md active:scale-90 transition-all"><User size={18} /></div>
-                                        <span className="text-[15px] font-bold text-white">My Account</span>
+                                        <span className="text-[11px] font-bold text-white">My Account</span>
                                     </button>
                                     {user?.role === 'student' && (
                                         <button onClick={() => handleNavigation('/support')} className="flex flex-col items-center gap-1 group">
                                             <div className="bg-white text-[#42A5F5] p-2.5 rounded-full shadow-md active:scale-90 transition-all">
                                                 <HelpCircle size={18} />
                                             </div>
-                                            <span className="text-[15px] font-bold text-white">Support</span>
+                                            <span className="text-[11px] font-bold text-white">Support</span>
                                         </button>
                                     )}
                                     {user?.role === 'teacher' && (
@@ -180,7 +180,7 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             <div className="bg-white text-[#42A5F5] p-2.5 rounded-full shadow-md active:scale-90 transition-all">
                                                 <MessageCircle size={18} />
                                             </div>
-                                            <span className="text-[15px] font-bold text-white italic">Help desk</span>
+                                            <span className="text-[11px] font-bold text-white italic">Help desk</span>
                                         </button>
                                     )}
                                     {user?.role === 'finance' && (
@@ -189,7 +189,7 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 <div className="bg-white text-[#42A5F5] p-2.5 rounded-full shadow-md active:scale-90 transition-all">
                                                     <PlusCircle size={18} />
                                                 </div>
-                                                <span className="text-[15px] font-bold text-white italic">Add Payment</span>
+                                                <span className="text-[11px] font-bold text-white italic">Add Payment</span>
                                             </button>
                                         </>
                                     )}
@@ -199,13 +199,13 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             <div className="bg-white text-[#42A5F5] p-2.5 rounded-full shadow-md active:scale-90 transition-all">
                                                 <ClipboardList size={18} />
                                             </div>
-                                            <span className="text-[15px] font-bold text-white italic">Notices</span>
+                                            <span className="text-[11px] font-bold text-white italic">Notices</span>
                                         </button>
                                     )}
 
                                     <button onClick={() => handleNavigation('/settings')} className="flex flex-col items-center gap-1 group">
                                         <div className="bg-white text-red-500 p-2.5 rounded-full shadow-md active:scale-90 transition-all"><Settings size={18} /></div>
-                                        <span className="text-[15px] font-bold text-white">Settings</span>
+                                        <span className="text-[11px] font-bold text-white">Settings</span>
                                     </button>
                                 </div>
                             </div>
@@ -215,8 +215,8 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                 {user?.role === 'student' && (
                                     <>
                                         {/* --- STEP 2: DAILY ROUTINE WITH SNAKE BORDER --- */}
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
                                                 <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
@@ -231,9 +231,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Daily Routine</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Daily Routine</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* ATTENDANCE MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/attendance')}
@@ -277,8 +277,8 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
                                                 <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
@@ -293,9 +293,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Updates</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Updates</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* Notice Module */}
                                                     <button
                                                         onClick={() => handleNavigation('/notice-feed')}
@@ -339,11 +339,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -355,9 +355,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Finance</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Finance</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* Fees MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/student/fees')}
@@ -374,11 +374,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -391,9 +391,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
 
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Academics</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Academics</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* Assignment MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/Assignments')}
@@ -456,11 +456,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                 {user?.role === 'teacher' && (
                                     <>
                                         {/* Academic Management */}
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -472,9 +472,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Academic Management</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Academic Management</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* CLASS ATTENDANCE MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/teacher/attendance')}
@@ -519,11 +519,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             </div>
                                         </div>
                                         {/* Class Management */}
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -535,9 +535,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Class Management</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Class Management</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* CLASS LIST MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/teacher/students')}
@@ -582,11 +582,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             </div>
                                         </div>
                                         {/* Communication with students */}
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -598,9 +598,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Communication</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Communication</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* BROADCAST MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/teacher/notices')}
@@ -649,11 +649,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
 
                                 {user?.role === 'admin' && (
                                     <>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -665,9 +665,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Personnel Management</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Personnel Management</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/*add student module*/}
                                                     <button
                                                         onClick={() => handleNavigation('/admin/add-student')}
@@ -711,11 +711,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -760,11 +760,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -776,9 +776,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Communication Hub</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Communication Hub</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* publish notice MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/admin/global-notice')}
@@ -809,11 +809,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -825,9 +825,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Analytics & Reports</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Analytics & Reports</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/* performance MODULE */}
                                                     <button
                                                         onClick={() => handleNavigation('/admin/attendance-report')}
@@ -849,11 +849,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
 
                                 {user?.role === 'finance' && (
                                     <>
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -865,9 +865,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Payments</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Payments</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/*Payments module*/}
                                                     <button
                                                         onClick={() => handleNavigation('/finance/add-payment')}
@@ -899,11 +899,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -915,9 +915,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Reports & Tracking</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Reports & Tracking</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/*Payments module*/}
                                                     <button
                                                         onClick={() => handleNavigation('/finance/reports')}
@@ -949,11 +949,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="mt-8 px-4">
-                                            <div className="relative bg-white rounded-[2.5rem] p-6 shadow-md border border-slate-100 overflow-hidden group">
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
 
                                                 {/* --- SNAKE PERIMETER ANIMATION (Precision Border Only) --- */}
-                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.5rem] overflow-hidden">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
                                                     {/* Rotating Gradient (Sirf kinaro par dikhega) */}
                                                     <div
                                                         className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]"
@@ -965,9 +965,9 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                     <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
                                                 </div>
 
-                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-6 ml-2 italic text-left relative z-10">Setup / Configuration</p>
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Setup / Configuration</p>
 
-                                                <div className="space-y-6 relative z-10">
+                                                <div className="space-y-3.5 relative z-10">
                                                     {/*fee setup*/}
                                                     <button
                                                         onClick={() => handleNavigation('/finance/reports')}
@@ -987,12 +987,12 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                     </>
                                 )}
                             </div>
-                            <div className="p-6 border-t border-neon/10">
+                            <div className="p-4 border-t border-neon/10">
                                 <button
                                     onClick={() => setShowConfirm(true)}
-                                    className="w-full bg-red-500/10 text-red-500 py-4 rounded-2xl font-black flex items-center justify-center gap-2 border border-red-500/20 hover:bg-red-500/20 transition-all active:scale-95 backdrop-blur-md uppercase text-[15px] tracking-[0.2em] italic"
+                                    className="w-full bg-red-500/10 text-red-500 py-3 rounded-2xl font-black flex items-center justify-center gap-2 border border-red-500/20 hover:bg-red-500/20 transition-all active:scale-95 backdrop-blur-md uppercase text-[15px] tracking-[0.2em] italic"
                                 >
-                                    <LogOut size={30} />
+                                    <LogOut size={25} />
                                     <span>Logout</span>
                                 </button>
                             </div>
