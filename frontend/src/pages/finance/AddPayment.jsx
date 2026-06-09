@@ -102,11 +102,25 @@ const AddPayment = () => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
+
         try {
-            const { data } = await API.post('/users/finance/add-payment', formData);
+            const { data } = await API.post(
+                '/users/finance/add-payment',
+                formData
+            );
+
             setMsg("Payment synchronized! ✅");
-            setTimeout(() => navigate(`/finance/receipt/${data.feeRecord._id}`), 2000);
-        } catch (err) { alert("Failed to log payment"); }
+
+            setTimeout(() => {
+                navigate(`/finance/receipt/${data.feeRecord._id}`);
+            }, 2000);
+
+        } catch (err) {
+            setMsg(
+                err?.response?.data?.message ||
+                "Failed to log payment ❌"
+            );
+        }
     };
 
     return (
@@ -253,109 +267,55 @@ const AddPayment = () => {
                             </div>
                         </div>
 
-                        {/* STEP 4: FEE PURPOSE & AMOUNT */}
+                        {/* STEP 4: AMOUNT TO BE PAID */}
                         <div className="bg-white p-6 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm space-y-4">
+
                             <div className="flex justify-between items-center px-2">
                                 <label className="text-[15px] font-black text-slate-700 uppercase flex items-center gap-1 italic tracking-widest">
-                                    <Zap size={14} /> 4. Fee Type
+                                    <Zap size={14} />
+                                    4. Amount To Be Paid
                                 </label>
-                                <button type="button" onClick={handleAllSelect} className="text-[13px] font-black text-[#42A5F5] border border-blue-100 px-4 py-1.5 rounded-full uppercase hover:bg-blue-50 transition-colors">All Payments</button>
                             </div>
 
-                            {/* --- STEP 4: CUSTOM FEE TYPE DROPDOWN --- */}
-                            <div className="relative mt-3">
-                                {/* Dropdown Trigger */}
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setOpenFee(!openFee);
-                                        setOpenClass(false);
-                                        setOpenStudent(false);
-                                        setIsMonthOpen(false);
-                                    }}
-                                    className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 flex justify-between items-center text-[16px] text-slate-700 font-bold italic"
-                                >
-                                    <span className="truncate">
-                                        {selectedFees.length > 0
-                                            ? selectedFees.join(', ')
-                                            : "Choose fee type"}
-                                    </span>
-                                    <ChevronDown size={20} className={`text-slate-400 transition-transform ${openFee ? 'rotate-180' : ''}`} />
-                                </button>
+                            <div className="relative mt-2">
+                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#42A5F5] font-black text-2xl">
+                                    ₹
+                                </div>
 
-                                {/* Dropdown Menu */}
-                                <AnimatePresence>
-                                    {openFee && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -10 }}
-                                            className="absolute z-50 w-full mt-2 bg-white border border-[#DDE3EA] rounded-3xl shadow-2xl max-h-60 overflow-y-auto p-2"
-                                        >
-                                            {/* Static Option: ALL */}
-                                            <div
-                                                onClick={() => {
-                                                    handleAllSelect();
-                                                    setOpenFee(false);
-                                                }}
-                                                className="p-4 hover:bg-blue-50 rounded-2xl cursor-pointer text-[#42A5F5] font-black transition-colors border-b border-slate-50"
-                                            >
-                                                All payments (Full settlement)
-                                            </div>
-
-                                            {activeFields.map(f => {
-                                                const isSelected = selectedFees.includes(f.label);
-
-                                                return (
-                                                    <div
-                                                        key={f.key}
-                                                        onClick={() => handleFeeToggle(f)}
-                                                        className={`p-4 rounded-2xl cursor-pointer font-bold transition-all border-b border-slate-50 last:border-none mb-1
-            ${isSelected
-                                                                ? 'bg-blue-50 text-[#42A5F5]'
-                                                                : 'hover:bg-slate-50 text-slate-700'
-                                                            }`}
-                                                    >
-                                                        <div className="flex justify-between items-center">
-                                                            <span>{f.label}</span>
-
-                                                            <div className="flex items-center gap-3">
-                                                                <span className="text-[#42A5F5]">₹{f.amount}</span>
-
-                                                                {isSelected && (
-                                                                    <CheckCircle2 size={16} className="text-[#42A5F5]" />
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                            {/* DONE BUTTON */}
-                                            <div className="sticky bottom-0 bg-white pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setOpenFee(false)}
-                                                    className="w-full bg-[#42A5F5] text-white py-4 rounded-2xl font-black uppercase shadow-md active:scale-95 transition-all"
-                                                >
-                                                    Done
-                                                </button>
-                                            </div>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </div>
-
-                            <div className="relative mt-4">
-                                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#42A5F5] font-black text-2xl">₹</div>
                                 <input
                                     type="number"
                                     placeholder="Enter amount"
-                                    className="w-full bg-slate-50 p-6 pl-12 rounded-3xl border border-slate-400 text-2xl text-slate-700 font-black outline-none focus:border-[#42A5F5] focus:bg-white transition-all shadow-inner"
+                                    className="
+                w-full
+                bg-slate-50
+                p-6
+                pl-12
+                rounded-3xl
+                border border-slate-200
+                text-2xl
+                text-slate-700
+                font-black
+                outline-none
+                focus:border-[#42A5F5]
+                focus:bg-white
+                transition-all
+                shadow-inner
+            "
                                     value={formData.amountPaid}
-                                    onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            amountPaid: e.target.value,
+                                        })
+                                    }
                                     required
                                 />
                             </div>
+
+                            <p className="text-xs text-slate-700 px-2">
+                                Enter the amount that will be collected from the student.
+                            </p>
+
                         </div>
 
                         {/* STEP 5: DATE LOGISTICS */}

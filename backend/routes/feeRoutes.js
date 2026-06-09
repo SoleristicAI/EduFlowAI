@@ -298,44 +298,44 @@ router.get('/student-summary', protect, async (req, res) => {
             status: 'Verified'
         }).sort({ date: -1 });
 
-        let monthlyStructureTotal = 0;
-        let oneTimeLabels = [];
-        let structureDetails = {};
+        let monthlyUnit = 0;
+        let oneTimeFixed = 0;
+        let structureDetails = { monthly: [], oneTime: [] };
 
-        // 1. Fee Structure logic (Monthly vs One-time)
         if (structure && structure.fees) {
             Object.keys(structure.fees).forEach(key => {
                 const item = structure.fees[key];
                 if (item && !item.isNone && item.amount > 0) {
                     const amount = Number(item.amount) || 0;
                     const label = key.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
+
                     if (item.billingCycle === 'monthly') {
-                        monthlyStructureTotal += amount;
-                        structureDetails[key] = { label, amount, billingCycle: 'monthly' };
+                        monthlyUnit += amount;
+                        structureDetails.monthly.push({ label, amount });
                     } else {
-                        oneTimeLabels.push(label);
-                        structureDetails[key] = { label, amount, billingCycle: 'one-time' };
+                        oneTimeFixed += amount;
+                        structureDetails.oneTime.push({ label, amount });
                     }
                 }
             });
         }
 
-        // 2. Months Elapsed Calculation
+        // --- CALCULATION LOGIC ---
         const joinDate = new Date(student.createdAt);
         const monthsElapsed = Math.max(1, (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth()) + 1);
-        const totalMonthlyExpected = monthlyStructureTotal * monthsElapsed;
 
-        // 3. Total Paid Logic (Including everything that isn't a One-Time fee)
-        const totalMonthlyPaidSoFar = verifiedPayments.filter(p => {
-            const isOneTime = oneTimeLabels.some(label => p.remarks?.toUpperCase().includes(label));
-            return !isOneTime;
-        }).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+        const totalTargetMonthly = monthlyUnit * monthsElapsed;
 
-        // 4. Final Balance & Advance Logic (Clean Ledger)
-        const netBalance = totalMonthlyExpected - totalMonthlyPaidSoFar;
-        
-        const finalOutstanding = netBalance > 0 ? netBalance : 0;
-        const advanceBalance = netBalance < 0 ? Math.abs(netBalance) : 0;
+        // Total payments distribution
+        const totalPaidAll = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+        // Logic: Pehle One-time fees cover hoti hai, fir Monthly dues.
+        // Par hum frontend ke liye outstanding split karenge:
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidAll);
+        let surplusAfterOneTime = Math.max(0, totalPaidAll - oneTimeFixed);
+
+        let remainingMonthly = Math.max(0, totalTargetMonthly - surplusAfterOneTime);
+        let finalAdvance = Math.max(0, surplusAfterOneTime - totalTargetMonthly);
 
         const pendingPayment = await Fee.findOne({ student: studentId, status: 'Pending' }).sort({ createdAt: -1 });
 
@@ -366,19 +366,20 @@ router.get('/student-summary', protect, async (req, res) => {
             currentMonth: currentMonthName,
             totalPaidThisMonth: verifiedPayments.filter(p => p.month === currentMonthName && p.year === currentYear).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0),
             lastActivity: verifiedPayments.length > 0 ? verifiedPayments[0].date : null,
-            totalPenalty: 0, // Penalty is now history
-            grandTotal: finalOutstanding,
-            remainingFees: finalOutstanding,
-            advanceBalance: advanceBalance,
-            totalFeesStructure: monthlyStructureTotal,
-            feeStructure: structureDetails,
+            totalPenalty: 0,
+            grandTotal: remainingMonthly + remainingOneTime,
+
+            // --- NEW SPLIT DATA FOR FRONTEND ---
+            monthlyOutstanding: remainingMonthly,
+            oneTimeOutstanding: remainingOneTime,
+            advanceBalance: finalAdvance,
+
+            totalFeesStructure: monthlyUnit,
+            feeStructureDetails: structureDetails,
             paymentHistory: groupedHistory,
             pendingSignal: pendingPayment ? {
-                id: pendingPayment._id,
-                amount: pendingPayment.amountPaid,
-                screenshot: pendingPayment.paymentScreenshot,
-                date: pendingPayment.date,
-                status: pendingPayment.status
+                id: pendingPayment._id, amount: pendingPayment.amountPaid,
+                screenshot: pendingPayment.paymentScreenshot, date: pendingPayment.date, status: pendingPayment.status
             } : null
         });
 
@@ -596,7 +597,6 @@ router.get('/tracker/students/:grade', protect, financeOnly, async (req, res) =>
     }
 });
 
-// --- AUDIT ROUTE: CLEAN LEDGER VERSION (NO PENALTY) ---
 router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
     try {
         const studentId = req.params.studentId;
@@ -606,84 +606,179 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         const currentYear = today.getFullYear();
 
         const User = require('../models/User');
-        const student = await User.findOne({ _id: studentId, schoolId });
-        if (!student) return res.status(404).json({ message: 'Identity missing' });
+        const School = require('../models/School');
+
+        const student = await User.findOne({ _id: studentId, schoolId }).populate('schoolId');
+        if (!student) {
+            return res.status(404).json({ message: 'Identity missing' });
+        }
+
+        const schoolData = await School.findById(schoolId);
 
         const rawGrade = student.grade || "";
         const numericPart = rawGrade.match(/\d+/);
         const classMatch = numericPart ? `Class ${numericPart[0]}` : rawGrade;
-        const structure = await FeeStructure.findOne({ schoolId, className: classMatch });
 
-        const allPayments = await Fee.find({
+        const structure = await FeeStructure.findOne({
+            schoolId,
+            className: classMatch
+        });
+
+        const verifiedPayments = await Fee.find({
             student: studentId,
-            schoolId: schoolId,
+            schoolId,
             status: 'Verified'
         }).sort({ date: -1 });
 
-        let monthlyStructureTotal = 0;
-        let structureDetails = [];
-        let oneTimeLabels = [];
+        let monthlyUnit = 0;
+        let oneTimeFixed = 0;
 
-        // 1. Structure Math
+        const structureDetails = {
+            monthly: [],
+            oneTime: []
+        };
+
         if (structure && structure.fees) {
             Object.keys(structure.fees).forEach(key => {
                 const item = structure.fees[key];
-                if (item && !item.isNone && item.amount > 0) {
-                    const labelName = key.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
-                    const amount = Number(item.amount);
-                    if (item.billingCycle === 'monthly') { monthlyStructureTotal += amount; }
-                    else { oneTimeLabels.push(labelName); }
 
-                    const isPaidAlready = allPayments.some(p => p.remarks?.toUpperCase().includes(labelName));
-                    structureDetails.push({
-                        label: labelName, amount: amount, cycle: item.billingCycle,
-                        isPaid: isPaidAlready && item.billingCycle === 'one-time'
-                    });
+                if (item && !item.isNone && item.amount > 0) {
+                    const amount = Number(item.amount) || 0;
+                    const label = key
+                        .replace(/([A-Z])/g, ' $1')
+                        .trim()
+                        .toUpperCase();
+
+                    if (item.billingCycle === 'monthly') {
+                        monthlyUnit += amount;
+                        structureDetails.monthly.push({
+                            label,
+                            amount
+                        });
+                    } else {
+                        oneTimeFixed += amount;
+                        structureDetails.oneTime.push({
+                            label,
+                            amount
+                        });
+                    }
                 }
             });
         }
 
-        // 2. Duration Math
+        // EXACT SAME LOGIC AS /student-summary
+
         const joinDate = new Date(student.createdAt);
-        const monthsElapsed = Math.max(1, (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth()) + 1);
-        const totalExpectedSoFar = monthlyStructureTotal * monthsElapsed;
 
-        // 3. Paid Math (Strictly Monthly)
-        const totalMonthlyPaidSoFar = allPayments.filter(p => {
-            const isOneTime = oneTimeLabels.some(label => p.remarks?.toUpperCase().includes(label));
-            // Penalty check hata diya gaya hai - Penalty ka paisa ab fees mein gina jayega
-            return !isOneTime;
-        }).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+        const monthsElapsed = Math.max(
+            1,
+            (today.getFullYear() - joinDate.getFullYear()) * 12 +
+            (today.getMonth() - joinDate.getMonth()) +
+            1
+        );
 
-        // 4. Final Clean Balance Logic
-        const baseBalance = totalExpectedSoFar - totalMonthlyPaidSoFar;
-        
-        const finalRemaining = baseBalance > 0 ? baseBalance : 0;
-        const advanceMoney = baseBalance < 0 ? Math.abs(baseBalance) : 0;
+        const totalTargetMonthly = monthlyUnit * monthsElapsed;
+
+        const totalPaidAll = verifiedPayments.reduce(
+            (sum, p) => sum + (Number(p.amountPaid) || 0),
+            0
+        );
+
+        let remainingOneTime = Math.max(
+            0,
+            oneTimeFixed - totalPaidAll
+        );
+
+        let surplusAfterOneTime = Math.max(
+            0,
+            totalPaidAll - oneTimeFixed
+        );
+
+        let remainingMonthly = Math.max(
+            0,
+            totalTargetMonthly - surplusAfterOneTime
+        );
+
+        let finalAdvance = Math.max(
+            0,
+            surplusAfterOneTime - totalTargetMonthly
+        );
+
+        const groupedHistory = verifiedPayments.reduce((acc, pay) => {
+            const key = `${pay.month} ${pay.year}`;
+
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+
+            const rawRemarks = pay.remarks || "";
+
+            let displayCategory = pay.feeCategory || "GENERAL FEE";
+
+            if (rawRemarks.toUpperCase().includes("PURPOSE:")) {
+                displayCategory = rawRemarks.split(":")[1].trim();
+            }
+
+            acc[key].push({
+                id: pay._id,
+                amount: pay.amountPaid,
+                category: displayCategory.toUpperCase(),
+                date: pay.date,
+                mode: pay.paymentMode
+            });
+
+            return acc;
+        }, {});
 
         res.json({
             student,
-            totalPaidThisMonth: allPayments.filter(p => p.month === currentMonthName && p.year === currentYear).reduce((sum, p) => sum + p.amountPaid, 0),
-            totalExpected: monthlyStructureTotal,
-            totalPenalty: 0, // Hardcoded 0 (Logic removed)
-            remaining: finalRemaining,
-            advance: advanceMoney,
+            schoolName: student.schoolId?.schoolName || "N/A",
+            schoolPhone: schoolData?.paymentSettings?.upiId || "N/A",
+            adminName: schoolData?.adminDetails?.fullName || "N/A",
+            adminEmail: schoolData?.adminDetails?.email || "N/A",
+
             currentMonth: currentMonthName,
+
+            totalPaidThisMonth: verifiedPayments
+                .filter(
+                    p =>
+                        p.month === currentMonthName &&
+                        p.year === currentYear
+                )
+                .reduce(
+                    (sum, p) =>
+                        sum + (Number(p.amountPaid) || 0),
+                    0
+                ),
+
+            lastActivity:
+                verifiedPayments.length > 0
+                    ? verifiedPayments[0].date
+                    : null,
+
+            grandTotal:
+                remainingMonthly + remainingOneTime,
+
+            monthlyOutstanding: remainingMonthly,
+            oneTimeOutstanding: remainingOneTime,
+            advanceBalance: finalAdvance,
+
+            totalFeesStructure: monthlyUnit,
             structureDetails,
-            history: allPayments.reduce((acc, pay) => {
-                const key = `${pay.month} ${pay.year}`;
-                if (!acc[key]) acc[key] = [];
-                const rawRemarks = pay.remarks || "";
-                let displayCategory = pay.feeCategory || "GENERAL FEE";
-                if (rawRemarks.toUpperCase().includes("PURPOSE:")) { displayCategory = rawRemarks.split(":")[1].trim(); }
-                acc[key].push({ id: pay._id, amount: pay.amountPaid, category: displayCategory.toUpperCase(), date: pay.date, mode: pay.paymentMode });
-                return acc;
-            }, {}),
-            status: finalRemaining <= 0 ? 'COMPLETED' : 'PENDING'
+
+            history: groupedHistory,
+
+            status:
+                (remainingMonthly + remainingOneTime) <= 0
+                    ? 'COMPLETED'
+                    : 'PENDING'
         });
 
     } catch (error) {
-        res.status(500).json({ message: 'Neural Ledger Reset Failed' });
+        console.error("AUDIT_ERROR:", error);
+        res.status(500).json({
+            message: 'Neural Ledger Reset Failed'
+        });
     }
 });
 

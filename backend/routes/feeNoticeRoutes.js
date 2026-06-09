@@ -58,25 +58,35 @@ router.get('/pending-by-classes', protect, financeOnly, async (req, res) => {
 
             const numericPart = student.grade.match(/\d+/);
             const classMatch = numericPart ? `Class ${numericPart[0]}` : student.grade;
-
+            
             const structure = await FeeStructure.findOne({ schoolId, className: classMatch });
-            if (!structure) continue;
+            if (!structure || !structure.fees) continue;
 
+            // 2. Logic: Calculate Monthly vs One-Time Total
             let monthlyRate = 0;
-            if (structure.fees) {
-                Object.keys(structure.fees).forEach(k => {
-                    if (structure.fees[k] && !structure.fees[k].isNone && structure.fees[k].billingCycle === 'monthly') {
-                        monthlyRate += Number(structure.fees[k].amount) || 0;
-                    }
-                });
-            }
+            let oneTimeRate = 0;
 
+            Object.keys(structure.fees).forEach(k => {
+                const feeItem = structure.fees[k];
+                if (feeItem && !feeItem.isNone && feeItem.amount > 0) {
+                    if (feeItem.billingCycle === 'monthly') {
+                        monthlyRate += Number(feeItem.amount);
+                    } else {
+                        oneTimeRate += Number(feeItem.amount);
+                    }
+                }
+            });
+
+            // Duration Math
             const joinDate = new Date(student.createdAt);
             const monthsElapsed = Math.max(1, (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth()) + 1);
-            const totalExpected = monthlyRate * monthsElapsed;
+            
+            const totalExpected = (monthlyRate * monthsElapsed) + oneTimeRate;
 
-            const verifiedPayments = await Fee.find({ student: student._id, schoolId, status: 'Verified' });
-            const totalPaid = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+            // 3. Paid Math (Strictly checking cycle tag agar tune implementation kiya hai, 
+            // ya simply total paid)
+            const payments = await Fee.find({ student: student._id, schoolId, status: 'Verified' });
+            const totalPaid = payments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
             const netOutstanding = totalExpected - totalPaid;
 

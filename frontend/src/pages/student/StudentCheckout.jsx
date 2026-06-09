@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, School, User, Hash, BookOpen, CreditCard, ChevronRight , Phone, Mail} from 'lucide-react';
+import { ArrowLeft, School, User, Hash, BookOpen, CreditCard, ChevronRight, Phone, Mail } from 'lucide-react';
 import API from '../../api';
 import Loader from '../../components/Loader';
 
@@ -101,7 +101,7 @@ const StudentCheckout = () => {
                                 <School size={18} />
                             </div>
                             <div>
-                               <p className="text-[13px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-1">School Name</p>
+                                <p className="text-[13px] font-bold text-slate-400 uppercase tracking-tight leading-none mb-1">School Name</p>
                                 <p className="text-[15px] font-black text-slate-800 capitalize leading-tight">{summary.schoolName?.toLowerCase()}</p>
                             </div>
                         </div>
@@ -143,26 +143,19 @@ const StudentCheckout = () => {
 
                 {/* --- BILLING SUMMARY --- */}
                 {/* --- BILLING SUMMARY --- */}
-<div className="bg-slate-800 p-8 rounded-[3rem] shadow-2xl border border-slate-700">
-    <h2 className="text-[18px] font-bold text-[#42A5F5] uppercase tracking-widest mb-6">Settlement summary</h2>
+                <div className="bg-slate-800 p-8 rounded-[3rem] shadow-2xl border border-slate-700">
+                    <h2 className="text-[18px] font-bold text-[#42A5F5] uppercase tracking-widest mb-6">Settlement summary</h2>
 
-    <div className="space-y-4">
-        <div className="flex justify-between items-center pb-4 border-b border-slate-700">
-            <span className="text-[16px] font-bold text-slate-400 capitalize">Outstanding monthly fees</span>
-            {/* Ab direct grandTotal dikhao kyunki backend se wahi asli fees aa rahi hai */}
-            <span className="text-[16px] font-black italic text-white">₹{summary.grandTotal.toLocaleString()}</span>
-        </div>
-        
-        {/* 🔥 PENALTY WALA SECTION DELETE KAR DIYA GAYA HAI */}
+                    <div className="space-y-4">
 
-        <div className="flex justify-between items-center pt-2">
-            <span className="text-[16px] font-black text-white capitalize italic">Net payable amount</span>
-            <span className="text-3xl font-black text-[#42A5F5] tracking-tighter animate-pulse">
-                ₹{summary.grandTotal.toLocaleString()}
-            </span>
-        </div>
-    </div>
-</div>
+                        <div className="flex justify-between items-center pt-2">
+                            <span className="text-[16px] font-black text-white capitalize italic">Net payable amount</span>
+                            <span className="text-3xl font-black text-[#42A5F5] tracking-tighter animate-pulse">
+                                ₹{summary.grandTotal.toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
 
                 {/* --- PAY NOW ACTION --- */}
                 <button

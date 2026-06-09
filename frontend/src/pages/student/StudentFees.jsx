@@ -19,6 +19,7 @@ const StudentFees = () => {
         const fetchSummary = async () => {
             try {
                 const { data } = await API.get('/fees/student-summary');
+                // console.log("🔥 API Response Data:", data); // <--- YAHAN LAGA!
                 setSummary(data);
             } catch (err) { console.error("Summary Load Error"); }
         };
@@ -161,45 +162,63 @@ const StudentFees = () => {
 
             <div className="px-5 -mt-16 relative z-20 space-y-6">
                 {/* Main Balance Card */}
-                <div className="bg-white p-10 rounded-[3rem] border border-[#DDE3EA] shadow-xl text-center relative overflow-hidden">
-                    <p className="text-[20px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                        {!isFeesDone ? `${summary?.currentMonth} Outstanding` : 'Account Integrity'}
-                    </p>
-
-                    {/* --- StudentFees.jsx Update --- */}
-
-                    {/* Surplus Adjusted Badge ke upar ya niche ye Penalty Alert daldo */}
-                    {/* {summary?.totalPenalty > 0 && finalOutstanding > 0 && (
-                        <div className="flex items-center justify-center gap-2 mb-4 bg-rose-50 p-4 rounded-3xl border border-rose-100 text-left">
-                            <AlertCircle size={20} className="text-rose-500" />
+                {/* Main Balance Card */}
+                {/* --- UPGRADED BALANCE CARDS (SAFE VERSION) --- */}
+                <div className="space-y-4">
+                    {/* Monthly Fees Status Box */}
+                    <div className="bg-white p-8 rounded-[3rem] border border-[#DDE3EA] shadow-lg relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-4">
                             <div>
-                                <span className="text-[15px] font-black text-rose-600 block capitalize">School Fine Due To Late Fees</span>
-                                <span className="text-[15px] font-bold text-slate-400 italic">₹{summary?.totalPenalty.toLocaleString()} added to your dues</span>
+                                <p className="text-[18px] font-black text-slate-400 uppercase tracking-widest italic">
+                                    {summary?.currentMonth || 'Current Month'} & Backlog Dues
+                                </p>
+                                <h2 className={`text-5xl font-black tracking-tighter mt-1 ${(summary?.monthlyOutstanding ?? 0) > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
+                                    ₹{(summary?.monthlyOutstanding ?? 0).toLocaleString()}
+                                </h2>
+                            </div>
+                            <div className={`p-4 rounded-2xl ${(summary?.monthlyOutstanding ?? 0) > 0 ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                <Calendar size={28} />
                             </div>
                         </div>
-                    )} */}
+                        <p className="text-[14px] font-bold text-slate-600 italic">
+                            {(summary?.monthlyOutstanding ?? 0) > 0
+                                ? "Includes current month + any unpaid previous months."
+                                : "Monthly fees is fully up to date."}
+                        </p>
+                    </div>
 
-                    {/* Main Balance Heading badal do */}
-                    <h2 className={`text-5xl font-black tracking-tighter mb-4 ${!isFeesDone ? 'text-rose-500' : 'text-emerald-500'}`}>
-                        {/* Manual logic hatao, seedha finalOutstanding dikhao jo backend ne calculate kiya hai */}
-                        ₹{finalOutstanding.toLocaleString()}
-                        {isFeesDone && <span className="text-xs ml-3 opacity-50 italic tracking-widest">ALL CLEAR</span>}
-                    </h2>
+                    {/* One-Time Fees Status Box */}
+                    <div className="bg-white p-8 rounded-[3rem] border border-[#DDE3EA] shadow-lg relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-4">
+                            <div>
+                                <p className="text-[18px] font-black text-slate-400 uppercase tracking-widest italic">
+                                    One-Time Yearly Charges
+                                </p>
+                                <h2 className={`text-5xl font-black tracking-tighter mt-1 ${(summary?.oneTimeOutstanding ?? 0) > 0 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                    ₹{(summary?.oneTimeOutstanding ?? 0).toLocaleString()}
+                                </h2>
+                            </div>
+                            <div className={`p-4 rounded-2xl ${(summary?.oneTimeOutstanding ?? 0) > 0 ? 'bg-amber-50 text-amber-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                                <Zap size={28} />
+                            </div>
+                        </div>
+                        <p className="text-[14px] font-bold text-slate-600 italic">
+                            {(summary?.oneTimeOutstanding ?? 0) > 0
+                                ? "Fixed annual charges pending for this academic year."
+                                : "One-time charges cleared/Zero balance."}
+                        </p>
+                    </div>
 
-                    {/* Surplus Adjusted Badge */}
-                    {advanceMoney > 0 && finalOutstanding <= 0 && (
-                        <div className="inline-flex items-center gap-2 mb-4 bg-emerald-50 px-5 py-2 rounded-full border border-emerald-100">
-                            <CheckCircle size={14} className="text-emerald-500" />
-                            <span className="text-[15px] font-bold text-emerald-600 capitalize">
-                                Surplus Adjusted: ₹{advanceMoney.toLocaleString()} Secured
-                            </span>
+                    {/* Advance Credit (Only shows if balance is negative) */}
+                    {(summary?.advanceBalance ?? 0) > 0 && (
+                        <div className="bg-emerald-500 p-6 rounded-[2.5rem] text-white flex justify-between items-center shadow-xl">
+                            <div>
+                                <p className="text-[12px] font-black uppercase tracking-[0.2em] opacity-80">Surplus Credit</p>
+                                <p className="text-2xl font-black italic">₹{(summary?.advanceBalance ?? 0).toLocaleString()}</p>
+                            </div>
+                            <CheckCircle size={30} className="opacity-50" />
                         </div>
                     )}
-
-                    <div className={`mt-4 py-2 px-6 rounded-full text-[15px] font-black inline-flex items-center gap-2 capitalize ${isFeesDone ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600 animate-pulse'}`}>
-                        {isFeesDone ? <CheckCircle size={15} /> : <AlertCircle size={15} />}
-                        {isFeesDone ? 'Fees completed' : 'Payment required'}
-                    </div>
                 </div>
                 {/* --- STATS GRID: MONTHLY FOCUS --- */}
                 <div className="grid grid-cols-2 gap-4">
@@ -240,7 +259,7 @@ const StudentFees = () => {
                                 </h4>
                                 <div className="space-y-1">
                                     <p className="text-[15px] font-bold text-slate-500 leading-relaxed italic">
-                                        Current monthly fees: <span className="text-slate-800 font-black">₹{summary.remainingFees.toLocaleString()}</span>
+                                        Current monthly fees: <span className="text-slate-800 font-black">₹{(summary?.monthlyOutstanding ?? 0).toLocaleString()}</span>
                                     </p>
                                     {/* {totalPenalty > 0 && (
                                         <p className="text-[15px] font-bold text-rose-400 italic">
@@ -278,78 +297,34 @@ const StudentFees = () => {
                     </div>
                 )}
 
-                {/* --- POINT 2: FEES DETAILS SECTION --- */}
-                {/* --- POINT 2: FEES DETAILS SECTION --- */}
-                <div className="pb-6 space-y-5 bg-white rounded-[2.5rem] border border-[#DDE3EA] shadow-sm">
-                    <div className="flex justify-center mb-4">
-                        <div className="px-6 py-3 bg-white shadow-md rounded-2xl border border-slate-200">
-                            <p className="text-[20px] font-bold text-slate-400 uppercase tracking-widest text-center">
-                                Fee Details
-                            </p>
+                {/* --- UPGRADED: SPLIT FEE STRUCTURE CARDS --- */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                    {/* Monthly Recurring Fees Card */}
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-[#42A5F5]/10 rounded-2xl text-[#42A5F5]"><Clock size={20} /></div>
+                            <h3 className="text-[19px] font-black text-slate-700 uppercase italic">Monthly Fees</h3>
                         </div>
+                        {summary.feeStructureDetails?.monthly.length > 0 ? summary.feeStructureDetails.monthly.map((item, index) => (
+                            <div key={index} className="flex justify-between py-4 border-b border-slate-50 last:border-none">
+                                <span className="text-[16px] font-bold text-slate-600 capitalize">{item.label}</span>
+                                <span className="text-[16px] font-black text-slate-800">₹{item.amount.toLocaleString()}</span>
+                            </div>
+                        )) : <p className="text-slate-400 font-bold italic">No monthly fees</p>}
                     </div>
 
-                    {(summary.feeStructure
-                        ? (showAllFees
-                            ? Object.entries(summary.feeStructure)
-                            : Object.entries(summary.feeStructure).slice(0, 3)
-                        )
-                        : []
-                    ).map(([key, data], index) => (
-                        <div
-                            key={index}
-                            className="flex justify-between items-center bg-white rounded-2xl px-5 py-5 shadow-sm border border-slate-200"
-                        >
-                            {/* Left Side */}
-                            <div className="flex flex-col">
-                                <span className="text-[18px] font-black text-slate-700 capitalize italic tracking-tight">
-                                    {key.replace(/([A-Z])/g, ' $1').trim().toLowerCase()}
-                                </span>
-
-                                <div className="flex items-center gap-2 mt-2">
-                                    <div
-                                        className={`w-2 h-2 rounded-full ${data.billingCycle === 'one-time'
-                                                ? 'bg-amber-400'
-                                                : 'bg-[#42A5F5]'
-                                            }`}
-                                    ></div>
-
-                                    <span className="text-[14px] font-bold text-slate-400 capitalize">
-                                        {data.billingCycle === 'one-time'
-                                            ? 'One time payment'
-                                            : 'Monthly billing'}
-                                    </span>
-                                </div>
+                    {/* One-Time Charges Card */}
+                    <div className="bg-white p-8 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-amber-500/10 rounded-2xl text-amber-500"><Zap size={20} /></div>
+                            <h3 className="text-[19px] font-black text-slate-700 uppercase italic">One-Time Charges</h3>
+                        </div>
+                        {summary.feeStructureDetails?.oneTime.length > 0 ? summary.feeStructureDetails.oneTime.map((item, index) => (
+                            <div key={index} className="flex justify-between py-4 border-b border-slate-50 last:border-none">
+                                <span className="text-[16px] font-bold text-slate-600 capitalize">{item.label}</span>
+                                <span className="text-[16px] font-black text-slate-800">₹{item.amount.toLocaleString()}</span>
                             </div>
-
-                            {/* Right Side Amount */}
-                            <span className="text-[18px] font-black text-slate-800 italic">
-                                ₹{(data.amount || 0).toLocaleString()}
-                            </span>
-                        </div>
-                    ))}
-
-                    {/* SHOW MORE / LESS BUTTON */}
-                    {summary.feeStructure &&
-                        Object.entries(summary.feeStructure).length > 3 && (
-                            <button
-                                onClick={() => setShowAllFees(!showAllFees)}
-                                className="w-full mt-2 bg-[#42A5F5]/10 text-[#42A5F5] py-3 rounded-2xl font-black flex items-center justify-center gap-2 active:scale-95 transition-all"
-                            >
-                                {showAllFees ? "Show Less ▲" : "Show More ▼"}
-                            </button>
-                        )}
-
-                    <div className="flex justify-between items-center pt-4 px-2 border-t border-slate-100">
-                        <div className="flex flex-col">
-                            <span className="text-[19px] font-black text-[#42A5F5] capitalize italic tracking-tight">
-                                Net monthly fees
-                            </span>
-                        </div>
-
-                        <span className="text-2xl font-black text-[#42A5F5] tracking-tighter">
-                            ₹{totalExpectedAll.toLocaleString()}
-                        </span>
+                        )) : <p className="text-slate-400 font-bold italic">No one-time charges</p>}
                     </div>
                 </div>
 
