@@ -127,6 +127,21 @@ router.post('/settings/gateway', protect, financeOnly, async (req, res) => {
     } catch (error) { res.status(500).json({ message: 'Update failed' }); }
 });
 
+// --- DAY 194: DELETE UPI GATEWAY ---
+router.delete('/settings/gateway', protect, financeOnly, async (req, res) => {
+    try {
+        const School = require('../models/School');
+        await School.findByIdAndUpdate(req.user.schoolId, {
+            'paymentSettings.upiId': '',
+            'paymentSettings.merchantName': '',
+            'paymentSettings.isActive': false // Reset kar diya
+        });
+        res.json({ success: true, message: 'Gateway reset successfully!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Delete failed' });
+    }
+});
+
 // --- DAY 130: CAPTURE WITH SCREENSHOT (STUDENT SIDE) ---
 router.post('/capture-with-screenshot', protect, upload.single('screenshot'), async (req, res) => {
     try {

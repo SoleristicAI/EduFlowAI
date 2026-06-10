@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Save, Eye, CheckCircle, Smartphone, User, Hash, Edit3, X, Zap, Activity, Database, Layers, Phone, UserCheck, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Save, Eye, CheckCircle, Smartphone, User, Hash, Edit3, X, Zap, Activity, Database, Layers, Phone, UserCheck, ArrowLeft, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
@@ -16,7 +16,7 @@ const FinanceGateway = () => {
     const [resolvedSignals, setResolvedSignals] = useState([]);
     const [selectedSignal, setSelectedSignal] = useState(null);
     const [isZoomed, setIsZoomed] = useState(false); // Screenshot bada karke dekhne ke liye
-
+    const [confirmDelete, setConfirmDelete] = useState(false);
     const formRef = useRef(null);
 
     const loadTerminal = async () => {
@@ -64,6 +64,21 @@ const FinanceGateway = () => {
             }
         } catch (err) {
             alert("Action failed: Check neural link");
+        }
+    };
+
+    const handleDelete = async () => {
+        try {
+            await API.delete('/fees/settings/gateway');
+            setSettings({ upiId: '', merchantName: '' });
+            setToastMsg("Gateway deleted successfully! 🛡️");
+            setShowToast(true);
+            setConfirmDelete(false); // Modal band
+            setIsEditing(true);      // Form khol do
+            setTimeout(() => setShowToast(false), 3000);
+            loadTerminal();
+        } catch (err) {
+            alert("Failed to delete gateway");
         }
     };
 
@@ -182,56 +197,88 @@ const FinanceGateway = () => {
 
                 {/* CREDENTIALS HUB (LEFT) */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-8 rounded-[3.5rem] border border-[#DDE3EA] relative overflow-hidden shadow-sm group hover:shadow-md transition-shadow">
+                    {/* UPI Details Card */}
+                    <div className="bg-white p-8 rounded-[3.5rem] border border-[#DDE3EA] relative overflow-hidden shadow-sm">
                         <div className="absolute top-0 right-0 p-8 opacity-5 rotate-12 text-[#42A5F5]"><Database size={100} /></div>
 
                         <div className="flex justify-between items-center mb-10 relative z-10">
                             <div className="flex items-center gap-3">
-                                <div className="w-2.5 h-2.5 bg-[#42A5F5] rounded-full animate-pulse shadow-[0_0_10px_#42A5F5]"></div>
-                                <h2 className="text-[15px] font-black text-slate-600 uppercase tracking-widest italic">Active UPI details</h2>
+                                <div className={`w-2.5 h-2.5 rounded-full animate-pulse ${settings.upiId ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-[#42A5F5]'}`}></div>
+                                <h2 className="text-[15px] font-black text-slate-600 uppercase tracking-widest italic">
+                                    {settings.upiId ? "Active UPI Details" : "Configure UPI"}
+                                </h2>
                             </div>
-                            <button
-                                onClick={() => setIsEditing(!isEditing)}
-                                className={`p-3.5 rounded-2xl border transition-all active:scale-90 ${isEditing ? 'bg-red-50 border-red-100 text-red-500' : 'bg-blue-50 border-blue-100 text-[#42A5F5]'}`}
-                            >
-                                {isEditing ? <X size={20} /> : <Edit3 size={20} />}
-                            </button>
+
+                            {/* Show Edit/Delete if configured */}
+                            {settings.upiId && (
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setConfirmDelete(true)}
+                                        className="p-3.5 bg-red-50 text-red-500 rounded-2xl border border-red-100 hover:bg-red-500 hover:text-white transition-all active:scale-90"
+                                    >
+                                        <Trash2 size={20} />
+                                    </button>
+                                    <button onClick={() => setIsEditing(!isEditing)} className={`p-3.5 rounded-2xl border transition-all active:scale-90 ${isEditing ? 'bg-red-50 border-red-100 text-red-500' : 'bg-blue-50 border-blue-100 text-[#42A5F5]'}`}>
+                                        {isEditing ? <X size={20} /> : <Edit3 size={20} />}
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="space-y-5 relative z-10">
-                            <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100 shadow-inner">
-                                <p className="text-[12px] uppercase text-slate-400 font-black mb-1 tracking-widest italic">Upi id</p>
-                                <p className="text-[17px] font-black text-slate-700 tracking-widest uppercase break-all italic">{settings.upiId || 'Not configured'}</p>
+                        {/* DETAILS OR ADD BUTTON */}
+                        {settings.upiId ? (
+                            <div className="space-y-5 relative z-10">
+                                <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100 shadow-inner">
+                                    <p className="text-[12px] uppercase text-slate-400 font-black mb-1 tracking-widest italic">Upi id</p>
+                                    <p className="text-[17px] font-black text-slate-700 tracking-widest break-all italic">{settings.upiId}</p>
+                                </div>
+                                <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100 shadow-inner">
+                                    <p className="text-[12px] uppercase text-slate-400 font-black mb-1 tracking-widest italic">Receiver name</p>
+                                   <p className="text-[17px] font-black text-slate-700 truncate italic">
+  {settings.merchantName
+    ?.toLowerCase()
+    .replace(/\b\w/g, char => char.toUpperCase())}
+</p>
+                                </div>
                             </div>
-                            <div className="p-6 rounded-[2rem] bg-slate-50 border border-slate-100 shadow-inner">
-                                <p className="text-[12px] uppercase text-slate-400 font-black mb-1 tracking-widest italic">Receiver name</p>
-                                <p className="text-[17px] font-black text-slate-700 uppercase truncate italic">{settings.merchantName || 'Not configured'}</p>
+                        ) : (
+                            // Add UPI Details Box (Light Blue)
+                            <div
+                                onClick={() => setIsEditing(true)}
+                                className="p-8 rounded-[2rem] bg-blue-50 border-2 border-dashed border-[#42A5F5]/30 text-center cursor-pointer hover:bg-blue-100 transition-all group"
+                            >
+                                <Zap size={30} className="mx-auto text-[#42A5F5] mb-3" />
+                                <p className="text-[15px] font-black text-[#42A5F5] uppercase tracking-widest italic group-hover:scale-105 transition-transform">
+                                    Add UPI Details
+                                </p>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* DYNAMIC PROTOCOL EDITOR */}
                     <AnimatePresence>
                         {isEditing && (
                             <motion.form
-                                ref={formRef} initial={{ height: 0, opacity: 0, scale: 0.95 }} animate={{ height: 'auto', opacity: 1, scale: 1 }} exit={{ height: 0, opacity: 0, scale: 0.95 }}
+                                initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                                 onSubmit={handleUpdateSettings} className="bg-white border-2 border-[#42A5F5]/30 p-8 rounded-[3.5rem] space-y-6 overflow-hidden shadow-xl"
                             >
-                                <h2 className="text-[15px] font-black text-[#42A5F5] uppercase tracking-widest mb-2 flex items-center gap-3 italic"><Zap size={18} className="fill-[#42A5F5]" /> Change upi details</h2>
+                                <h2 className="text-[19px] font-black text-[#42A5F5] uppercase tracking-widest mb-2 flex items-center gap-3 italic">
+                                    <Edit3 size={18} /> {settings.upiId ? "Update details" : "Enter details"}
+                                </h2>
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="text-[12px] font-black text-slate-400 uppercase ml-4 italic tracking-widest">New upi id</label>
-                                        <input className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 mt-2 font-black text-slate-700 outline-none focus:border-[#42A5F5] focus:bg-white transition-all text-[15px] italic shadow-inner"
+                                        <label className="text-[16px] font-black text-slate-700 uppercase ml-4 italic tracking-widest">Upi id</label>
+                                        <input className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 mt-2 font-black text-slate-700 outline-none focus:border-[#42A5F5] transition-all text-[15px] italic shadow-inner"
                                             value={settings.upiId} onChange={e => setSettings({ ...settings, upiId: e.target.value })} placeholder="school@upi" required />
                                     </div>
                                     <div>
-                                        <label className="text-[12px] font-black text-slate-400 uppercase ml-4 italic tracking-widest">New receiver name</label>
-                                        <input className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 mt-2 font-black text-slate-700 outline-none focus:border-[#42A5F5] focus:bg-white transition-all text-[15px] italic shadow-inner"
+                                        <label className="text-[16px] font-black text-slate-700 uppercase ml-4 italic tracking-widest">Receiver name</label>
+                                        <input className="w-full bg-slate-50 p-5 rounded-2xl border border-slate-100 mt-2 font-black text-slate-700 outline-none focus:border-[#42A5F5] transition-all text-[15px] italic shadow-inner"
                                             value={settings.merchantName} onChange={e => setSettings({ ...settings, merchantName: e.target.value })} placeholder="Institution name" required />
                                     </div>
                                 </div>
-                                <button type="submit" className="w-full bg-[#42A5F5] text-white py-5 rounded-[2rem] font-black uppercase text-[12px] tracking-widest shadow-lg shadow-blue-100 hover:scale-[1.02] active:scale-95 transition-all italic">
-                                    Change details
+                                <button type="submit" className="w-full bg-[#42A5F5] text-white py-5 rounded-[2rem] font-black uppercase text-[12px] tracking-widest shadow-lg shadow-blue-100 active:scale-95 transition-all italic">
+                                    Save Changes
                                 </button>
                             </motion.form>
                         )}
@@ -388,6 +435,42 @@ const FinanceGateway = () => {
                             <p className="text-center text-white/40 font-bold italic mt-4 uppercase text-[11px] tracking-[0.3em]">
                                 Neural View Protocol Active
                             </p>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* CONFIRMATION MODAL */}
+            <AnimatePresence>
+                {confirmDelete && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[3000] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-sm"
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+                            className="bg-white p-8 rounded-[3rem] shadow-2xl w-full max-w-sm text-center"
+                        >
+                            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <Trash2 size={30} />
+                            </div>
+                            <h3 className="text-xl font-black italic mb-2">Delete Details?</h3>
+                            <p className="text-slate-500 font-bold italic mb-8">This action cannot be undone. All UPI data will be wiped.</p>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setConfirmDelete(false)}
+                                    className="flex-1 py-4 rounded-2xl bg-slate-100 font-black italic uppercase text-[12px]"
+                                >
+                                    No, Back
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    className="flex-1 py-4 rounded-2xl bg-red-500 text-white font-black italic uppercase text-[12px]"
+                                >
+                                    Yes, Delete
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}

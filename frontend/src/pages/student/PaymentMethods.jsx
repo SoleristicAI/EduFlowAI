@@ -72,7 +72,7 @@ const PaymentMethods = () => {
     const upiLink = `upi://pay?pa=${summary.schoolPhone}&pn=${summary.schoolName}&am=${summary.grandTotal}&cu=INR`;
 
     return (
-      <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans italic flex flex-col items-center justify-start pt-12 relative p-6 text-[15px] overflow-y-auto pb-44">
+        <div className="min-h-screen bg-[#F8FAFC] text-slate-800 font-sans italic flex flex-col items-center justify-start pt-12 relative p-6 text-[15px] overflow-y-auto pb-44">
             <AnimatePresence mode="wait">
                 {/* STEP 1: SELECT MODE */}
                 {!paymentMode && (
@@ -162,54 +162,75 @@ const PaymentMethods = () => {
                                     <div className="w-10"></div>
                                 </div>
 
-                                {/* QR DISPLAY (Teacher's UPI ID used here) */}
-                                <div className="bg-[#F8FAFC] p-6 rounded-[2.5rem] inline-block mb-6 border-2 border-[#DDE3EA] shadow-inner">
-                                    <QRCodeSVG value={upiLink} size={180} fgColor="#1e293b" />
-                                </div>
+                                {/* QR DISPLAY LOGIC */}
+<div className="bg-[#F8FAFC] p-6 rounded-[2.5rem] inline-block mb-6 border-2 border-[#DDE3EA] shadow-inner min-w-[200px] min-h-[200px] flex items-center justify-center">
+    {summary.schoolPhone ? (
+        <QRCodeSVG value={upiLink} size={180} fgColor="#1e293b" />
+    ) : (
+        <div className="text-center p-4">
+            <ShieldAlert size={40} className="text-slate-300 mx-auto mb-2" />
+            <p className="text-[12px] font-black text-slate-400 uppercase tracking-widest italic">
+                No QR available right now <br /> You can try again later
+            </p>
+        </div>
+    )}
+</div>
 
-                               <div className="space-y-1 mb-8">
-                                    <p className="text-4xl font-black italic tracking-tighter text-[#42A5F5]">₹{summary.grandTotal.toLocaleString()}</p>
-                                    <p className="text-[12px] text-slate-400 font-bold tracking-widest">UPI ID: {summary.schoolPhone}</p>
-                                </div>
+{/* UPI Details Logic */}
+<div className="space-y-1 mb-8">
+    <p className="text-4xl font-black italic tracking-tighter text-[#42A5F5]">
+        ₹{summary.grandTotal.toLocaleString()}
+    </p>
+    {summary.schoolPhone ? (
+        <p className="text-[12px] text-slate-400 font-bold tracking-widest">
+            UPI ID: {summary.schoolPhone}
+        </p>
+    ) : (
+        <p className="text-[12px] text-rose-400 font-bold tracking-widest uppercase italic">
+            Gateway not configured
+        </p>
+    )}
+</div>
 
-                                {/* --- SCREENSHOT UPLOAD AREA --- */}
-                                <div className="space-y-4">
-                                    {!preview ? (
-                                        <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-blue-100 rounded-[2rem] bg-blue-50/30 cursor-pointer hover:bg-blue-50 transition-all group">
-                                            <Upload className="text-[#42A5F5] group-hover:animate-bounce mb-3" size={32} />
-                                            <span className="text-[14px] font-black text-[#42A5F5] italic tracking-tight capitalize">Upload payment screenshot</span>
-                                            <input type="file" hidden accept="image/*" onChange={handleFileChange} />
-                                        </label>
-                                    ) : (
-                                        <div className="relative">
-                                            <img src={preview} className="w-full h-44 object-contain rounded-3xl border-2 border-[#42A5F5]/30 bg-slate-50 p-2" alt="Preview" />
-                                            <button 
-                                                onClick={() => { setPreview(null); setScreenshot(null) }}
-                                                className="absolute -top-3 -right-3 bg-rose-500 text-white p-2 rounded-full shadow-lg active:scale-90"
-                                            >
-                                                <X size={16} />
-                                            </button>
-                                            <p className="text-[13px] font-black text-emerald-500 italic mt-3 flex items-center justify-center gap-2">
-                                                <CheckCircle2 size={16} /> Screenshot captured successfully
-                                            </p>
-                                        </div>
-                                    )}
+{/* --- SCREENSHOT UPLOAD AREA (Only show if schoolPhone exists) --- */}
+{summary.schoolPhone && (
+    <div className="space-y-4">
+        {!preview ? (
+            <label className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-blue-100 rounded-[2rem] bg-blue-50/30 cursor-pointer hover:bg-blue-50 transition-all group">
+                <Upload className="text-[#42A5F5] group-hover:animate-bounce mb-3" size={32} />
+                <span className="text-[14px] font-black text-[#42A5F5] italic tracking-tight capitalize">Upload payment screenshot</span>
+                <input type="file" hidden accept="image/*" onChange={handleFileChange} />
+            </label>
+        ) : (
+            <div className="relative">
+                <img src={preview} className="w-full h-44 object-contain rounded-3xl border-2 border-[#42A5F5]/30 bg-slate-50 p-2" alt="Preview" />
+                <button
+                    onClick={() => { setPreview(null); setScreenshot(null) }}
+                    className="absolute -top-3 -right-3 bg-rose-500 text-white p-2 rounded-full shadow-lg active:scale-90"
+                >
+                    <X size={16} />
+                </button>
+                <p className="text-[13px] font-black text-emerald-500 italic mt-3 flex items-center justify-center gap-2">
+                    <CheckCircle2 size={16} /> Screenshot captured successfully
+                </p>
+            </div>
+        )}
 
-                                    {/* Action Button: Sirf tab dikhega jab screenshot select hoga */}
-                                    <AnimatePresence>
-                                        {screenshot && (
-                                            <motion.button
-                                                initial={{ opacity: 0, y: 10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                onClick={handleFinalSubmit}
-                                                className="w-full py-5 bg-[#42A5F5] text-white rounded-[2rem] font-black text-[16px] shadow-lg shadow-blue-200 active:scale-95 transition-all mt-4 capitalize"
-                                        >
-                                                Payment Completed
-                                            </motion.button>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-
+        {/* Action Button */}
+        <AnimatePresence>
+            {screenshot && (
+                <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={handleFinalSubmit}
+                    className="w-full py-5 bg-[#42A5F5] text-white rounded-[2rem] font-black text-[16px] shadow-lg shadow-blue-200 active:scale-95 transition-all mt-4 capitalize"
+                >
+                    Payment Completed
+                </motion.button>
+            )}
+        </AnimatePresence>
+    </div>
+)}
                                 {/* <button onClick={() => setSelectedApp(null)} className="mt-8 text-[9px] font-black text-white/20 uppercase tracking-widest hover:text-white transition-all underline underline-offset-4 decoration-white/10">Change Method</button> */}
                             </>
                         )}
@@ -229,14 +250,14 @@ const PaymentMethods = () => {
                         initial={{ y: -100, opacity: 0 }}
                         animate={{ y: 40, opacity: 1 }}
                         exit={{ y: -100, opacity: 0 }}
-                       className={`fixed top-0 z-[100] px-8 py-4 rounded-2xl font-black text-[13px] italic shadow-2xl flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
+                        className={`fixed top-0 z-[100] px-8 py-4 rounded-2xl font-black text-[13px] italic shadow-2xl flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
                     >
                         {toast.type === 'success' ? <CheckCircle2 size={18} /> : <ShieldAlert size={18} />}
                         {toast.message}
                     </motion.div>
                 )}
             </AnimatePresence>
-        <div className="absolute bottom-8 opacity-30 flex items-center gap-2 text-slate-400">
+            <div className="absolute bottom-8 opacity-30 flex items-center gap-2 text-slate-400">
                 <ShieldAlert size={14} />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em]">Neural encrypted gateway</p>
             </div>
