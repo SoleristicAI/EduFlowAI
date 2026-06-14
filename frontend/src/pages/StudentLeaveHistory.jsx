@@ -7,16 +7,48 @@ import API from '../api';
 const StudentLeaveHistory = () => {
     const [history, setHistory] = useState([]);
     const navigate = useNavigate();
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            try {
+                setLoading(true);
+                const { data } = await API.get('/leaves/my-history');
+                setHistory(data);
+            } catch (err) {
+                console.error("History fetch failed");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, []);
 
     useEffect(() => {
         const fetchHistory = async () => {
             try {
                 const { data } = await API.get('/leaves/my-history');
                 setHistory(data);
-            } catch (err) { console.error("History fetch failed"); }
+            } catch (err) {
+                console.error("History fetch failed");
+            }
         };
+
         fetchHistory();
+
+        const interval = setInterval(fetchHistory, 3000); // every 3 sec
+
+        return () => clearInterval(interval);
     }, []);
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        });
+    };
 
     return (
         <motion.div
@@ -45,7 +77,11 @@ const StudentLeaveHistory = () => {
 
             <div className="px-8 -mt-16 space-y-6">
                 <AnimatePresence>
-                    {history.length > 0 ? history.map((req, index) => (
+                    {loading ? (
+                        <div className="text-center mt-40 text-slate-400 font-bold">
+                            Loading...
+                        </div>
+                    ) : history.length > 0 ? history.map((req, index) => (
                         <motion.div
                             key={req._id}
                             initial={{ opacity: 0, y: 30, scale: 0.96 }}
@@ -61,16 +97,27 @@ const StudentLeaveHistory = () => {
                         >
                             <div>
                                 <p className="text-[19px] font-black italic">{req.reason}</p>
-                                <p className="text-[14px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    {new Date(req.fromDate).toLocaleDateString()} • {req.status}
+                                <p className="text-[13px] font-bold text-slate-600 uppercase tracking-widest mt-2">
+                                    {req.leaveType === "One Day" ? (
+                                        formatDate(req.fromDate)
+                                    ) : (
+                                        <>
+                                            {formatDate(req.fromDate)}
+                                            <br />
+                                            To {formatDate(req.toDate)}
+                                        </>
+                                    )}
                                 </p>
                             </div>
                             <motion.div
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ delay: 0.2 }}
-                                className={`px-4 py-2 rounded-full font-black text-[11px] uppercase ${req.status === 'Approved' ? 'bg-emerald-50 text-emerald-600' :
-                                    req.status === 'Rejected' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                                className={`px-4 py-2 rounded-full font-black text-[14px] uppercase ${req.status === 'Confirmed'
+                                    ? 'bg-emerald-100 text-emerald-700'
+                                    : req.status === 'Rejected'
+                                        ? 'bg-rose-100 text-rose-700'
+                                        : 'bg-amber-100 text-amber-700'
                                     }`}>
                                 {req.status}
                             </motion.div>

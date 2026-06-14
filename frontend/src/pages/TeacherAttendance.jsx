@@ -93,6 +93,28 @@ const TeacherAttendance = ({ user }) => {
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const fetchPendingCount = async () => {
+    if (!assignedClass) return; // Agar class assigned nahi hai toh request mat bhejo
+    try {
+        const { data } = await API.get('/leaves/pending-count');
+        setPendingCount(data.count);
+    } catch (err) {
+        console.error("Error fetching count");
+    }
+};
+
+    useEffect(() => {
+        // Jab bhi teacher is page par wapas aaye (focus kare), count refresh ho
+        const handleFocus = () => fetchPendingCount();
+        window.addEventListener('focus', handleFocus);
+
+        fetchPendingCount(); // Initial load
+
+        return () => window.removeEventListener('focus', handleFocus);
+    }, []);
+
+
     const handleSubmit = async () => {
         if (students.length === 0) return;
         setIsSaving(true);
@@ -306,19 +328,17 @@ const TeacherAttendance = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Dynamic Counter Badge */}
-                            {pendingCount > 0 ? (
-                                <motion.div
-                                    initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                    className="bg-rose-500 text-white font-black text-[12px] w-10 h-10 rounded-full flex items-center justify-center shadow-lg shadow-rose-200"
-                                >
-                                    {pendingCount}
-                                </motion.div>
-                            ) : (
-                                <div className="bg-slate-100 text-slate-400 font-black text-[15px] w-10 h-10 rounded-full flex items-center justify-center">
-                                    0
-                                </div>
-                            )}
+                            <motion.div
+                                initial={{ scale: 0.8 }}
+                                animate={{ scale: 1 }}
+                                className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-[14px] transition-all duration-500
+        ${pendingCount > 0
+                                        ? "bg-rose-500 text-white shadow-lg shadow-rose-200 animate-bounce"
+                                        : "bg-slate-100 text-slate-400"
+                                    }`}
+                            >
+                                {pendingCount}
+                            </motion.div>
                         </button>
                     </div>
                 </div>

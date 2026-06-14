@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Plus, IndianRupee, TrendingUp, Trash2, Edit3, X, Save, RotateCcw, Users, Bot, School, Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Globe, Plus, IndianRupee, TrendingUp, Trash2, Edit3, X, Save, RotateCcw, Users, Bot, Loader2,School, Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
@@ -84,7 +84,14 @@ const SuperAdminDashboard = () => {
         return () => { document.body.style.overflow = 'unset'; }; // Cleanup
     }, [editingSchool]);
 
-    if (loading) return <Loader />;
+   if (loading) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
+      <Loader2 className="w-12 h-12 animate-spin text-[#42A5F5]" />
+      <p className="text-slate-500 font-bold italic">Loading...</p>
+    </div>
+  );
+}
 
     return (
         <div className="min-h-screen bg-[#F1F5F9] p-8 font-sans">

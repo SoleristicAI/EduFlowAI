@@ -72,40 +72,69 @@ router.post('/apply', protect, upload.single('document'), async (req, res) => {
     }
 });
 
+// --- UPDATED PENDING COUNT ROUTE ---
 router.get('/pending-count', protect, async (req, res) => {
     try {
-        const count = await LeaveRequest.countDocuments({ 
-            schoolId: req.user.schoolId, 
-            status: 'Pending' 
-        });
-        res.json({ count });
+        const teacherClass = req.user.assignedClass; // Teacher ki class
+        
+        // Saari pending requests fetch karo aur populate karo taaki student ki grade mile
+        const allPending = await LeaveRequest.find({
+            schoolId: req.user.schoolId,
+            status: 'Pending'
+        }).populate('student', 'grade');
+
+        // Sirf wahi requests filter karo jo teacher ki class ki hain
+        const filteredRequests = allPending.filter(req => req.student?.grade === teacherClass);
+
+        res.json({ count: filteredRequests.length });
     } catch (error) {
         res.status(500).json({ count: 0 });
     }
 });
 
-// --- GET PENDING LEAVES FOR CLASS TEACHER ---
 router.get('/requests', protect, async (req, res) => {
     try {
-        // Assume req.user mein 'assignedClass' saved hai
-        const teacherClass = req.user.assignedClass; 
+        const teacherClass = req.user.assignedClass;
         const schoolId = req.user.schoolId;
 
         const requests = await LeaveRequest.find({
-            schoolId,
-            status: 'Pending'
-        }).populate('student', 'name grade');
+            schoolId
+        })
+            .populate('student', 'name grade')
+            .sort({ createdAt: -1 });
 
-        // Sirf wahi requests return karo jo teacher ki assignedClass ki hain
-        const filtered = requests.filter(r => r.student?.grade === teacherClass);
+        const filtered = requests.filter(
+            r => r.student?.grade === teacherClass
+        );
+
         res.json(filtered);
-    } catch (error) { res.status(500).json({ message: error.message }); }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
 });
 
 router.get('/my-history', protect, async (req, res) => {
     try {
         const history = await LeaveRequest.find({ student: req.user._id }).sort({ createdAt: -1 });
         res.json(history);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+router.put('/update-status/:id', protect, async (req, res) => {
+    try {
+        const { status } = req.body; // Confirmed ya Rejected
+
+        // status update only (delete nahi)
+        const updatedRequest = await LeaveRequest.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true }
+        ).populate('student', 'name grade');
+
+        res.json(updatedRequest);
+
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
