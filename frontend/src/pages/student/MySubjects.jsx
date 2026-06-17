@@ -146,7 +146,15 @@ const MySubjects = () => {
                                                             </div>
 
                                                             <p className="text-[18px] font-bold text-slate-700 flex-1 break-words">
-                                                                {name?.trim()}
+                                                                {name
+                                                                    ?.trim()
+                                                                    .toLowerCase()
+                                                                    .split(" ")
+                                                                    .map(
+                                                                        (word) =>
+                                                                            word.charAt(0).toUpperCase() + word.slice(1)
+                                                                    )
+                                                                    .join(" ")}
                                                             </p>
                                                         </div>
 
