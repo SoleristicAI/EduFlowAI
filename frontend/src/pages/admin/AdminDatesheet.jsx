@@ -49,7 +49,7 @@ const AdminDatesheet = () => {
     });
 
     // --- MANUAL WIZARD DATA & CUSTOM STATES ---
-    const [manualData, setManualData] = useState({ title: '', fileData: '' });
+    const [manualData, setManualData] = useState({ title: '', fileData: '', signatures: { incharge: '' } });
     const [manualWizard, setManualWizard] = useState({
         timing: '',
         selectedClass: '',
@@ -157,6 +157,16 @@ const AdminDatesheet = () => {
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => setManualData(prev => ({ ...prev, fileData: reader.result }));
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Handle Manual Incharge Signature
+    const handleManualSignatureUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setManualData(prev => ({ ...prev, signatures: { incharge: reader.result } }));
             reader.readAsDataURL(file);
         }
     };
@@ -292,11 +302,12 @@ const AdminDatesheet = () => {
                     fileData: manualData.fileData,
                     classes: manualWizard.completedClasses,
                     timing: manualWizard.timing,
-                    schedule: manualWizard.masterSchedule
+                    schedule: manualWizard.masterSchedule,
+                    signatures: manualData.signatures
                 };
                 await API.post('/datesheet/save-manual', payload);
 
-                setManualData({ title: '', fileData: '' });
+                setManualData({ title: '', fileData: '', signatures: { incharge: '' } });
                 setManualWizard({
                     timing: '', selectedClass: '', selectedSubject: '', examDate: '',
                     classSubjects: ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi', 'Computer'],
@@ -757,6 +768,25 @@ const AdminDatesheet = () => {
                                     )}
                                 </div>
 
+                            </div>
+
+                            {/* --- MANUAL EXAM CONTROLLER SIGNATURE --- */}
+                            <div className="bg-indigo-50/30 p-6 rounded-[2rem] border border-indigo-100">
+                                <label className="text-[13px] font-black text-slate-500 uppercase ml-2 mb-2 block tracking-widest">
+                                    Exam Controller Signature (For Admit Card)
+                                </label>
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleManualSignatureUpload} 
+                                    className="w-full text-sm font-bold file:mr-4 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-sm file:font-black file:bg-indigo-500 file:text-white hover:file:bg-indigo-600" 
+                                />
+                                {/* Preview chota sa */}
+                                {manualData.signatures?.incharge && (
+                                    <div className="mt-3 bg-white p-2 rounded-xl inline-block border border-slate-200">
+                                        <img src={manualData.signatures.incharge} alt="Sign" className="h-10 object-contain" />
+                                    </div>
+                                )}
                             </div>
 
                             {/* Premium File Upload Box */}

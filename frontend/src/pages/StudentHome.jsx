@@ -289,7 +289,7 @@ const StudentHome = ({ user, searchQuery }) => {
                 >
                   <Link to={em.path} className="flex flex-col items-center gap-4 group">
 
-                    <div className="w-12 h-12 lg:w-20 lg:h-20 flex items-center justify-center rounded-[2rem] bg-[#E3F2FD] text-[#2196F3] group-hover:bg-[#9C27B0] group-hover:text-white transition-all active:scale-90 border border-purple-50">
+                    <div className="w-12 h-12 lg:w-20 lg:h-20 flex items-center justify-center rounded-[2rem] bg-[#E3F2FD] text-[#2196F3] group-hover:bg-[#2196F3] group-hover:text-white transition-all active:scale-90 border border-purple-50">
                       {em.icon}
                     </div>
 

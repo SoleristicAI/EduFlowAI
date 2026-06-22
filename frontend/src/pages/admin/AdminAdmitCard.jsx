@@ -179,7 +179,7 @@ const AdminAdmitCard = () => {
 
                             {datesheets.length === 0 ? (
                                 <div className="text-center p-6 bg-red-50 rounded-3xl text-red-500 font-bold">
-                                    ⚠️ Generate an AI Datesheet first to issue Admit Cards.
+                                    ⚠️ Generate Datesheet first to issue Admit Cards.
                                 </div>
                             ) : (
                                 <form onSubmit={handleGeneratePreview} className="space-y-6">

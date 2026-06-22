@@ -117,7 +117,7 @@ router.post('/save', protect, adminOnly, async (req, res) => {
 // Manual Upload Save Route (Upgraded with Scheduler Matrix)
 router.post('/save-manual', protect, adminOnly, async (req, res) => {
     try {
-        const { title, classes, fileData, schedule, timing } = req.body;
+        const { title, classes, fileData, schedule, timing, signatures } = req.body;
         
         if (!fileData) return res.status(400).json({ message: "No PDF/Image file provided!" });
 
@@ -128,7 +128,8 @@ router.post('/save-manual', protect, adminOnly, async (req, res) => {
             isManual: true,
             fileUrl: fileData,
             schedule: schedule || [], // Saves the matrix built by wizard
-            timing: timing || "Refer to Document"
+            timing: timing || "Refer to Document",
+            signatures: signatures || { incharge: '' }
         });
 
         res.status(201).json({ message: "Manual Datesheet Published with Matrix!", data: newDatesheet });
