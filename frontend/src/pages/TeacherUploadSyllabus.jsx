@@ -16,7 +16,7 @@ const TeacherUploadSyllabus = ({ user }) => {
     const [managedSyllabuses, setManagedSyllabuses] = useState([]); // For monitor hub
     const [classes, setClasses] = useState([]);
     const [isClassOpen, setIsClassOpen] = useState(false);
-    
+
     // Naya State: Track karne ke liye ki konsa syllabus edit mode mein hai
     const [editModes, setEditModes] = useState({});
 
@@ -268,10 +268,48 @@ const TeacherUploadSyllabus = ({ user }) => {
                                                     <span className="font-black text-blue-900 text-lg">{subject.subjectName}</span>
                                                 </div>
                                                 <button
-                                                    onClick={() => openEditor(req._id, req.title, req.grade, subject.subjectName, '', 'submit')}
-                                                    className="w-full bg-slate-900 text-white py-5 rounded-[2.5rem] font-black uppercase tracking-widest hover:bg-[#42A5F5] transition-colors flex justify-center items-center gap-3 shadow-md"
+                                                    onClick={() =>
+                                                        openEditor(
+                                                            req._id,
+                                                            req.title,
+                                                            req.grade,
+                                                            subject.subjectName,
+                                                            "",
+                                                            "submit"
+                                                        )
+                                                    }
+                                                    className="
+        w-full 
+        bg-white 
+        text-[#42A5F5] 
+        py-5 
+        rounded-[2.5rem] 
+        font-black 
+        uppercase 
+        tracking-widest 
+        border border-[#DDE3EA]
+        shadow-lg
+        hover:shadow-[0_10px_30px_rgba(66,165,245,0.25)]
+        hover:border-[#42A5F5]
+        hover:bg-blue-50
+        hover:scale-[1.02]
+        active:scale-[0.97]
+        transition-all duration-300
+        flex justify-center items-center gap-3
+        relative overflow-hidden group
+    "
                                                 >
-                                                    <Send size={20} /> Open Editor
+                                                    {/* Shine Effect */}
+                                                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700"></span>
+
+                                                    <Send
+                                                        size={20}
+                                                        className="relative z-10 group-hover:rotate-12 transition-transform duration-300"
+                                                    />
+
+                                                    <span className="relative z-10">
+                                                        Open Editor
+                                                    </span>
                                                 </button>
                                             </motion.div>
                                         ))
@@ -305,7 +343,7 @@ const TeacherUploadSyllabus = ({ user }) => {
                                                     Status: {syllabus.status}
                                                 </span>
                                             </div>
-                                            
+
                                             {/* Action Buttons: Delete aur Edit dono ek sath */}
                                             <div className="flex gap-3">
                                                 {isPublished && (
@@ -363,7 +401,7 @@ const TeacherUploadSyllabus = ({ user }) => {
                                                 <CheckCircle2 size={22} /> Publish to Students
                                             </button>
                                         )}
-                                        
+
                                         {isPublished && !isEditMode && (
                                             <div className="w-full py-5 bg-blue-50/50 text-[#42A5F5] border-2 border-blue-100 rounded-[2.5rem] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2">
                                                 <CheckCircle2 size={22} /> Published

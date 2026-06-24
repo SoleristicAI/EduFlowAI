@@ -40,6 +40,7 @@ import LeaveRequest from './pages/LeaveRequest';
 import StudentSyllabus from './pages/student/StudentSyllabus';
 import StudentDatesheet from './pages/student/StudentDatesheet';
 import StudentAdmitCard from './pages/student/StudentAdmitCard';
+import TeacherUploadResult from './pages/teacher/TeacherUploadResult';
 // import AdminFees from './pages/AdminFees';
 import LeaveReview from './pages/LeaveReview';
 import StudentAssignments from './pages/StudentAssignments';
@@ -457,6 +458,7 @@ function App() {
           <Route path="/admin/school-logo" element={<AdminSchoolLogo />} />
           <Route path="/admin/admit-card" element={<AdminAdmitCard />} />
           <Route path="/admin/manage-admit-cards" element={<AdminManageAdmitCards />} />
+          <Route path="/teacher/results" element={<TeacherUploadResult user={user} />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
