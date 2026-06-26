@@ -137,32 +137,56 @@ const LeaveRequest = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden fixed inset-0 overflow-y-auto">
             {/* Header - Wahi blue theme */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg mb-8">
-                <div className="flex items-center gap-5">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white/20 rounded-2xl border border-white/10 active:scale-90 transition-all">
+            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden mb-8">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
+
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+                    >
                         <ArrowLeft size={24} />
                     </button>
-                    <div>
-                        <h1 className="text-4xl font-black italic tracking-tight capitalize">Leave request</h1>
-                        <p className="text-[15px] font-bold text-white/80 tracking-widest mt-1">Submit official application</p>
+
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <FileText size={24} />
                     </div>
                 </div>
 
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Leave Request
+                    </h1>
+
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Submit Official Application
+                    </p>
+                </div>
+
+                {/* History Button */}
                 <button
-                    type="button" // Type button dena zaroori hai taaki form submit na ho
+                    type="button"
                     onClick={(e) => {
-                        e.preventDefault(); // Default behavior roko
+                        e.preventDefault();
                         navigate('/student/leave-history');
                     }}
-                    className="w-full mt-6 py-5 bg-slate-100 text-slate-500 font-black text-[16px] uppercase tracking-widest rounded-[2.5rem] transition-all hover:bg-slate-200"
+                    className="relative z-10 w-full mt-6 py-5 bg-white text-[#42A5F5] font-black text-[14px] uppercase tracking-widest rounded-[2.5rem] shadow-lg transition-all active:scale-95"
                 >
                     View My Leave History
                 </button>
+
             </div>
             <motion.form
                 layout
                 onSubmit={handleSubmit}
-                className="px-8 -mt-16 space-y-8 max-w-lg mx-auto"
+                className="relative z-20 px-8 -mt-24 space-y-8 max-w-lg mx-auto"
             >
                 {/* Leave Type Toggle */}
                 <div className="grid grid-cols-2 gap-4 bg-white p-3 rounded-[2.5rem] shadow-sm border border-[#DDE3EA]">

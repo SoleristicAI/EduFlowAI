@@ -87,26 +87,40 @@ const LeaveReview = () => {
                 initial={{ y: -40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4 }}
-                className="bg-white text-slate-800 px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-sm border-b border-[#DDE3EA] mb-8"
+                className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible mb-8"
             >
-                <div className="flex items-center gap-5">
+                <div className="flex justify-between items-center relative z-10">
+
+                    {/* Back Button */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all"
+                        className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <div className="relative flex items-center">
-                        <h1 className="text-3xl font-black italic text-center">
+
+                    {/* Center Title */}
+                    <div className="text-center">
+                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
                             Leave Requests
                         </h1>
+
+                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                            Manage Student Leaves
+                        </p>
                     </div>
+
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+                        <FileText size={24} />
+                    </div>
+
                 </div>
             </motion.div>
 
             <motion.div
                 layout
-                className="px-6 -mt-16 space-y-6"
+                className="px-6 -mt-8 space-y-6"
             >
                 {requests.length > 0 ? requests.map(req => (
                     <motion.div

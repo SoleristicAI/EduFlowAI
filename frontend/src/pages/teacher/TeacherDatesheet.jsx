@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, FileDown, CheckCircle, Download, FileText, Printer, Check, ArrowRight, LayoutDashboard, BookOpen } from 'lucide-react';
+import { ArrowLeft, Calendar, FileDown, CheckCircle, Download, FileText,CalendarDays, Printer, Check, ArrowRight, LayoutDashboard, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
@@ -96,27 +96,35 @@ const TeacherDatesheet = () => {
             {showToast.show && <Toast message={showToast.message} type={showToast.type} onClose={() => setShowToast({ show: false, message: '', type: '' })} />}
 
             {/* Custom Adapted Header */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden print:hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible print:hidden">
+    <div className="flex justify-between items-center relative z-10">
 
-                <div className="relative z-10 flex items-center">
-                    <button
-                        onClick={handleBack}
-                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm z-20"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
+        {/* Back Button */}
+        <button
+            onClick={handleBack}
+            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+        >
+            <ArrowLeft size={24} />
+        </button>
 
-                    <div className="absolute left-1/2 -translate-x-[45%] text-center">
-                        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
-                            Date Sheet
-                        </h1>
-                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-1 whitespace-nowrap">
-                            Examination Schedule
-                        </p>
-                    </div>
-                </div>
-            </div>
+        {/* Center Title */}
+        <div className="text-center">
+            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                Date Sheet
+            </h1>
+
+            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                Examination Schedule
+            </p>
+        </div>
+
+        {/* Right Icon */}
+        <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+            <CalendarDays size={24} />
+        </div>
+
+    </div>
+</div>
 
             <div className="px-5 -mt-10 relative z-20 space-y-6 max-w-lg mx-auto print:hidden">
                 <AnimatePresence mode="wait">

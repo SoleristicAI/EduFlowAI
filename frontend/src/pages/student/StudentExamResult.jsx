@@ -178,35 +178,41 @@ const StudentExamResult = () => {
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
 
-                {/* Background Glow */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+    {/* Background Glow */}
+    <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-                <div className="relative z-10 flex items-center">
+    {/* Top Row */}
+    <div className="relative z-10 flex justify-between items-center">
 
-                    {/* Back Button */}
-                    <button
-                        onClick={() => {
-                            if (viewMode === "reportCard") setViewMode("select");
-                            else navigate(-1);
-                        }}
-                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm z-20"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
+        {/* Back Button */}
+        <button
+            onClick={() => {
+                if (viewMode === "reportCard") setViewMode("select");
+                else navigate(-1);
+            }}
+            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+        >
+            <ArrowLeft size={24} />
+        </button>
 
-                    {/* Center Title */}
-                    <div className="absolute left-1/2 -translate-x-[45%] text-center">
-                        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
-                            Exam Results
-                        </h1>
+        {/* Right Icon */}
+        <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+            <BarChart3 size={24} />
+        </div>
+    </div>
 
-                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-1 whitespace-nowrap">
-                            Student Performance Report
-                        </p>
-                    </div>
+    {/* Heading + Subtitle */}
+    <div className="relative z-10 text-center mt-4">
+        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+            Exam Results
+        </h1>
 
-                </div>
-            </div>
+        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+            Student Performance Report
+        </p>
+    </div>
+
+</div>
 
             <div className="px-5 -mt-10 relative z-20 max-w-4xl mx-auto">
 

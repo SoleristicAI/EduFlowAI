@@ -23,21 +23,39 @@ const StudentCheckout = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg relative overflow-hidden">
-                <div className="flex items-center gap-4 relative z-10">
+            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg relative z-10 overflow-hidden">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Header Row */}
+                <div className="flex justify-between items-center mb-6 relative z-10">
+
+                    {/* Back Button */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-2 bg-white/20 rounded-xl border border-white/30 active:scale-90 transition-all cursor-pointer"
+                        className="bg-white/20 p-2.5 rounded-2xl active:scale-90 border border-white/10 text-white"
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <h1 className="text-3xl font-black italic tracking-tight capitalize">
-                        Online payment mode
-                    </h1>
+
+                    {/* Center Title */}
+                    <div className="flex flex-col items-center">
+                        <h1 className="text-4xl font-black italic tracking-tight capitalize text-center">
+                            Online Payment
+                        </h1>
+
+                        <p className="text-[15px] font-bold text-white/80 tracking-widest mt-1 capitalize">
+                            Secure Fee Transactions
+                        </p>
+                    </div>
+
+                    {/* Right Icon */}
+                    <div className="bg-white/20 p-2.5 rounded-2xl border border-white/10 text-white">
+                        <CreditCard size={24} />
+                    </div>
                 </div>
-                <div className="absolute -right-6 -bottom-6 opacity-10 rotate-12">
-                    <CreditCard size={120} />
-                </div>
+
             </div>
 
             <div className="px-5 -mt-10 space-y-6 max-w-2xl mx-auto relative z-20">

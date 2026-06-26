@@ -135,29 +135,38 @@ const StudentFees = () => {
                 )}
             </AnimatePresence>
             {/* Header: Blue Theme */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-32 rounded-b-[4rem] shadow-lg relative overflow-hidden">
+            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-32 rounded-b-[3.5rem] shadow-lg relative overflow-hidden">
 
-                <div className="flex items-center justify-between relative z-10">
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-                    {/* Left side (Back + Title) */}
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={() => navigate(-1)}
-                            className="p-2 bg-white/20 rounded-xl active:scale-90 transition-all border border-white/30"
-                        >
-                            <ArrowLeft size={24} />
-                        </button>
+                {/* Header Row */}
+                <div className="flex justify-between items-center relative z-10">
 
-                        <h1 className="text-4xl font-black italic tracking-tighter capitalize">
-                            My fees
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="bg-white/20 p-2.5 rounded-2xl active:scale-90 border border-white/10 text-white"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+
+                    {/* Center Title */}
+                    <div className="flex flex-col items-center">
+                        <h1 className="text-5xl font-black italic tracking-tight capitalize">
+                            My Fees
                         </h1>
+                        <p className="text-[17px] font-bold text-white/80 tracking-widest mt-1 capitalize">
+                            Payment Details
+                        </p>
                     </div>
 
                     {/* Right Icon */}
-                    <div className="bg-white/10 p-4 rounded-3xl backdrop-blur-md border border-white/20">
-                        <CreditCard size={32} />
+                    <div className="bg-white/20 p-2.5 rounded-2xl border border-white/10 text-white">
+                        <CreditCard size={24} />
                     </div>
                 </div>
+
             </div>
 
             <div className="px-5 -mt-16 relative z-20 space-y-6">

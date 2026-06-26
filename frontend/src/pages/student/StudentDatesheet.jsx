@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, ShieldCheck, Lock, FileDown, CheckCircle, Download, UserCheck, FileText, Printer, Check, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Calendar, ShieldCheck, Lock, FileDown, CalendarDays, CheckCircle, Download, UserCheck, FileText, Printer, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api'; // Path apne hisaab se adjust kar lena
 import Loader from '../../components/Loader';
@@ -150,25 +150,38 @@ const StudentDatesheet = ({ user }) => {
 
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden print:hidden">
+
+                {/* Background Glow */}
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-                <div className="relative z-10 flex items-center">
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
+
+                    {/* Back Button */}
                     <button
                         onClick={handleBack}
-                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm z-20"
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
                     >
                         <ArrowLeft size={24} />
                     </button>
 
-                    <div className="absolute left-1/2 -translate-x-[45%] text-center">
-                        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
-                            Date Sheet
-                        </h1>
-                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-1 whitespace-nowrap">
-                            Examination Schedule
-                        </p>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <CalendarDays size={24} />
                     </div>
                 </div>
+
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Date Sheet
+                    </h1>
+
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Examination Schedule
+                    </p>
+                </div>
+
             </div>
 
             <div className="px-5 -mt-10 relative z-20 space-y-6 max-w-lg mx-auto print:hidden">
@@ -421,7 +434,7 @@ const StudentDatesheet = ({ user }) => {
                 </AnimatePresence>
             </div>
 
-           {/* --- HIDDEN AI DATESHEET RENDERER (ONLY FOR PDF GENERATION) --- */}
+            {/* --- HIDDEN AI DATESHEET RENDERER (ONLY FOR PDF GENERATION) --- */}
             {selectedDatesheet && !selectedDatesheet.isManual && (currentView === 'download' || currentView === 'success') && (
                 <div className="h-0 w-0 overflow-hidden">
 

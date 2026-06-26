@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, CreditCard, Megaphone, PlusCircle, Database, X, Bot,ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Users, CreditCard, Megaphone, PlusCircle, Database, X, Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Toast from '../components/Toast';
@@ -181,14 +181,9 @@ const AdminHome = ({ searchQuery }) => {
         { id: 'timetable', title: 'Timetable', icon: <Database size={24} />, desc: 'Schedule all classes', color: 'bg-blue-50 text-[#42A5F5] border-blue-100' },
         { id: 'edit-timetable', title: 'Edit timetable', icon: <Database size={24} />, desc: 'Modify existing schedules', color: 'bg-rose-50 text-rose-500 border-rose-100' },
         { id: 'datesheet-engine', title: 'Generate datesheet', icon: <Calendar size={24} />, desc: 'Exam scheduler', color: 'bg-violet-50 text-violet-500 border-violet-100' },
+        { id: 'admit-card', title: 'Publish Admit Card ', icon: <ClipboardCheck size={24} />, desc: 'Exam hall tickets', color: 'bg-indigo-50 text-indigo-500 border-indigo-100' },
+        { id: 'academic-calendar', title: 'Academic Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', color: 'bg-rose-50 text-rose-500 border-rose-100' },
         { id: 'manage-users', title: 'Manage student and teacher', icon: <Users size={24} />, desc: 'Edit or Delete personnel', color: 'bg-blue-50 text-[#42A5F5] border-blue-100' },
-        { 
-    id: 'admit-card', // Is ID ke base pe navigate('/admin/admit-card') karwa liyo
-    title: 'Publish Admit Card ', 
-    icon: <ClipboardCheck size={24} />, 
-    desc: 'Exam hall tickets', 
-    color: 'bg-indigo-50 text-indigo-500 border-indigo-100' 
-},
     ];
 
     return (
@@ -278,8 +273,8 @@ const AdminHome = ({ searchQuery }) => {
                     <button
                         onClick={() => navigate('/admin/school-logo')}
                         className={`border-2 px-8 py-3 rounded-full font-black uppercase tracking-widest text-[13px] shadow-sm active:scale-95 transition-all flex items-center gap-3 ${hasLogo
-                                ? 'bg-emerald-50/60 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-emerald-100 hover:shadow-md'
-                                : 'bg-red-50/60 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 hover:shadow-red-100 hover:shadow-md'
+                            ? 'bg-emerald-50/60 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-400 hover:shadow-emerald-100 hover:shadow-md'
+                            : 'bg-red-50/60 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 hover:shadow-red-100 hover:shadow-md'
                             }`}
                     >
                         {/* Dynamic Icon Wrapper */}
@@ -311,6 +306,7 @@ const AdminHome = ({ searchQuery }) => {
                             if (m.id === 'edit-timetable') navigate('/admin/edit-timetable');
                             if (m.id === 'datesheet-engine') navigate('/admin/datesheet');
                             if (m.id === 'admit-card') navigate('/admin/admit-card');
+                            if (m.id === 'academic-calendar') navigate('/admin/academic-calendar');
                         }} className="bg-white p-6 rounded-[2.5rem] border border-slate-50 flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer group shadow-sm hover:shadow-md hover:border-blue-100">
                             <div className="flex items-center gap-5">
                                 <div className={`${m.color} p-4 rounded-2xl border transition-all`}>{m.icon}</div>

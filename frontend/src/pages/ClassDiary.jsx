@@ -70,36 +70,61 @@ const ClassDiary = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header */}
-            <div className="bg-[#42A5F5] text-slate-800 px-6 pt-12 pb-24 rounded-b-[4rem] border-b border-slate-100 shadow-md relative overflow-hidden">
-                <div className="flex justify-between items-center mb-8 relative z-10 px-2">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all">
-                        <ArrowLeft size={24} />
-                    </button>
-                    <h1 className="text-4xl font-black italic tracking-tighter capitalize text-white">
-                        Class Diary
-                    </h1>
-                    <div className="p-3 bg-blue-50 rounded-2xl text-[#42A5F5]">
-                        <BookOpen size={24} />
-                    </div>
-                </div>
+            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg relative z-10 overflow-hidden">
 
-                {/* Date Scroller */}
-                <div className="flex justify-between gap-3 overflow-x-auto no-scrollbar py-2 relative z-10 px-2">
-                    {datesMenu.map((d) => (
-                        <button
-                            key={d.full}
-                            onClick={() => setSelectedDate(d.full)}
-                            className={`flex flex-col items-center min-w-[65px] py-4 rounded-3xl border transition-all ${selectedDate === d.full
-                                ? 'bg-[#42A5F5] text-white border-[#42A5F5] shadow-lg shadow-blue-100'
-                                : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'
-                                }`}
-                        >
-                            <span className="text-[10px] font-black uppercase mb-1 tracking-widest">{d.day}</span>
-                            <span className="text-[18px] font-black">{d.date}</span>
-                        </button>
-                    ))}
-                </div>
-            </div>
+    {/* Background Glow */}
+    <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+    {/* Header Row */}
+    <div className="flex justify-between items-center mb-6 relative z-10">
+
+        {/* Back Button */}
+        <button
+            onClick={() => navigate(-1)}
+            className="bg-white/20 p-2.5 rounded-2xl active:scale-90 border border-white/10 text-white"
+        >
+            <ArrowLeft size={24} />
+        </button>
+
+        {/* Center Title */}
+        <div className="flex flex-col items-center">
+            <h1 className="text-4xl font-black italic tracking-tight capitalize">
+                Class Diary
+            </h1>
+            <p className="text-[15px] font-bold text-white/80 tracking-widest mt-1 capitalize">
+                Daily Learning Notes
+            </p>
+        </div>
+
+        {/* Right Icon */}
+        <div className="bg-white/20 p-2.5 rounded-2xl border border-white/10 text-white">
+            <BookOpen size={24} />
+        </div>
+    </div>
+
+    {/* Date Scroller */}
+    <div className="flex justify-between gap-3 overflow-x-auto no-scrollbar py-2 relative z-10">
+        {datesMenu.map((d) => (
+            <button
+                key={d.full}
+                onClick={() => setSelectedDate(d.full)}
+                className={`flex flex-col items-center min-w-[65px] py-4 rounded-3xl border transition-all ${
+                    selectedDate === d.full
+                        ? 'bg-white text-[#42A5F5] border-white shadow-lg'
+                        : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}
+            >
+                <span className="text-[10px] font-black uppercase mb-1 tracking-widest">
+                    {d.day}
+                </span>
+                <span className="text-[18px] font-black">
+                    {d.date}
+                </span>
+            </button>
+        ))}
+    </div>
+
+</div>
 
             {/* Homework List */}
             <div className="px-6 -mt-10 space-y-6 relative z-20 min-h-[70vh]">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Phone, User, GraduationCap, ShieldCheck, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Phone, User, GraduationCap, ShieldCheck, MessageCircle, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
@@ -31,22 +31,48 @@ const Mentorship = () => {
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden fixed inset-0 overflow-y-auto">
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
-                <div className="flex items-center gap-4 relative z-10">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
+
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+                    >
                         <ArrowLeft size={24} />
                     </button>
-                    <h1 className="text-4xl font-black italic tracking-tight capitalize">Mentorship</h1>
+
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <Users size={24} />
+                    </div>
                 </div>
+
+                {/* Center Heading */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Mentorship
+                    </h1>
+
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Guidance & Student Support
+                    </p>
+                </div>
+
             </div>
 
             <div className="px-6 -mt-10 relative z-20">
                 {error ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-[3rem] p-12 text-center shadow-xl border border-slate-100">
-                         <ShieldCheck size={60} className="mx-auto text-slate-200 mb-4" />
-                         <p className="text-slate-400 font-bold italic uppercase tracking-widest">{error}</p>
+                        <ShieldCheck size={60} className="mx-auto text-slate-200 mb-4" />
+                        <p className="text-slate-400 font-bold italic uppercase tracking-widest">{error}</p>
                     </motion.div>
                 ) : (
-                    <motion.div 
+                    <motion.div
                         initial={{ y: 20, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         className="bg-white rounded-[3.5rem] p-10 shadow-2xl border border-slate-100 flex flex-col items-center text-center"
@@ -85,9 +111,9 @@ const Mentorship = () => {
                                         <p className="text-[16px] font-black text-slate-700 tracking-widest">{mentor?.phone}</p>
                                     </div>
                                 </div>
-                                
+
                                 {/* CALL BUTTON */}
-                                <a 
+                                <a
                                     href={`tel:${mentor?.phone}`}
                                     className="bg-emerald-500 text-white p-4 rounded-3xl shadow-lg shadow-emerald-200 active:scale-90 transition-all"
                                 >
@@ -108,8 +134,8 @@ const Mentorship = () => {
                         </div>
 
                         <div className="mt-10 flex flex-col items-center gap-2 opacity-20">
-                             <div className="w-10 h-1 rounded-full bg-slate-400" />
-                             <p className="text-[9px] font-black uppercase tracking-[0.4em]">Official Neural Node Verified</p>
+                            <div className="w-10 h-1 rounded-full bg-slate-400" />
+                            <p className="text-[9px] font-black uppercase tracking-[0.4em]">Official Neural Node Verified</p>
                         </div>
                     </motion.div>
                 )}

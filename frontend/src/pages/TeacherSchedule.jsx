@@ -172,32 +172,49 @@ const TeacherSchedule = () => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-overscroll-none fixed inset-0 overflow-y-auto">
       {/* Header Section */}
-      <div className="bg-white text-slate-800 px-6 pt-12 pb-20 rounded-b-[4rem] border-b border-slate-100 shadow-md relative overflow-hidden">
-        <div className="flex justify-between items-center mb-8 relative z-10 px-2">
+      <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
+        <div className="flex justify-between items-center relative z-10">
+
+          {/* Back Button */}
           <button
             onClick={() => navigate(-1)}
-            className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all"
+            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
           >
             <ArrowLeft size={24} />
           </button>
-          <h1 className="text-3xl font-black italic tracking-tight capitalize">Class schedule</h1>
-          <div className="p-3 bg-blue-50 rounded-2xl text-[#42A5F5]">
+
+          {/* Center Title */}
+          <div className="text-center">
+            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+              Class Schedule
+            </h1>
+
+            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+              Daily Class Routine
+            </p>
+          </div>
+
+          {/* Right Icon */}
+          <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
             <Calendar size={24} />
           </div>
+
         </div>
 
         {/* Day Selector */}
-        <div className="flex justify-between overflow-x-auto gap-3 no-scrollbar py-2 relative z-10 px-2">
+        <div className="flex justify-between overflow-x-auto gap-3 no-scrollbar py-2 mt-8 relative z-10">
           {daysMap.map((day) => (
             <button
               key={day.full}
               onClick={() => setActiveDay(day.full)}
               className={`flex flex-col items-center min-w-[60px] py-4 rounded-2xl border transition-all ${activeDay === day.full
-                ? 'bg-[#42A5F5] text-white border-[#42A5F5] shadow-lg shadow-blue-100'
-                : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-white'
+                  ? 'bg-white text-[#42A5F5] border-white shadow-lg'
+                  : 'bg-white/20 text-white border-white/30 hover:bg-white/30'
                 }`}
             >
-              <span className="text-[12px] font-black uppercase italic tracking-wider">{day.short}</span>
+              <span className="text-[12px] font-black uppercase italic tracking-wider">
+                {day.short}
+              </span>
             </button>
           ))}
         </div>

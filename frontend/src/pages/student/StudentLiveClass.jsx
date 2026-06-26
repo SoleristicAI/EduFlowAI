@@ -61,24 +61,43 @@ const StudentLiveClass = () => {
 
             {/* HEADER */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent opacity-40 pointer-events-none"></div>
-                <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-center">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent opacity-50 pointer-events-none"></div>
+
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
+
+                    {/* Back Button */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="absolute left-0 p-3 bg-white/20 rounded-2xl border border-white/30 active:scale-95 transition-all shadow-sm hover:bg-white/30"
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <div className="text-center px-16">
-                        <h1 className="text-4xl md:text-4xl font-black tracking-tight">Live Classes</h1>
-                        <p className="text-[13px] uppercase tracking-[0.25em] font-bold opacity-90 mt-2">Digital Classrooms</p>
+
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <Video size={24} />
                     </div>
                 </div>
+
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Live Classes
+                    </h1>
+
+                    <p className="text-[13px] uppercase tracking-[0.25em] font-bold opacity-90 mt-2 whitespace-nowrap">
+                        Digital Classrooms
+                    </p>
+                </div>
+
             </div>
 
             <div className="px-5 -mt-10 relative z-20 max-w-4xl mx-auto">
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-                    
+
                     {/* Identity Badge */}
                     <div className="bg-white p-5 rounded-[2rem] border border-blue-100 shadow-sm flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -105,7 +124,7 @@ const StudentLiveClass = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {liveClasses.map((cls) => (
                                 <div key={cls._id} className="bg-white p-6 rounded-[2.5rem] shadow-lg border border-[#DDE3EA] relative overflow-hidden group hover:border-[#42A5F5] transition-all">
-                                    
+
                                     {/* Subject and Teacher */}
                                     <div className="flex justify-between items-start mb-5">
                                         <div>
@@ -118,22 +137,22 @@ const StudentLiveClass = () => {
                                             {cls.platform === 'Zoom' ? 'Z' : 'GM'}
                                         </div>
                                     </div>
-                                    
+
                                     {/* Timing Details */}
                                     <div className="bg-blue-50/50 p-4 rounded-2xl space-y-2 mb-6 border border-blue-100">
                                         <p className="text-[13px] font-black text-slate-700 flex items-center gap-2 tracking-wide uppercase">
-                                            <Calendar size={16} className="text-[#42A5F5]"/> {cls.date}
+                                            <Calendar size={16} className="text-[#42A5F5]" /> {cls.date}
                                         </p>
                                         <p className="text-[13px] font-black text-slate-700 flex items-center gap-2 tracking-wide uppercase">
-                                            <Clock size={16} className="text-[#42A5F5]"/> {cls.startTime} - {cls.endTime}
+                                            <Clock size={16} className="text-[#42A5F5]" /> {cls.startTime} - {cls.endTime}
                                         </p>
                                     </div>
 
                                     {/* Join Button (Student Link) */}
-                                    <a 
-                                        href={cls.studentLink} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer" 
+                                    <a
+                                        href={cls.studentLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="w-full bg-[#42A5F5] text-white py-4 rounded-[1.5rem] font-black uppercase tracking-[0.15em] text-[13px] flex justify-center items-center gap-2 shadow-lg shadow-blue-200 hover:bg-blue-600 active:scale-95 transition-all border-b-4 border-blue-700"
                                     >
                                         <LinkIcon size={16} /> Join Class ({cls.platform})

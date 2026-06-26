@@ -95,14 +95,14 @@ const TeacherAttendance = ({ user }) => {
     }, []);
 
     const fetchPendingCount = async () => {
-    if (!assignedClass) return; // Agar class assigned nahi hai toh request mat bhejo
-    try {
-        const { data } = await API.get('/leaves/pending-count');
-        setPendingCount(data.count);
-    } catch (err) {
-        console.error("Error fetching count");
-    }
-};
+        if (!assignedClass) return; // Agar class assigned nahi hai toh request mat bhejo
+        try {
+            const { data } = await API.get('/leaves/pending-count');
+            setPendingCount(data.count);
+        } catch (err) {
+            console.error("Error fetching count");
+        }
+    };
 
     useEffect(() => {
         // Jab bhi teacher is page par wapas aaye (focus kare), count refresh ho
@@ -163,22 +163,35 @@ const TeacherAttendance = ({ user }) => {
             )}
 
             {/* Header */}
-            <div className="bg-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-md border-b border-slate-100 relative z-10 overflow-visible">
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50 to-transparent pointer-events-none opacity-50"></div>
-                <div className="flex justify-between items-center mb-8 relative z-10">
+            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
+                {/* <div className="absolute inset-0 bg-gradient-to-t from-blue-50 to-transparent pointer-events-none opacity-50"></div> */}
+                <div className="flex justify-between items-center relative z-10">
+
+                    {/* Back Button */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all"
+                        className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
                     >
                         <ArrowLeft size={24} />
                     </button>
-                    <h1 className="text-3xl font-black italic tracking-tight text-slate-800">Attendance </h1>
-                    <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100 text-[#42A5F5] shadow-sm">
+
+                    {/* Center Title */}
+                    <div className="text-center">
+                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                            Attendance
+                        </h1>
+
+                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                            Class Management
+                        </p>
+                    </div>
+
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
                         <Calendar size={24} />
                     </div>
                 </div>
-
-                <div className="bg-white p-6 rounded-[3rem] border border-[#DDE3EA] shadow-lg italic relative z-10">
+               <div className="bg-white mt-6 p-6 rounded-[3rem] border border-[#DDE3EA] shadow-lg italic relative z-10">
                     <div className="flex justify-between items-center px-2">
                         <div>
                             {/* <p className="text-[11px] font-black uppercase text-slate-400 tracking-widest italic mb-1"></p> */}
@@ -342,7 +355,6 @@ const TeacherAttendance = ({ user }) => {
                         </button>
                     </div>
                 </div>
-
             </div>
             {/* Main Area */}
             <div className={`px-5 -mt-10 space-y-6 relative ${isDateOpen ? 'z-0' : 'z-20'}`}>

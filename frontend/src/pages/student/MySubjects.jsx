@@ -60,29 +60,44 @@ const MySubjects = () => {
                 initial={{ y: -40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5 }}
-                className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg mb-8"
+                className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg mb-8 relative overflow-hidden"
             >
-                <div className="flex items-center gap-5">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
+
+                    {/* Back Button */}
                     <button
                         onClick={() => navigate(-1)}
-                        className="p-3 bg-white/20 rounded-2xl border border-white/10 active:scale-90 transition-all"
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
                     >
                         <ArrowLeft size={24} />
                     </button>
 
-                    <div>
-                        <h1 className="text-4xl font-black italic tracking-tight">
-                            My Subjects
-                        </h1>
-                        <p className="text-[16px] font-bold text-white/80 tracking-widest mt-1">
-                            Your class subjects
-                        </p>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <BookOpen size={24} />
                     </div>
                 </div>
+
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        My Subjects
+                    </h1>
+
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Your Class Subjects
+                    </p>
+                </div>
+
             </motion.div>
 
             {/* Body */}
-            <div className="px-8 -mt-16 space-y-6">
+            <div className="px-8 -mt-20 relative z-20 space-y-6">
                 <AnimatePresence>
                     {loading ? (
                         <>

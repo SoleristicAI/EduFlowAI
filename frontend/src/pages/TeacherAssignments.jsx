@@ -176,32 +176,42 @@ const TeacherAssignments = ({ user }) => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-20 rounded-b-[4rem] shadow-lg relative">
+            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
+    <div className="flex justify-between items-center relative z-10">
 
-                <button
-                    onClick={() => navigate(-1)}
-                    className="absolute top-12 left-6 bg-white/20 p-3 rounded-2xl border border-white/30 active:scale-90"
-                >
-                    <ArrowLeft />
-                </button>
+        {/* Back Button */}
+        <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+        >
+            <ArrowLeft size={24} />
+        </button>
 
-                <div className="text-center mt-4">
-                    <h1 className="text-4xl font-black italic tracking-tighter uppercase">
-                        Class <br /> Assignments
-                    </h1>
-                </div>
+        {/* Right Side Empty Space for Balance */}
+        <div className="w-12"></div>
+    </div>
 
-                {/* ✅ NEW POSITION */}
-                <div className="flex justify-end mt-2">
-                    <button
-                        onClick={() => setView(view === 'create' ? 'history' : 'create')}
-                        className="bg-white text-[#42A5F5] px-4 py-2 rounded-2xl font-black text-[15px] uppercase tracking-widest shadow-lg flex items-center gap-2"
-                    >
-                        {view === 'create' ? "View History" : "Create New"}
-                    </button>
-                </div>
+    {/* Center Title + Subtitle */}
+    <div className="text-center mt-4 relative z-10">
+        <h1 className="text-4xl font-black italic tracking-tight text-white uppercase">
+            Class Assignments
+        </h1>
 
-            </div>
+        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+            Homework & Tasks
+        </p>
+    </div>
+
+    {/* Action Button below subtitle, right aligned */}
+    <div className="flex justify-end mt-4 relative z-10">
+        <button
+            onClick={() => setView(view === 'create' ? 'history' : 'create')}
+            className="bg-white text-[#42A5F5] px-5 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-lg flex items-center gap-2 active:scale-90 transition-all"
+        >
+            {view === 'create' ? "View History" : "Create New"}
+        </button>
+    </div>
+</div>
 
             <div className="px-6 -mt-10 relative z-10 space-y-6">
                 {view === 'create' ? (

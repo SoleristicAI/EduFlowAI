@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Megaphone, Clock, Sun, AlertTriangle, FileText } from 'lucide-react';
+import { ArrowLeft, Megaphone, Clock, Sun, AlertTriangle, FileText, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '../api';
@@ -31,23 +31,41 @@ const Notifications = () => {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
-      
+
       {/* Header Layer */}
-      <div className="bg-[#42A5F5] text-slate-800 px-6 pt-12 pb-24 rounded-b-[4rem] border-b border-slate-100 shadow-md relative overflow-hidden">
-        <div className="flex justify-between items-center mb-8 relative z-10 px-2">
-          <button 
-            onClick={() => navigate(-1)} 
-            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all"
+      <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
+
+        {/* Background Glow */}
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+        {/* Top Row */}
+        <div className="relative z-10 flex justify-between items-center">
+
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
           >
             <ArrowLeft size={24} />
           </button>
-          
-          <h1 className="text-4xl font-black italic tracking-tight text-white drop-shadow-sm capitalize">
+
+          {/* Right Icon */}
+          <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+            <Bell size={24} />
+          </div>
+        </div>
+
+        {/* Center Heading */}
+        <div className="relative z-10 text-center mt-4">
+          <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
             ERP Notices
           </h1>
 
-          <div className="w-11 h-11 pointer-events-none opacity-0"></div>
+          <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+            Important School Updates
+          </p>
         </div>
+
       </div>
 
       {/* Main Ribbon Indicator */}
@@ -80,7 +98,7 @@ const Notifications = () => {
               {filteredNotices.length > 0 ? (
                 <div className="space-y-6 min-h-[420px]">
                   {filteredNotices.map((notice, idx) => {
-                    {/* 🔥 FIXED: notice.category ki jagah ab naye model ka notice.noticeType check hoga */}
+                    {/* 🔥 FIXED: notice.category ki jagah ab naye model ka notice.noticeType check hoga */ }
                     const isFeeAlert = notice.noticeType === 'fee_alert';
 
                     return (
@@ -93,16 +111,14 @@ const Notifications = () => {
                       >
                         <div className="flex flex-col gap-4">
                           <div className="flex items-center gap-3">
-                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
-                              isFeeAlert ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'
-                            }`}>
+                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${isFeeAlert ? 'bg-rose-50 text-rose-500' : 'bg-amber-50 text-amber-500'
+                              }`}>
                               {isFeeAlert ? <AlertTriangle size={22} /> : <FileText size={22} />}
                             </div>
 
                             <div>
-                              <h4 className={`font-black text-[25px] leading-tight uppercase ${
-                                isFeeAlert ? 'text-rose-500' : 'text-amber-500'
-                              }`}>
+                              <h4 className={`font-black text-[25px] leading-tight uppercase ${isFeeAlert ? 'text-rose-500' : 'text-amber-500'
+                                }`}>
                                 {isFeeAlert ? "Fee Alert Notice" : "Financial Notice (Others)"}
                               </h4>
                               <p className="text-[15px] font-bold text-slate-400 italic mt-0.5">
@@ -115,7 +131,7 @@ const Notifications = () => {
                           <div className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner">
                             <p className="text-[19px] font-bold text-slate-600 leading-relaxed italic whitespace-pre-line not-italic">
                               {/* 🔥 FIXED: notice.mode ki jagah ab asli notice.content render hoga */}
-                              {notice.content} 
+                              {notice.content}
                             </p>
                           </div>
 

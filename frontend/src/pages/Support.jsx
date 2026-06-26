@@ -17,46 +17,46 @@ const Support = () => {
         query: '',
         isUrgent: false
     });
-const fetchTickets = async () => {
-    try {
-        setLoading(true);
-        const { data } = await API.get('/support/my-queries');
-        setTickets(data);
-    } catch (err) {
-        console.error("Error fetching tickets:", err);
-    } finally {
-        setLoading(false);
-    }
-};
+    const fetchTickets = async () => {
+        try {
+            setLoading(true);
+            const { data } = await API.get('/support/my-queries');
+            setTickets(data);
+        } catch (err) {
+            console.error("Error fetching tickets:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
     useEffect(() => {
         fetchTickets();
     }, []);
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
+        e.preventDefault();
 
-    try {
-        await API.post('/support/ask', {
-            subject: formData.subject,
-            query: formData.query,
-            isUrgent: formData.isUrgent
-        });
+        try {
+            await API.post('/support/ask', {
+                subject: formData.subject,
+                query: formData.query,
+                isUrgent: formData.isUrgent
+            });
 
-        setMsg("Query! Send to your Class Teacher. 🛰️");
-        setIsFormOpen(false);
+            setMsg("Query! Send to your Class Teacher. 🛰️");
+            setIsFormOpen(false);
 
-        setFormData({
-            subject: '',
-            query: '',
-            isUrgent: false
-        });
+            setFormData({
+                subject: '',
+                query: '',
+                isUrgent: false
+            });
 
-        fetchTickets();
+            fetchTickets();
 
-    } catch (err) {
-        setMsg("Protocol Failure: Link interrupted. ⚠️");
-    }
-};
+        } catch (err) {
+            setMsg("Protocol Failure: Link interrupted. ⚠️");
+        }
+    };
 
     if (loading) return <Loader />;
 
@@ -64,24 +64,54 @@ const fetchTickets = async () => {
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header Section */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-20 rounded-b-[3.5rem] shadow-lg relative z-10 overflow-hidden">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Header Row */}
                 <div className="flex justify-between items-center mb-6 relative z-10">
-                    <button onClick={() => navigate(-1)} className="bg-white/20 p-2.5 rounded-xl active:scale-90 border border-white/30 text-white transition-all">
+
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="bg-white/20 p-2.5 rounded-2xl active:scale-90 border border-white/10 text-white"
+                    >
                         <ArrowLeft size={24} />
                     </button>
-                    <h1 className="text-3xl font-black italic tracking-tight capitalize">Student support</h1>
+
+                    {/* Center Title */}
+                    <div className="flex flex-col items-center">
+                        <h1 className="text-3xl font-black italic tracking-tight capitalize">
+                            Student Support
+                        </h1>
+                        <p className="text-[15px] font-bold text-white/80 tracking-widest mt-1 capitalize">
+                            Ask & Connect
+                        </p>
+                    </div>
+
+                    {/* Toggle Button */}
                     <button
                         onClick={() => setIsFormOpen(!isFormOpen)}
-                        className={`p-2.5 rounded-xl shadow-md transition-all active:scale-90 border ${isFormOpen ? 'bg-white text-[#42A5F5] border-white' : 'bg-white/20 border-white/30 text-white'}`}
+                        className={`p-2.5 rounded-2xl border transition-all active:scale-90 ${isFormOpen
+                                ? "bg-white text-[#42A5F5] border-white"
+                                : "bg-white/20 border-white/10 text-white"
+                            }`}
                     >
                         <MessageSquarePlus size={24} />
                     </button>
                 </div>
+
+                {/* Support Status Card */}
                 <div className="flex items-center gap-3 bg-white/10 p-4 rounded-2xl backdrop-blur-md border border-white/20 relative z-10">
                     <div className="p-2 bg-white/20 rounded-lg">
                         <Cpu className="text-white animate-pulse" size={25} />
                     </div>
-                    <p className="text-[15px] font-bold leading-relaxed capitalize tracking-wide text-white/90">Connected to class teacher</p>
+
+                    <p className="text-[15px] font-bold leading-relaxed capitalize tracking-wide text-white/90">
+                        Connected to class teacher
+                    </p>
                 </div>
+
             </div>
 
             <div className="px-5 -mt-8 relative z-20 space-y-6">
@@ -142,8 +172,8 @@ const fetchTickets = async () => {
                                 </span>
 
                                 <span className={`px-4 py-1.5 rounded-full text-[15px] font-black capitalize border italic ${t.status === 'Resolved'
-                                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                                        : 'bg-amber-50 text-amber-600 border-amber-100'
+                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                    : 'bg-amber-50 text-amber-600 border-amber-100'
                                     }`}>
                                     {t.status.toLowerCase()}
                                 </span>

@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckSquare, BookOpen, Users, FilePlus, CalendarDays,
-  ClipboardList, Bot, Activity, Megaphone, MessageCircle,Calendar,
-  Layers, Video, BarChart3 , 
+  ClipboardList, Bot, Activity, Megaphone, MessageCircle, Calendar,
+  Layers, Video, BarChart3,
 } from 'lucide-react';
 import API from '../api';
 
@@ -38,8 +38,15 @@ const TeacherHome = ({ user, searchQuery }) => {
     { title: 'Assignments', icon: <FilePlus size={32} />, path: '/teacher/assignments' },
     { title: 'Syllabus', icon: <Layers size={32} />, path: '/teacher/upload-syllabus' },
     { title: 'Live class', icon: <Video size={32} />, path: '/teacher/live-class' },
-    { title: 'Exam Datesheet', icon: <Calendar size={32} />, path: '/teacher/datesheet',bgColor: 'bg-[#FFF4E5]',iconColor: 'bg-[#FFE0B2] text-[#FB8C00]'},
-    {title: 'Exam Results', icon: <BarChart3 size={32} />, path: '/teacher/results', bgColor: 'bg-[#E8F5E9]', iconColor: 'bg-[#C8E6C9] text-[#43A047]'},
+    { title: 'Exam Datesheet', icon: <Calendar size={32} />, path: '/teacher/datesheet', bgColor: 'bg-[#FFF4E5]', iconColor: 'bg-[#FFE0B2] text-[#FB8C00]' },
+    { title: 'Exam Results', icon: <BarChart3 size={32} />, path: '/teacher/results', bgColor: 'bg-[#E8F5E9]', iconColor: 'bg-[#C8E6C9] text-[#43A047]' },
+    {
+      title: 'Academic Calendar',
+      icon: <Calendar size={32} />,
+      path: '/teacher/calendar',
+      bgColor: 'bg-[#E3F2FD]',
+      iconColor: 'bg-[#BBDEFB] text-[#1E88E5]'
+    }
   ];
 
   return (

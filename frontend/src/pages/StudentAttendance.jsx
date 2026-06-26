@@ -34,25 +34,43 @@ const StudentAttendance = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header Section */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-2 pb-28 rounded-b-[3.5rem] shadow-lg relative overflow-hidden text-center">
+            <div className="bg-[#42A5F5] text-white px-6 pt-8 pb-16 rounded-b-[3.5rem] shadow-lg relative overflow-hidden text-center">
+
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+                {/* Back Button */}
                 <button
                     onClick={() => navigate('/')}
-                    className="absolute top-12 left-6 z-50 bg-white/20 p-2 rounded-xl border border-white/30 text-white active:scale-90 transition-all cursor-pointer"
+                    className="absolute top-8 left-6 z-50 bg-white/20 p-2.5 rounded-2xl border border-white/20 text-white active:scale-90 transition-all"
                 >
                     <ArrowLeft size={24} />
                 </button>
 
-                <div className="relative inline-block mt-4 z-10">
-                    <div className="w-36 h-36 rounded-full border-[6px] border-white/20 flex items-center justify-center relative bg-white/10 backdrop-blur-sm">
-                        <div className="text-4xl font-black text-white tracking-tighter">{stats?.percentage}%</div>
+                {/* Right Icon */}
+                <div className="absolute top-8 right-6 z-50 bg-white/20 p-2.5 rounded-2xl border border-white/20 text-white">
+                    <Cpu size={24} />
+                </div>
+
+                {/* Attendance Circle */}
+                <div className="relative inline-block mt-6 z-10">
+                    <div className="w-32 h-32 rounded-full border-[6px] border-white/20 flex items-center justify-center relative bg-white/10 backdrop-blur-sm">
+                        <div className="text-3xl font-black text-white tracking-tighter">
+                            {stats?.percentage}%
+                        </div>
+
                         <div className="absolute inset-0 rounded-full border-[6px] border-white shadow-[0_0_20px_rgba(255,255,255,0.3)]"></div>
                     </div>
                 </div>
-                <h2 className="mt-6 text-[20px] font-bold text-white/90 italic relative z-10 capitalize">Attendance Percentage % </h2>
-                <div className="absolute -right-8 top-16 text-white/10 animate-spin-slow"><Cpu size={140} /></div>
+
+                {/* Heading */}
+                <h2 className="mt-4 text-[20px] font-black italic text-white/90 relative z-10 capitalize">
+                    Attendance Percentage %
+                </h2>
+
             </div>
 
-            <div className="px-5 -mt-16 relative z-20 space-y-6">
+            <div className="px-5 -mt-8 relative z-20 space-y-6">
                 {/* 1. Stats Cards */}
                 <div className="grid grid-cols-3 gap-3">
                     {[

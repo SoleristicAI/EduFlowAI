@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Send, Users, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Send, Users, ChevronDown,Megaphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Toast from '../components/Toast';
@@ -54,33 +54,35 @@ const TeacherNotices = () => {
             {showToast && <Toast message="Class broadcast successful! 📡" type="success" onClose={() => setShowToast(false)} />}
 
             {/* Header Section */}
-            <div className="bg-white text-slate-800 px-6 pt-12 pb-20 rounded-b-[4rem] shadow-md border-b border-slate-100 relative overflow-hidden">
+            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
+    <div className="flex justify-between items-center relative z-10">
 
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50 to-transparent pointer-events-none opacity-50"></div>
+        {/* Back Button */}
+        <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+        >
+            <ArrowLeft size={24} />
+        </button>
 
-                {/* FLEX ROW */}
-                <div className="flex items-start gap-4 relative z-10">
+        {/* Center Title */}
+        <div className="text-center">
+            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                Class Updates
+            </h1>
 
-                    {/* Arrow Button */}
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
+            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                Send Messages To Students
+            </p>
+        </div>
 
-                    {/* Text Content */}
-                    <div>
-                        <h1 className="text-4xl font-black italic tracking-tight text-slate-800 capitalize">
-                            Class broadcast
-                        </h1>
-                        <p className="text-[15px] text-slate-600 font-bold uppercase tracking-widest mt-2">
-                            Connect with students instantly
-                        </p>
-                    </div>
+        {/* Right Icon */}
+        <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+            <Megaphone size={24} />
+        </div>
 
-                </div>
-            </div>
+    </div>
+</div>
 
             <div className="px-5 -mt-10 relative z-20">
                 <form onSubmit={handleSubmit} className="bg-white p-8 rounded-[3.5rem] shadow-xl border border-[#DDE3EA] space-y-8">

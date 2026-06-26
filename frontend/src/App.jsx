@@ -16,7 +16,6 @@ import TeacherStudentList from './pages/TeacherStudentList';
 import TeacherAssignments from './pages/TeacherAssignments';
 import Performance from './pages/Performance';
 import TeacherSchedule from './pages/TeacherSchedule';
-import Holidays from './pages/Holidays';
 import Academic from './pages/Academic';
 import Support from './pages/Support';
 import NoticeFeed from './pages/NoticeFeed';
@@ -42,6 +41,7 @@ import StudentDatesheet from './pages/student/StudentDatesheet';
 import StudentAdmitCard from './pages/student/StudentAdmitCard';
 import TeacherUploadResult from './pages/teacher/TeacherUploadResult';
 import StudentExamResult from './pages/student/StudentExamResult';
+import TeacherAcademicCalendar from './pages/teacher/TeacherAcademicCalendar';
 // import AdminFees from './pages/AdminFees';
 import LeaveReview from './pages/LeaveReview';
 import StudentAssignments from './pages/StudentAssignments';
@@ -57,16 +57,17 @@ import AdminAttendance from './pages/AdminAttendance';
 import AdminGlobalNotice from './pages/AdminGlobalNotice';
 import ManageUsers from './pages/ManageUsers';
 import AdminEditTimetable from './pages/AdminEditTimetable';
-import StudentDetail from './pages/StudentDetail'; // Day 87: New Deep Analytics Page
+import StudentDetail from './pages/StudentDetail'; 
 import StudentLeaveHistory from './pages/StudentLeaveHistory';
-import MySubjects from './pages/student/MySubjects'; // Import karo
+import MySubjects from './pages/student/MySubjects'; 
+import StudentAcademicCalendar from './pages/student/StudentAcademicCalendar';
 import AdminDatesheet from './pages/admin/AdminDatesheet';
 import AdminManageDatesheets from './pages/admin/AdminManageDatesheets';
 import TeacherDatesheet from './pages/teacher/TeacherDatesheet';
 import AdminSchoolLogo from './pages/admin/AdminSchoolLogo';
 import AdminAdmitCard from './pages/admin/AdminAdmitCard';
 import AdminManageAdmitCards from './pages/admin/AdminManageAdmitCards';
-
+import AdminAcademicCalendar from './pages/admin/AdminAcademicCalendar';
 
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 // import StudentsFees from './pages/finance/StudentsFees';
@@ -460,6 +461,7 @@ function App() {
           <Route path="/admin/admit-card" element={<AdminAdmitCard />} />
           <Route path="/admin/manage-admit-cards" element={<AdminManageAdmitCards />} />
           <Route path="/teacher/results" element={<TeacherUploadResult user={user} />} />
+          <Route path="/admin/academic-calendar" element={<AdminAcademicCalendar />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
@@ -467,7 +469,6 @@ function App() {
           {/* <Route path="/fees" element={<Fees user={user} />} /> */}
           <Route path="/notices" element={<Notifications />} />
           <Route path="/performance" element={<Performance />} />
-          <Route path="/holidays" element={<Holidays />} />
           <Route path="/academic" element={<Academic />} />
           <Route path="/support" element={<Support />} />
           <Route path="/notice-feed" element={<NoticeFeed user={user} />} />
@@ -485,6 +486,7 @@ function App() {
           <Route path="/exam-datesheet" element={<StudentDatesheet user={user} />} />
           <Route path="/admit-card" element={<StudentAdmitCard user={user} />} />
           <Route path="/exam-results" element={<StudentExamResult />} />
+          <Route path="/holidays" element={<StudentAcademicCalendar />} />
 
           <Route path="/feedback" element={<Feedback />} />
 
@@ -494,6 +496,7 @@ function App() {
 
           {/* Teacher Specific Routes */}
           <Route path="/teacher/leave-requests" element={<LeaveReview />} />
+          <Route path="/teacher/calendar" element={<TeacherAcademicCalendar />} />
           <Route path="/teacher/attendance" element={<TeacherAttendance user={user} />} />
           <Route path="/teacher/students" element={<TeacherStudentList user={user} />} />
           <Route path="/teacher/assignments" element={<TeacherAssignments user={user} />} />

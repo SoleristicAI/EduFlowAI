@@ -21,7 +21,7 @@ const TeacherLiveClass = ({ user }) => {
 
     // Form Data
     const [formData, setFormData] = useState({
-        grade: '', subject: '', platform: '', date: '', fromTime: '', fromAmPm: 'AM', toTime: '', toAmPm: 'PM'
+        grade: '', subject: '', platform: 'Zoom', date: '', fromTime: '', fromAmPm: 'AM', toTime: '', toAmPm: 'PM'
     });
 
     // Custom Dropdown & Calendar Refs
@@ -405,7 +405,7 @@ const TeacherLiveClass = ({ user }) => {
                                 </div>
                             </div>
 
-                            {/* Platform Cards */}
+                            {/* Platform Cards
                             <div>
                                 <label className="text-[14px] font-black text-slate-400 uppercase ml-2 mb-3 block tracking-widest">Select Platform</label>
                                 <div className="grid grid-cols-2 gap-4">
@@ -418,7 +418,7 @@ const TeacherLiveClass = ({ user }) => {
                                         <span className="font-black text-sm uppercase tracking-widest text-slate-700">Google Meet</span>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             {/* Custom Date Calendar */}
                             <div className="relative" ref={dateRef}>

@@ -31,26 +31,39 @@ const StudentSyllabus = () => {
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden fixed inset-0 overflow-y-auto">
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
-                <div className="flex items-center gap-6 relative z-10">
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
 
-                    <div className="flex flex-col">
-                        <h1 className="text-4xl font-black italic tracking-tight leading-none whitespace-nowrap">
-                            Exam Syllabus
-                        </h1>
+    {/* Background Glow */}
+    <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-2 whitespace-nowrap">
-                            Academic Curriculum
-                        </p>
-                    </div>
-                </div>
-            </div>
+    {/* Top Row */}
+    <div className="relative z-10 flex justify-between items-center">
+
+        {/* Back Button */}
+        <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+        >
+            <ArrowLeft size={24} />
+        </button>
+
+        {/* Right Icon */}
+        <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+            <BookOpen size={24} />
+        </div>
+    </div>
+
+    {/* Heading + Subtitle BELOW */}
+    <div className="relative z-10 text-center mt-4">
+        <h1 className="text-4xl font-black italic tracking-tight whitespace-nowrap">
+            Exam Syllabus
+        </h1>
+
+        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-2 whitespace-nowrap">
+            Academic Curriculum
+        </p>
+    </div>
+
+</div>
 
             <div className="px-5 -mt-10 relative z-20">
                 {error ? (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, MapPin, BookOpen } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, BookOpen, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
@@ -9,10 +9,10 @@ const Timetable = ({ user }) => {
 
   // --- NAYA LOGIC: LIVE DAY DETECTION ---
   const todayName = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date());
-  
+
   // Sunday ho toh Monday dikhao, warna jo din hai wahi active rakho
   const [activeDay, setActiveDay] = useState(todayName === 'Sunday' ? 'Monday' : todayName);
-  
+
   const [timetable, setTimetable] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -44,36 +44,56 @@ const Timetable = ({ user }) => {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
       <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[3.5rem] shadow-lg relative overflow-hidden">
+
+        {/* Background Glow */}
+        <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+
+        {/* Header Row */}
         <div className="flex justify-between items-center mb-6 relative z-10">
-          <button onClick={() => navigate(-1)} 
-            className="bg-white/20 p-2 rounded-xl border border-white/30 text-white active:scale-90 transition-all cursor-pointer"
+
+          {/* Back Button */}
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-white/20 p-2.5 rounded-2xl active:scale-90 border border-white/10 text-white"
           >
             <ArrowLeft size={24} />
           </button>
-          <div className="text-center">
-            <h1 className="text-3xl font-black italic tracking-tight capitalize">Class schedule</h1>
-            <p className="text-[15px] font-bold text-white/80 tracking-widest italic capitalize mt-1">
-              {user?.grade ? `Class: ${user.grade}` : "Node not assigned"}
+
+          {/* Center Title */}
+          <div className="flex flex-col items-center">
+            <h1 className="text-4xl font-black italic tracking-tight capitalize">
+              Class Schedule
+            </h1>
+
+            <p className="text-[15px] font-bold text-white/80 tracking-widest mt-1 capitalize">
+              {user?.grade ? `Class: ${user.grade}` : "Not Assigned"}
             </p>
           </div>
-          <div className="w-8"></div>
+
+          {/* Right Icon */}
+          <div className="bg-white/20 p-2.5 rounded-2xl border border-white/10 text-white">
+            <Clock3 size={24} />
+          </div>
         </div>
 
-        <div className="flex justify-between overflow-x-auto gap-3 no-scrollbar py-2 relative z-10 px-1">
+        {/* Days Scroller */}
+        <div className="flex justify-between overflow-x-auto gap-3 no-scrollbar py-2 relative z-10">
           {daysMap.map((day) => (
             <button
               key={day.full}
               onClick={() => setActiveDay(day.full)}
-              className={`flex flex-col items-center min-w-[60px] py-3 rounded-2xl transition-all duration-300 border ${
-                activeDay === day.full 
-                ? 'bg-white text-[#42A5F5] border-white shadow-md scale-105' 
-                : 'bg-white/10 text-white/70 border-white/10'
-              }`}
+              className={`flex flex-col items-center min-w-[60px] py-3 rounded-2xl transition-all duration-300 border ${activeDay === day.full
+                  ? "bg-white text-[#42A5F5] border-white shadow-md scale-105"
+                  : "bg-white/10 text-white/80 border-white/20 hover:bg-white/20"
+                }`}
             >
-              <span className="text-[13px] font-black italic capitalize tracking-wide">{day.short}</span>
+              <span className="text-[13px] font-black italic capitalize tracking-wide">
+                {day.short}
+              </span>
             </button>
           ))}
         </div>
+
       </div>
 
       <div className="px-5 -mt-10 space-y-4 relative z-20">

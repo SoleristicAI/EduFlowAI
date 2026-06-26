@@ -65,35 +65,35 @@ const TeacherSupport = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header Section */}
-            <div className="bg-white px-6 pt-12 pb-20 rounded-b-[4rem] shadow-md border-b border-slate-100 relative overflow-hidden">
+            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
+    <div className="flex justify-between items-center relative z-10">
 
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-50 to-transparent pointer-events-none opacity-50"></div>
+        {/* Back Button */}
+        <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+        >
+            <ArrowLeft size={24} />
+        </button>
 
-                {/* 👇 YAHI MAIN CHANGE */}
-                <div className="flex items-start gap-4 mb-6 relative z-10">
+        {/* Center Title */}
+        <div className="text-center">
+            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                Class Support
+            </h1>
 
-                    <button
-                        onClick={() => navigate(-1)}
-                        className="p-3 bg-white rounded-2xl border border-[#DDE3EA] text-[#42A5F5] shadow-md active:scale-90 transition-all"
-                    >
-                        <ArrowLeft size={24} />
-                    </button>
+            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                Assigned Class Queries Only
+            </p>
+        </div>
 
-                    <div>
-                        <h1 className="text-3xl font-black italic tracking-tight text-slate-800 capitalize">
-                            Class support
-                        </h1>
-                        <p className="text-[15px] text-slate-700 font-bold uppercase tracking-widest mt-2">
-                            Assigned class queries only
-                        </p>
-                    </div>
+        {/* Right Icon */}
+        <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+            <HelpCircle size={24} />
+        </div>
 
-                </div>
-
-                <div className="absolute top-10 right-[-20px] opacity-5 rotate-12 z-0">
-                    <HelpCircle size={150} className="text-[#42A5F5]" />
-                </div>
-            </div>
+    </div>
+</div>
 
             <div className="px-5 -mt-10 space-y-8 relative z-20">
                 {queries.length > 0 ? queries.map((q) => (
