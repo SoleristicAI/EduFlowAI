@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Award, Calendar, AlertCircle, CheckCircle, XCircle, Cpu, ChevronLeft, ChevronRight, BarChart3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from "framer-motion";
 import API from '../api';
 import Loader from '../components/Loader';
 
@@ -8,7 +9,8 @@ const StudentAttendance = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7)); // e.g. "2026-02"
+    const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
+    const [selectedDateLog, setSelectedDateLog] = useState(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -28,7 +30,38 @@ const StudentAttendance = () => {
         date.setMonth(date.getMonth() + offset);
         setCurrentMonth(date.toISOString().slice(0, 7));
     };
+    // 2. Apni file mein is helper function ko add kar le (Render function se theek upar):
+    const getLogForDate = (day) => {
+        if (!stats?.history) return null;
 
+        // Convert 'day' into matching YYYY-MM-DD format (Assuming stats.history has 'date' in YYYY-MM-DD format from DB)
+        const [year, month] = currentMonth.split('-');
+        const dateStr = `${year}-${month}-${String(day).padStart(2, '0')}`;
+
+        // Find if the student was marked Present/Absent on this exact date
+        return stats.history.find(log => {
+            // Safe check to match dates
+            const logDateStr = new Date(log.date).toISOString().split('T')[0];
+            return logDateStr === dateStr;
+        });
+    };
+
+    const handleDateClick = (day) => {
+        const log = getLogForDate(day);
+        const [year, month] = currentMonth.split('-');
+
+        if (log) {
+            setSelectedDateLog({
+                ...log,
+                formattedDate: new Date(year, month - 1, day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'long' })
+            });
+        } else {
+            setSelectedDateLog({
+                status: 'Not Taken',
+                formattedDate: new Date(year, month - 1, day).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', weekday: 'long' })
+            });
+        }
+    };
     if (loading) return <Loader />;
 
     return (
@@ -86,9 +119,9 @@ const StudentAttendance = () => {
                     ))}
                 </div>
 
-                {/* 2. Month Navigation */}
-                <div className="bg-white p-5 rounded-[2rem] border border-[#DDE3EA] flex items-center justify-between shadow-sm mx-1">
-                    <button onClick={() => changeMonth(-1)} className="p-2 text-slate-400 hover:text-[#42A5F5] transition-colors">
+                {/* MONTH NAVIGATOR */}
+                <div className="bg-white p-5 rounded-[2rem] border border-[#DDE3EA] flex items-center justify-between shadow-sm mx-1 mb-6">
+                    <button onClick={() => { changeMonth(-1); setSelectedDateLog(null); }} className="p-2 text-slate-400 hover:text-[#42A5F5] transition-colors">
                         <ChevronLeft size={28} />
                     </button>
                     <div className="flex items-center gap-2">
@@ -97,40 +130,117 @@ const StudentAttendance = () => {
                             {new Date(currentMonth + "-01").toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
                     </div>
-                    <button onClick={() => changeMonth(1)} className="p-2 text-slate-400 hover:text-[#42A5F5] transition-colors">
+                    <button onClick={() => { changeMonth(1); setSelectedDateLog(null); }} className="p-2 text-slate-400 hover:text-[#42A5F5] transition-colors">
                         <ChevronRight size={28} />
                     </button>
                 </div>
 
-                {/* 3. History List */}
-                <div className="space-y-3 pb-10">
-                    <h3 className="text-[20px] font-bold text-slate-500 mb-2 ml-4  capitalize"> 🗓️ Per Day Attendance</h3>
+                {/* CALENDAR BOARD */}
+                <div className="bg-white rounded-[3.5rem] p-6 md:p-8 shadow-xl border border-[#E2E8F0] mb-8">
 
-                    {stats?.history && stats.history.length > 0 ? (
-                        stats.history.map((log, i) => (
-                            <div key={i} className="bg-white p-5 rounded-[2.5rem] border border-[#DDE3EA] flex items-center justify-between group active:scale-95 transition-all italic shadow-sm">
-                                <div className="flex items-center gap-4">
-                                    <div className={`p-3 rounded-2xl ${log.status === 'Present' ? 'bg-[#E0F2F1] text-emerald-600' : 'bg-[#FFEBEE] text-rose-600'}`}>
-                                        {log.status === 'Present' ? <CheckCircle size={22} /> : <XCircle size={22} />}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-slate-700 text-[18px] italic tracking-tight capitalize">
-                                            {new Date(log.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', weekday: 'long' })}
-                                        </h4>
-                                        <p className="text-[15px] font-medium text-slate-400 italic">Verified by EduFlowAI</p>
-                                    </div>
-                                </div>
-                                <span className={`text-[13px] font-bold px-5 py-2 rounded-full ${log.status === 'Present' ? 'bg-[#42A5F5] text-white shadow-md' : 'bg-slate-100 text-slate-400 border border-[#DDE3EA]'} capitalize`}>
-                                    {log.status}
-                                </span>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center py-24 bg-white rounded-[3rem] border border-dashed border-[#DDE3EA] mx-2">
-                            <p className="text-slate-400 font-bold text-[20px] italic tracking-wide">No Data Found ✅</p>
-                        </div>
-                    )}
+                    {/* Days Header */}
+                    <div className="grid grid-cols-7 gap-2 text-center text-[11px] font-black text-slate-400 mb-4 uppercase tracking-widest">
+                        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map(d => (<span key={d}>{d}</span>))}
+                    </div>
+
+                    {/* Dates Grid */}
+                    <div className="grid grid-cols-7 gap-2 md:gap-3">
+                        {(() => {
+                            const [year, month] = currentMonth.split('-');
+                            // Note: JavaScript months are 0-indexed (0 = Jan, 11 = Dec)
+                            const firstDay = new Date(year, parseInt(month) - 1, 1);
+                            const lastDate = new Date(year, parseInt(month), 0).getDate();
+
+                            let startDay = firstDay.getDay();
+                            startDay = startDay === 0 ? 6 : startDay - 1; // Adjust so Monday is column 0
+
+                            const days = [];
+
+                            // Empty cells for alignment
+                            for (let i = 0; i < startDay; i++) {
+                                days.push(<div key={`empty-${i}`} className="p-4"></div>);
+                            }
+
+                            // Actual dates
+                            for (let d = 1; d <= lastDate; d++) {
+                                const log = getLogForDate(d);
+
+                                let cellStyle = "text-slate-600 bg-slate-50 border border-slate-100 hover:border-[#42A5F5]";
+                                let dotColor = "";
+
+                                if (log) {
+                                    if (log.status === 'Present') {
+                                        cellStyle = "bg-emerald-50 text-emerald-600 border-emerald-200 font-black relative";
+                                        dotColor = "bg-emerald-500";
+                                    } else if (log.status === 'Absent') {
+                                        cellStyle = "bg-rose-50 text-rose-600 border-rose-200 font-black relative";
+                                        dotColor = "bg-rose-500";
+                                    }
+                                }
+
+                                const isSelected = selectedDateLog && parseInt(selectedDateLog.formattedDate.split(' ')[0]) === d;
+                                if (isSelected) {
+                                    cellStyle += " ring-4 ring-offset-2 ring-blue-300 transform scale-105 z-10 shadow-md";
+                                }
+
+                                days.push(
+                                    <button
+                                        key={d}
+                                        type="button"
+                                        onClick={() => handleDateClick(d)}
+                                        className={`p-3 md:p-4 rounded-2xl text-sm md:text-base font-black transition-all flex justify-center items-center ${cellStyle}`}
+                                    >
+                                        {d}
+                                        {log && (
+                                            <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${dotColor}`}></div>
+                                        )}
+                                    </button>
+                                );
+                            }
+                            return days;
+                        })()}
+                    </div>
                 </div>
+
+                {/* SELECTED DATE DETAILS CARD */}
+                <AnimatePresence>
+                    {selectedDateLog && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="bg-white rounded-[3rem] p-6 md:p-8 shadow-2xl border-4 border-blue-50 relative overflow-hidden"
+                        >
+                            <div className="relative z-10 text-center">
+                                <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest mb-1">
+                                    {selectedDateLog.formattedDate}
+                                </p>
+
+                                {selectedDateLog.status === 'Not Taken' ? (
+                                    <>
+                                        <div className="w-16 h-16 bg-slate-50 border border-slate-100 text-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 mt-4">
+                                            <Calendar size={32} />
+                                        </div>
+                                        <h2 className="text-2xl font-black text-slate-600 uppercase tracking-wide mb-2">No Record</h2>
+                                        <p className="text-sm font-medium text-slate-700 bg-slate-50 p-3 rounded-2xl inline-block">
+                                            Attendance was not registered for this day.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 mt-4 shadow-inner ${selectedDateLog.status === 'Present' ? 'bg-emerald-50 text-emerald-500 border border-emerald-100' : 'bg-rose-50 text-rose-500 border border-rose-100'}`}>
+                                            {selectedDateLog.status === 'Present' ? <CheckCircle size={40} /> : <XCircle size={40} />}
+                                        </div>
+                                        <h2 className={`text-3xl font-black uppercase tracking-wide mb-2 ${selectedDateLog.status === 'Present' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                                            {selectedDateLog.status}
+                                        </h2>
+                                        <p className="text-sm font-medium text-slate-400 italic">Verified by EduFlowAI System</p>
+                                    </>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

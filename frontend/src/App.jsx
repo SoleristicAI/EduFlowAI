@@ -14,7 +14,6 @@ import TeacherHome from './pages/TeacherHome';
 import TeacherAttendance from './pages/TeacherAttendance';
 import TeacherStudentList from './pages/TeacherStudentList';
 import TeacherAssignments from './pages/TeacherAssignments';
-import Performance from './pages/Performance';
 import TeacherSchedule from './pages/TeacherSchedule';
 import Academic from './pages/Academic';
 import Support from './pages/Support';
@@ -41,6 +40,7 @@ import StudentDatesheet from './pages/student/StudentDatesheet';
 import StudentAdmitCard from './pages/student/StudentAdmitCard';
 import TeacherUploadResult from './pages/teacher/TeacherUploadResult';
 import StudentExamResult from './pages/student/StudentExamResult';
+import StudentPerformance from './pages/student/StudentPerformance';
 import TeacherAcademicCalendar from './pages/teacher/TeacherAcademicCalendar';
 // import AdminFees from './pages/AdminFees';
 import LeaveReview from './pages/LeaveReview';
@@ -468,7 +468,6 @@ function App() {
           <Route path="/attendance" element={user.role === 'student' ? <StudentAttendance /> : <AttendanceDetails />} />
           {/* <Route path="/fees" element={<Fees user={user} />} /> */}
           <Route path="/notices" element={<Notifications />} />
-          <Route path="/performance" element={<Performance />} />
           <Route path="/academic" element={<Academic />} />
           <Route path="/support" element={<Support />} />
           <Route path="/notice-feed" element={<NoticeFeed user={user} />} />
@@ -487,6 +486,7 @@ function App() {
           <Route path="/admit-card" element={<StudentAdmitCard user={user} />} />
           <Route path="/exam-results" element={<StudentExamResult />} />
           <Route path="/holidays" element={<StudentAcademicCalendar />} />
+          <Route path="/performance" element={<StudentPerformance />} />
 
           <Route path="/feedback" element={<Feedback />} />
 

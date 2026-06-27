@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  Calendar, Clock, CreditCard, Bell, Sun, FileText,
-  TrendingUp, FileSearch, ClipboardCheck,
-  Bus, Book, Video, BookOpen, Megaphone, Users, GraduationCap, UserPlus,MessageSquare, Bot, ChevronDown, ChevronUp, ClipboardList, Sparkles, BarChart3
+  Calendar, Clock, CreditCard, Bell, Sun, FileText, TrendingUp, FileSearch, ClipboardCheck, Bus, Book, Video, BookOpen, Megaphone, Users, GraduationCap, UserPlus, MessageSquare, Bot, ChevronDown, ChevronUp, ClipboardList, Sparkles, BarChart3
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '../api';
@@ -68,8 +66,8 @@ const StudentHome = ({ user, searchQuery }) => {
     { title: 'Assignment', icon: <FileText size={17} />, path: '/assignments' },
     { title: 'ERP Notices', icon: <Bell size={17} />, path: '/notices' },
     { title: 'Performance', icon: <TrendingUp size={17} />, path: '/performance' },
-    { title: 'Holidays', icon: <Calendar size={17} />, path: '/holidays' },
     { title: 'Mentorship', icon: <Users size={17} />, path: '/mentors' },
+    { title: 'Holidays', icon: <Calendar size={17} />, path: '/holidays' },
     { title: 'Leave Request', icon: <ClipboardList size={17} />, path: '/leave' },
     { title: 'My Subjects', icon: <BookOpen size={17} />, path: '/my-subjects' },
     { title: 'Live Class', icon: <Video size={17} />, path: '/live-class' },
@@ -89,7 +87,7 @@ const StudentHome = ({ user, searchQuery }) => {
       path: '/syllabus',
       bgColor: 'bg-[#E0F7FA]',
       iconColor: 'bg-[#B2EBF2] text-[#0097A7]'
-    }, 
+    },
 
     {
       title: 'Date Sheet',
@@ -98,7 +96,7 @@ const StudentHome = ({ user, searchQuery }) => {
       bgColor: 'bg-[#FFF4E5]',
       iconColor: 'bg-[#FFE0B2] text-[#FB8C00]'
     },
-    
+
     {
       title: 'Admit Card',
       icon: <ClipboardCheck size={17} />,
@@ -122,7 +120,7 @@ const StudentHome = ({ user, searchQuery }) => {
     //   iconColor: 'bg-[#E1BEE7] text-[#8E24AA]'
     // },
 
-    
+
     // {
     //   title: 'Exam Registration',
     //   icon: <UserPlus size={24} />,

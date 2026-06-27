@@ -253,4 +253,68 @@ router.get('/my-results', protect, async (req, res) => {
     }
 });
 
+// Add this to your resultRoutes.js file
+router.get('/my-performance', protect, async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        
+        // Results wahi fetch karo jo 'published' hain
+        const results = await Result.find({ 
+            'studentMarks.studentId': studentId,
+            status: 'published' 
+        });
+
+        // Data ko Frontend ke liye map karo
+        const formattedData = results.map(resObj => {
+            const myData = resObj.studentMarks.find(sm => sm.studentId.toString() === studentId.toString());
+            
+            return {
+                examTitle: resObj.examTitle,
+                date: resObj.createdAt ? new Date(resObj.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : 'N/A',
+                subjects: myData ? myData.marks.map(m => ({
+                    subjectName: m.subjectName,
+                    marksObtained: Number(m.marksObtained),
+                    maxMarks: Number(resObj.maxMarks)
+                })) : []
+            };
+        });
+
+        res.json(formattedData);
+    } catch (error) {
+        console.error("Performance Fetch Error:", error);
+        res.status(500).json({ message: "Failed to fetch performance data." });
+    }
+});
+
+// Admin/Teacher: Fetch Specific Student's Performance
+router.get('/student-performance/:studentId', protect, async (req, res) => {
+    try {
+        const { studentId } = req.params;
+        
+        // Find published results for this specific student
+        const results = await Result.find({ 
+            'studentMarks.studentId': studentId,
+            status: 'published' 
+        });
+
+        const formattedData = results.map(resObj => {
+            const myData = resObj.studentMarks.find(sm => sm.studentId.toString() === studentId.toString());
+            
+            return {
+                examTitle: resObj.examTitle,
+                date: resObj.createdAt ? new Date(resObj.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : 'N/A',
+                subjects: myData ? myData.marks.map(m => ({
+                    subjectName: m.subjectName,
+                    marksObtained: Number(m.marksObtained),
+                    maxMarks: Number(resObj.maxMarks)
+                })) : []
+            };
+        });
+
+        res.json(formattedData);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch student performance." });
+    }
+});
+
 module.exports = router;
