@@ -29,6 +29,7 @@ const datesheetRoutes = require('./routes/datesheetRoutes');
 const admitCardRoutes = require('./routes/admitCardRoutes');
 const resultRoutes = require('./routes/resultRoutes');
 const academicCalendarRoutes = require('./routes/academicCalendarRoutes');
+const feedbackRoutes = require('./routes/feedbackRoutes');
 
 dotenv.config();
 
@@ -89,6 +90,7 @@ app.use('/api/datesheet', datesheetRoutes);
 app.use('/api/admitcard', admitCardRoutes);
 app.use('/api/exam-results', resultRoutes);
 app.use('/api/academic-calendar', academicCalendarRoutes);
+app.use('/api/feedback', feedbackRoutes);
 app.get('/', (req, res) => {
     res.send('EduFlowAI API is running...');
 });

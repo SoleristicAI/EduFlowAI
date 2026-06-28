@@ -76,7 +76,7 @@ const StudentHome = ({ user, searchQuery }) => {
   const extraModules = [
     { title: 'Bus Tracker', icon: <Bus size={17} />, path: '/transport' },
     { title: 'Library', icon: <Book size={17} />, path: '/library' },
-    { title: 'Feedback', icon: <MessageSquare size={17} />, path: '/feedback' },
+    { title: 'Feedback', icon: <MessageSquare size={17} />, path: '/student/feedback' },
   ];
 
   const examModules = [

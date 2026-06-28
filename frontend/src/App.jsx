@@ -25,7 +25,7 @@ import Transport from './pages/Transport';
 import IDCard from './pages/IDCard';
 import Library from './pages/Library';
 import StudentLiveClass from './pages/student/StudentLiveClass';
-import Feedback from './pages/Feedback';
+import StudentFeedback from './pages/student/StudentFeedback';
 import Requests from './pages/Requests';
 import Mentorship from './pages/Mentorship';
 import Syllabus from './pages/Syllabus';
@@ -68,6 +68,7 @@ import AdminSchoolLogo from './pages/admin/AdminSchoolLogo';
 import AdminAdmitCard from './pages/admin/AdminAdmitCard';
 import AdminManageAdmitCards from './pages/admin/AdminManageAdmitCards';
 import AdminAcademicCalendar from './pages/admin/AdminAcademicCalendar';
+import AdminFeedback from './pages/admin/AdminFeedback';
 
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 // import StudentsFees from './pages/finance/StudentsFees';
@@ -462,6 +463,7 @@ function App() {
           <Route path="/admin/manage-admit-cards" element={<AdminManageAdmitCards />} />
           <Route path="/teacher/results" element={<TeacherUploadResult user={user} />} />
           <Route path="/admin/academic-calendar" element={<AdminAcademicCalendar />} />
+          <Route path="/admin/feedback" element={<AdminFeedback />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
@@ -487,12 +489,10 @@ function App() {
           <Route path="/exam-results" element={<StudentExamResult />} />
           <Route path="/holidays" element={<StudentAcademicCalendar />} />
           <Route path="/performance" element={<StudentPerformance />} />
-
-          <Route path="/feedback" element={<Feedback />} />
-
           <Route path="/requests" element={<Requests />} />
           <Route path="/mentors" element={<Mentorship />} />
           <Route path="/syllabus" element={<Syllabus user={user} />} />
+          <Route path="/student/feedback" element={<StudentFeedback />} />
 
           {/* Teacher Specific Routes */}
           <Route path="/teacher/leave-requests" element={<LeaveReview />} />

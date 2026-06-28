@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, CreditCard, Megaphone, PlusCircle, Database, X, Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Users, CreditCard, Megaphone, PlusCircle, Database, X , MessageSquare , Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Toast from '../components/Toast';
@@ -183,6 +183,7 @@ const AdminHome = ({ searchQuery }) => {
         { id: 'datesheet-engine', title: 'Generate datesheet', icon: <Calendar size={24} />, desc: 'Exam scheduler', color: 'bg-violet-50 text-violet-500 border-violet-100' },
         { id: 'admit-card', title: 'Publish Admit Card ', icon: <ClipboardCheck size={24} />, desc: 'Exam hall tickets', color: 'bg-indigo-50 text-indigo-500 border-indigo-100' },
         { id: 'academic-calendar', title: 'Academic Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', color: 'bg-rose-50 text-rose-500 border-rose-100' },
+        { id: 'feedback-engine', title: 'Feedback Engine', icon: <MessageSquare size={24} />, desc: 'Request teacher evaluations', color: 'bg-teal-50 text-teal-500 border-teal-100' },
         { id: 'manage-users', title: 'Manage student and teacher', icon: <Users size={24} />, desc: 'Edit or Delete personnel', color: 'bg-blue-50 text-[#42A5F5] border-blue-100' },
     ];
 
@@ -307,6 +308,7 @@ const AdminHome = ({ searchQuery }) => {
                             if (m.id === 'datesheet-engine') navigate('/admin/datesheet');
                             if (m.id === 'admit-card') navigate('/admin/admit-card');
                             if (m.id === 'academic-calendar') navigate('/admin/academic-calendar');
+                            if (m.id === 'feedback-engine') navigate('/admin/feedback');
                         }} className="bg-white p-6 rounded-[2.5rem] border border-slate-50 flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer group shadow-sm hover:shadow-md hover:border-blue-100">
                             <div className="flex items-center gap-5">
                                 <div className={`${m.color} p-4 rounded-2xl border transition-all`}>{m.icon}</div>
