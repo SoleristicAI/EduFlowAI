@@ -73,7 +73,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="bg-slate-50 text-slate-900 min-h-screen relative overflow-hidden">
+    <div className="bg-slate-50 text-slate-900 min-h-screen relative overflow-x-hidden">
 
       {/* PREMIUM BACKGROUND GLOW */}
       <div className="fixed inset-0 pointer-events-none z-0">

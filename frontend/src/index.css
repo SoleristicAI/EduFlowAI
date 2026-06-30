@@ -114,3 +114,14 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* index.css mein ye code daal de */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  /* Ye line bounce rokegi, par scroll allow karegi */
+  overscroll-behavior-y: contain; 
+  background-color: #f8fafc; /* Tere background color se match kar diya */
+}
