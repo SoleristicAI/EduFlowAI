@@ -12,6 +12,7 @@ import '../features/student/screens/student_checkout.dart';
 import '../features/student/screens/student_payment_methods.dart';
 import '../features/student/screens/class_diary.dart';
 import '../features/student/screens/notice_feed.dart';
+import '../features/student/screens/student_performance.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -92,6 +93,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/notice-feed',
       builder: (context, state) => const NoticeFeed(),
+    ),
+
+    GoRoute(
+      path: '/performance',
+      builder: (context, state) => const StudentPerformance(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---

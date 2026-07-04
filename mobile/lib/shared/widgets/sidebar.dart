@@ -538,7 +538,7 @@ class _SidebarState extends State<Sidebar> {
             _MenuItem(
                 icon: Icons.trending_up,
                 label: "Performance",
-                path: '/exam-performance',
+                path: '/performance',
                 onTap: _navigate),
           ]),
           _buildCategory("Campus & Support", [
@@ -567,7 +567,7 @@ class _SidebarState extends State<Sidebar> {
             _MenuItem(
                 icon: Icons.campaign,
                 label: "Notices",
-                path: '/notices',
+                path: '/notice-feed',
                 onTap: _navigate),
             _MenuItem(
                 icon: Icons.notifications,

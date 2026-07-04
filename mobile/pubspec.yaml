@@ -33,6 +33,7 @@ dependencies:
   open_filex: ^4.7.0
   qr_flutter: ^4.1.0
   image_picker: ^1.2.3
+  visibility_detector: ^0.4.0+2
 
 dev_dependencies:
   flutter_test:
