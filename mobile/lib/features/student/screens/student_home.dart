@@ -72,7 +72,7 @@ class _StudentHomeState extends State<StudentHome> {
     {'title': 'Holidays', 'icon': Icons.calendar_month, 'path': '/holidays'},
     {'title': 'Leave Request', 'icon': Icons.list_alt, 'path': '/leave'},
     {'title': 'My Subjects', 'icon': Icons.menu_book, 'path': '/my-subjects'},
-    {'title': 'Live Class', 'icon': Icons.videocam, 'path': '/live-class'},
+    {'title': 'Live Class', 'icon': Icons.videocam, 'path': '/live-classes'},
   ];
 
   final extraModules = [

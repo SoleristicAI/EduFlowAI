@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/custom_loader.dart';
 
 class StudentMySubjects extends StatefulWidget {
   const StudentMySubjects({super.key});
@@ -104,8 +105,10 @@ class _StudentMySubjectsState extends State<StudentMySubjects> {
     }).join(' ');
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
+    if (loading) return const CustomLoader(); // <--- YEH NAYI LINE ADD KAR DE
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -185,13 +188,11 @@ class _StudentMySubjectsState extends State<StudentMySubjects> {
                     ),
 
                     // --- CONTENT AREA ---
-                    Transform.translate(
+                   Transform.translate(
                       offset: const Offset(0, -40),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: loading 
-                          ? _buildShimmerLoading()
-                          : subjects.isNotEmpty 
+                        child: subjects.isNotEmpty 
                             ? Column(
                                 children: subjects.asMap().entries.map((entry) {
                                   int index = entry.key;
@@ -312,29 +313,6 @@ class _StudentMySubjectsState extends State<StudentMySubjects> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildShimmerLoading() {
-    return Column(
-      children: List.generate(4, (index) => Container(
-        margin: const EdgeInsets.only(bottom: 24),
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(40),
-          border: Border.all(color: const Color(0xFFDDE3EA)),
-          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5)]
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(width: 150, height: 20, decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(5))),
-            const SizedBox(height: 16),
-            Container(width: 250, height: 16, decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(5))),
-          ],
-        ),
-      ).animate(onPlay: (controller) => controller.repeat(reverse: true)).fade(begin: 0.5, end: 1.0, duration: 800.ms)),
     );
   }
 }
