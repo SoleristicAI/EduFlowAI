@@ -17,6 +17,7 @@ import '../features/student/screens/mentorship.dart';
 import '../features/student/screens/student_calendar.dart';
 import '../features/student/screens/student_my_subjects.dart';
 import '../features/student/screens/student_live_classes.dart';
+import '../features/student/screens/student_erp_notices.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -122,6 +123,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/live-classes', // Apne StudentHome mein subModules ke path se match kar lena
       builder: (context, state) => const StudentLiveClass(),
+    ),
+
+    GoRoute(
+      path: '/erp-notices', 
+      builder: (context, state) => const StudentErpNotices(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---

@@ -66,7 +66,7 @@ class _StudentHomeState extends State<StudentHome> {
 
   final subModules = [
     {'title': 'Assignment', 'icon': Icons.assignment, 'path': '/assignments'},
-    {'title': 'ERP Notices', 'icon': Icons.notifications, 'path': '/notices'},
+    {'title': 'ERP Notices', 'icon': Icons.notifications, 'path': '/erp-notices'},
     {'title': 'Performance', 'icon': Icons.trending_up, 'path': '/performance'},
     {'title': 'Mentorship', 'icon': Icons.people, 'path': '/mentors'},
     {'title': 'Holidays', 'icon': Icons.calendar_month, 'path': '/holidays'},
