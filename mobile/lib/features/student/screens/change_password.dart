@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class ChangePassword extends StatefulWidget {
+class ChangePassword extends ConsumerStatefulWidget {
   const ChangePassword({super.key});
 
   @override
-  State<ChangePassword> createState() => _ChangePasswordState();
+  ConsumerState<ChangePassword> createState() => _ChangePasswordState();
 }
 
-class _ChangePasswordState extends State<ChangePassword> {
+class _ChangePasswordState extends ConsumerState<ChangePassword> {
   final TextEditingController _oldPassCtrl = TextEditingController();
   final TextEditingController _newPassCtrl = TextEditingController();
   final TextEditingController _confirmPassCtrl = TextEditingController();
@@ -98,6 +100,20 @@ class _ChangePasswordState extends State<ChangePassword> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    // final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF334155);
+    final Color labelColor = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final Color inputFieldBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color inputFieldBorder = isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
+    final Color inputTextColor = isDarkMode ? const Color(0xFFE2E8F0) : const Color(0xFF334155);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -105,154 +121,173 @@ class _ChangePasswordState extends State<ChangePassword> {
         if (context.canPop()) context.pop();
         else context.go('/settings');
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        body: RefreshIndicator(
-          color: const Color(0xFF42A5F5),
-          backgroundColor: Colors.white,
-          onRefresh: () async {}, // Form page, no fetch refresh needed
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                    // --- BLUE HEADER SECTION ---
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.only(top: 60, bottom: 80, left: 24, right: 24),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF42A5F5),
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF64B5F6), Color(0xFF42A5F5)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        color: bgColor,
+        child: Scaffold(
+          backgroundColor: Colors.transparent, // Background transparent for AnimatedContainer
+          body: RefreshIndicator(
+            color: const Color(0xFF42A5F5),
+            backgroundColor: cardColor,
+            onRefresh: () async {}, // Form page, no fetch refresh needed
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      // --- BLUE HEADER SECTION ---
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(top: 60, bottom: 80, left: 24, right: 24),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF42A5F5),
+                          gradient: LinearGradient(
+                            colors: isDarkMode 
+                                ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                                : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
                         ),
-                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(55)),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
-                      ),
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Positioned(
-                            right: -40,
-                            top: -10,
-                            child: Icon(Icons.security, size: 200, color: Colors.white.withOpacity(0.1)),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  if (context.canPop()) context.pop();
-                                  else context.go('/settings');
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Positioned(
+                              right: -40,
+                              top: -10,
+                              child: Icon(Icons.security, size: 200, color: Colors.white.withOpacity(0.1)),
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    if (context.canPop()) context.pop();
+                                    else context.go('/settings');
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                    ),
+                                    child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
                                   ),
-                                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text("Security", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
-                                    Text("CHANGE SECURITY PASSWORD", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
-                                  ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text("Security", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
+                                      Text("CHANGE SECURITY PASSWORD", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
 
-                    // --- CONTENT AREA ---
-                    Transform.translate(
-                      offset: const Offset(0, -40),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: loading
-                            ? Container(
-                                height: 350,
-                                alignment: Alignment.center,
-                                child: const CustomLoader(),
-                              )
-                            : Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(32),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(45),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))]
-                                ),
-                                child: Column(
-                                  children: [
-                                    // Current Password
-                                    _buildPasswordField(
-                                      label: "CURRENT PASSWORD",
-                                      icon: Icons.lock_outline,
-                                      controller: _oldPassCtrl,
-                                      isObscure: !showOld,
-                                      onToggle: () => setState(() => showOld = !showOld),
-                                      hintText: "Enter current password"
-                                    ),
-                                    const SizedBox(height: 24),
-
-                                    // New Password
-                                    _buildPasswordField(
-                                      label: "NEW PASSWORD",
-                                      icon: Icons.bolt,
-                                      controller: _newPassCtrl,
-                                      isObscure: !showNew,
-                                      onToggle: () => setState(() => showNew = !showNew),
-                                      hintText: "Enter new password"
-                                    ),
-                                    const SizedBox(height: 24),
-
-                                    // Confirm Password
-                                    _buildPasswordField(
-                                      label: "CONFIRM NEW PASSWORD",
-                                      icon: Icons.security,
-                                      controller: _confirmPassCtrl,
-                                      isObscure: !showConfirm,
-                                      onToggle: () => setState(() => showConfirm = !showConfirm),
-                                      hintText: "Confirm new password"
-                                    ),
-                                    const SizedBox(height: 32),
-
-                                    // Submit Button
-                                    GestureDetector(
-                                      onTap: loading ? null : _handleUpdate,
-                                      child: Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(vertical: 20),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF42A5F5),
-                                          borderRadius: BorderRadius.circular(30),
-                                          boxShadow: [BoxShadow(color: const Color(0xFF42A5F5).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 5))]
-                                        ),
-                                        alignment: Alignment.center,
-                                        child: const Text("UPDATE PASSWORD", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: 2)),
+                      // --- CONTENT AREA ---
+                      Transform.translate(
+                        offset: const Offset(0, -40),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: loading
+                              ? Container(
+                                  height: 350,
+                                  alignment: Alignment.center,
+                                  child: const CustomLoader(),
+                                )
+                              : AnimatedContainer(
+                                  duration: const Duration(milliseconds: 400),
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(32),
+                                  decoration: BoxDecoration(
+                                    color: cardColor,
+                                    borderRadius: BorderRadius.circular(45),
+                                    border: Border.all(color: borderColor),
+                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10))]
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      // Current Password
+                                      _buildPasswordField(
+                                        label: "CURRENT PASSWORD",
+                                        icon: Icons.lock_outline,
+                                        controller: _oldPassCtrl,
+                                        isObscure: !showOld,
+                                        onToggle: () => setState(() => showOld = !showOld),
+                                        hintText: "Enter current password",
+                                        labelColor: labelColor,
+                                        inputFieldBg: inputFieldBg,
+                                        inputFieldBorder: inputFieldBorder,
+                                        inputTextColor: inputTextColor,
                                       ),
-                                    ).animate().scale(delay: 200.ms)
-                                  ],
-                                ),
-                              ).animate().fadeIn().slideY(begin: 0.1),
+                                      const SizedBox(height: 24),
+
+                                      // New Password
+                                      _buildPasswordField(
+                                        label: "NEW PASSWORD",
+                                        icon: Icons.bolt,
+                                        controller: _newPassCtrl,
+                                        isObscure: !showNew,
+                                        onToggle: () => setState(() => showNew = !showNew),
+                                        hintText: "Enter new password",
+                                        labelColor: labelColor,
+                                        inputFieldBg: inputFieldBg,
+                                        inputFieldBorder: inputFieldBorder,
+                                        inputTextColor: inputTextColor,
+                                      ),
+                                      const SizedBox(height: 24),
+
+                                      // Confirm Password
+                                      _buildPasswordField(
+                                        label: "CONFIRM NEW PASSWORD",
+                                        icon: Icons.security,
+                                        controller: _confirmPassCtrl,
+                                        isObscure: !showConfirm,
+                                        onToggle: () => setState(() => showConfirm = !showConfirm),
+                                        hintText: "Confirm new password",
+                                        labelColor: labelColor,
+                                        inputFieldBg: inputFieldBg,
+                                        inputFieldBorder: inputFieldBorder,
+                                        inputTextColor: inputTextColor,
+                                      ),
+                                      const SizedBox(height: 32),
+
+                                      // Submit Button
+                                      GestureDetector(
+                                        onTap: loading ? null : _handleUpdate,
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(vertical: 20),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF42A5F5),
+                                            borderRadius: BorderRadius.circular(30),
+                                            boxShadow: [BoxShadow(color: const Color(0xFF42A5F5).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 5))]
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: const Text("UPDATE PASSWORD", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: 2)),
+                                        ),
+                                      ).animate().scale(delay: 200.ms)
+                                    ],
+                                  ),
+                                ).animate().fadeIn().slideY(begin: 0.1),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 50), // Standard bottom padding
-                  ],
+                      const SizedBox(height: 50), // Standard bottom padding
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -266,19 +301,24 @@ class _ChangePasswordState extends State<ChangePassword> {
     required bool isObscure,
     required VoidCallback onToggle,
     required String hintText,
+    required Color labelColor,
+    required Color inputFieldBg,
+    required Color inputFieldBorder,
+    required Color inputTextColor,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(left: 16, bottom: 8),
-          child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Color(0xFF94A3B8), letterSpacing: 1.5, fontStyle: FontStyle.italic)),
+          child: Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: labelColor, letterSpacing: 1.5, fontStyle: FontStyle.italic)),
         ),
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: inputFieldBg,
             borderRadius: BorderRadius.circular(25),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            border: Border.all(color: inputFieldBorder),
           ),
           child: Row(
             children: [
@@ -290,7 +330,7 @@ class _ChangePasswordState extends State<ChangePassword> {
                 child: TextField(
                   controller: controller,
                   obscureText: isObscure,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF334155), fontStyle: FontStyle.italic),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: inputTextColor, fontStyle: FontStyle.italic),
                   decoration: InputDecoration(
                     hintText: hintText,
                     hintStyle: const TextStyle(color: Color(0xFFCBD5E1)),

@@ -1,19 +1,22 @@
 import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class StudentFeedback extends StatefulWidget {
+class StudentFeedback extends ConsumerStatefulWidget {
   const StudentFeedback({super.key});
 
   @override
-  State<StudentFeedback> createState() => _StudentFeedbackState();
+  ConsumerState<StudentFeedback> createState() => _StudentFeedbackState();
 }
 
-class _StudentFeedbackState extends State<StudentFeedback> {
+class _StudentFeedbackState extends ConsumerState<StudentFeedback> {
   // 🔥 FIX 1: Split loaders into initial (full screen) and content (partial screen)
   bool initialLoading = true;
   bool contentLoading = false;
@@ -163,6 +166,12 @@ class _StudentFeedbackState extends State<StudentFeedback> {
   }
 
   void _showConfirmModal() {
+    // 🔥 GET LOCAL THEME CONFIG FROM BUILD CONTEXT FOR DIALOG
+    final themeMode = ref.read(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+    final Color modalBgColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+
     showDialog(
       context: context,
       barrierColor: const Color(0xFF0F172A).withOpacity(0.4),
@@ -174,9 +183,9 @@ class _StudentFeedbackState extends State<StudentFeedback> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: modalBgColor,
               borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: Colors.blue.shade50, width: 4),
+              border: Border.all(color: isDarkMode ? const Color(0xFF334155) : Colors.blue.shade50, width: 4),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -185,18 +194,18 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
+                      color: isDarkMode ? const Color(0xFF0F172A) : Colors.blue.shade50,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blue.shade100)),
+                      border: Border.all(color: isDarkMode ? const Color(0xFF334155) : Colors.blue.shade100)),
                   child: const Icon(Icons.security,
                       size: 24, color: Color(0xFF42A5F5)),
                 ),
                 const SizedBox(height: 16),
-                const Text("SUBMIT FEEDBACK?",
+                Text("SUBMIT FEEDBACK?",
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF1E293B),
+                        color: textColorPrimary,
                         letterSpacing: 1.5,
                         fontStyle: FontStyle.italic)),
                 const SizedBox(height: 8),
@@ -216,14 +225,14 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(25)),
                           alignment: Alignment.center,
-                          child: const Text("CANCEL",
+                          child: Text("CANCEL",
                               style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
-                                  color: Color(0xFF475569),
+                                  color: isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569),
                                   letterSpacing: 2)),
                         ),
                       ),
@@ -303,6 +312,19 @@ class _StudentFeedbackState extends State<StudentFeedback> {
       );
     }
 
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
+    final Color inputFieldBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color inputFieldBorder = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -312,203 +334,210 @@ class _StudentFeedbackState extends State<StudentFeedback> {
         else
           context.go('/');
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        body: RefreshIndicator(
-          color: const Color(0xFF42A5F5),
-          backgroundColor: Colors.white,
-          onRefresh: _handleRefresh,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Column(
-                  children: [
-                   // --- BLUE HEADER SECTION ---
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.only(top: 60, bottom: 80),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF42A5F5),
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF64B5F6), Color(0xFF42A5F5)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        color: bgColor,
+        child: Scaffold(
+          backgroundColor: Colors.transparent, // Background transparent for AnimatedContainer
+          body: RefreshIndicator(
+            color: const Color(0xFF42A5F5),
+            backgroundColor: cardColor,
+            onRefresh: _handleRefresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                     // --- BLUE HEADER SECTION ---
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.only(top: 60, bottom: 80),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF42A5F5),
+                          gradient: LinearGradient(
+                            colors: isDarkMode 
+                                ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                                : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
                         ),
-                        borderRadius: BorderRadius.vertical(bottom: Radius.circular(55)),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Back Button
-                                GestureDetector(
-                                  onTap: () {
-                                    if (context.canPop()) context.pop();
-                                    else context.go('/');
-                                  },
-                                  child: Container(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Back Button
+                                  GestureDetector(
+                                    onTap: () {
+                                      if (context.canPop()) context.pop();
+                                      else context.go('/');
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                      ),
+                                      child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                                    ),
+                                  ),
+                                  
+                                  // Center Heading
+                                  Column(
+                                    children: [
+                                      const Text("Feedback", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
+                                      Text("SHARE YOUR EXPERIENCE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
+                                    ],
+                                  ),
+  
+                                  // Right Icon
+                                  Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(color: Colors.white.withOpacity(0.3)),
                                     ),
-                                    child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                                    child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 22),
                                   ),
-                                ),
-                                
-                                // Center Heading
-                                Column(
-                                  children: [
-                                    const Text("Feedback", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
-                                    Text("SHARE YOUR EXPERIENCE", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
-                                  ],
-                                ),
-
-                                // Right Icon
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(color: Colors.white.withOpacity(0.3)),
-                                  ),
-                                  child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 22),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 30), // Standard spacing
-
-                            // Locked Identity Badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(color: Colors.white.withOpacity(0.3)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.account_circle, color: Colors.white, size: 18),
-                                  const SizedBox(width: 8),
-                                  Text((studentProfile?['name'] ?? 'STUDENT').toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                                  Container(margin: const EdgeInsets.symmetric(horizontal: 10), width: 4, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle)),
-                                  const Icon(Icons.lock, color: Colors.white70, size: 12),
-                                  const SizedBox(width: 4),
-                                  Text("CLASS ${studentProfile?['grade'] ?? 'LOCKED'}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
                                 ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 30), // Standard spacing
+  
+                              // Locked Identity Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.account_circle, color: Colors.white, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text((studentProfile?['name'] ?? 'STUDENT').toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                    Container(margin: const EdgeInsets.symmetric(horizontal: 10), width: 4, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle)),
+                                    const Icon(Icons.lock, color: Colors.white70, size: 12),
+                                    const SizedBox(width: 4),
+                                    Text("CLASS ${studentProfile?['grade'] ?? 'LOCKED'}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-
-                    // --- CONTENT AREA ---
-                    Transform.translate(
-                      offset: const Offset(0, -30),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: [
-                            // SESSION SELECTOR DROPDOWN (Compacted)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(20),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                      color: const Color(0xFFF1F5F9)),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 10,
-                                        offset: Offset(0, 4))
-                                  ]),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.chat_bubble_outline,
-                                          size: 16, color: Color(0xFF42A5F5)),
-                                      const SizedBox(width: 6),
-                                      const Text("SELECT FORM TO FILL",
-                                          style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w900,
-                                              color: Color(0xFF94A3B8),
-                                              letterSpacing: 2,
-                                              fontStyle: FontStyle.italic)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        isDropdownOpen = !isDropdownOpen;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 12),
-                                      decoration: BoxDecoration(
-                                          color: const Color(0xFFF8FAFC),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
-                                          border: Border.all(
-                                              color: isDropdownOpen
-                                                  ? const Color(0xFF42A5F5)
-                                                  : const Color(0xFFE2E8F0),
-                                              width: 1.5)),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              selectedSessionId != null
-                                                  ? activeSessions
-                                                      .firstWhere(
-                                                          (s) =>
-                                                              s['_id'] ==
-                                                              selectedSessionId,
-                                                          orElse: () => {
-                                                                'title':
-                                                                    'Unknown'
-                                                              })['title']
-                                                      .toString()
-                                                      .toUpperCase()
-                                                  : (activeSessions.isEmpty
-                                                      ? "NO FORMS AVAILABLE"
-                                                      : "CHOOSE FORM"),
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: Color(0xFF334155),
-                                                  letterSpacing: 1),
-                                              overflow: TextOverflow.ellipsis,
+  
+                      // --- CONTENT AREA ---
+                      Transform.translate(
+                        offset: const Offset(0, -30),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: [
+                              // SESSION SELECTOR DROPDOWN (Compacted)
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 400),
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                    color: cardColor,
+                                    borderRadius: BorderRadius.circular(30),
+                                    border: Border.all(
+                                        color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9)),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                          color: Colors.black12,
+                                          blurRadius: 10,
+                                          offset: Offset(0, 4))
+                                    ]),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.chat_bubble_outline,
+                                            size: 16, color: Color(0xFF42A5F5)),
+                                        const SizedBox(width: 6),
+                                        Text("SELECT FORM TO FILL",
+                                            style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w900,
+                                                color: textColorSecondary,
+                                                letterSpacing: 2,
+                                                fontStyle: FontStyle.italic)),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          isDropdownOpen = !isDropdownOpen;
+                                        });
+                                      },
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 400),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                            color: inputFieldBg,
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            border: Border.all(
+                                                color: isDropdownOpen
+                                                    ? const Color(0xFF42A5F5)
+                                                    : inputFieldBorder,
+                                                width: 1.5)),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                selectedSessionId != null
+                                                    ? activeSessions
+                                                        .firstWhere(
+                                                            (s) =>
+                                                                s['_id'] ==
+                                                                selectedSessionId,
+                                                            orElse: () => {
+                                                                  'title':
+                                                                      'Unknown'
+                                                                })['title']
+                                                        .toString()
+                                                        .toUpperCase()
+                                                    : (activeSessions.isEmpty
+                                                        ? "NO FORMS AVAILABLE"
+                                                        : "CHOOSE FORM"),
+                                                style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: textColorPrimary,
+                                                    letterSpacing: 1),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                             ),
-                                          ),
-                                          Icon(
-                                              isDropdownOpen
-                                                  ? Icons.keyboard_arrow_up
-                                                  : Icons.keyboard_arrow_down,
-                                              color: const Color(0xFF42A5F5),
-                                              size: 18),
+                                            Icon(
+                                                isDropdownOpen
+                                                    ? Icons.keyboard_arrow_up
+                                                    : Icons.keyboard_arrow_down,
+                                                color: const Color(0xFF42A5F5),
+                                                size: 18),
                                         ],
                                       ),
                                     ),
                                   ),
-
+  
                                   // Dropdown Menu List
                                   AnimatedSize(
                                     duration: const Duration(milliseconds: 300),
@@ -520,7 +549,7 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                 const EdgeInsets.only(top: 8),
                                             padding: const EdgeInsets.all(8),
                                             decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: cardColor,
                                                 borderRadius:
                                                     BorderRadius.circular(20),
                                                 border: Border.all(
@@ -554,12 +583,11 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                         session['title']
                                                             .toString()
                                                             .toUpperCase(),
-                                                        style: const TextStyle(
+                                                        style: TextStyle(
                                                             fontSize: 11,
                                                             fontWeight:
                                                                 FontWeight.w900,
-                                                            color: Color(
-                                                                0xFF334155),
+                                                            color: textColorPrimary,
                                                             letterSpacing: 1)),
                                                   ),
                                                 );
@@ -572,7 +600,7 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                               ),
                             ).animate().fadeIn().slideY(begin: 0.1),
                             const SizedBox(height: 20),
-
+  
                             // 🔥 FIX 2: Content Area Loader
                             if (contentLoading)
                               const SizedBox(
@@ -582,11 +610,12 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                             else if (selectedSessionId != null)
                               hasSubmitted
                                   ? // SUBMITTED SUCCESS CARD
-                                  Container(
+                                  AnimatedContainer(
+                                      duration: const Duration(milliseconds: 400),
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(24),
                                       decoration: BoxDecoration(
-                                          color: Colors.white,
+                                          color: cardColor,
                                           borderRadius:
                                               BorderRadius.circular(30),
                                           border: Border.all(
@@ -604,46 +633,43 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                               width: 60,
                                               height: 60,
                                               decoration: BoxDecoration(
-                                                  color:
-                                                      const Color(0xFFECFDF5),
+                                                  color: isDarkMode ? const Color(0xFF064E3B).withOpacity(0.3) : const Color(0xFFECFDF5),
                                                   shape: BoxShape.circle,
                                                   border: Border.all(
-                                                      color: const Color(
-                                                          0xFFD1FAE5))),
+                                                      color: isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFD1FAE5))),
                                               child: const Icon(
                                                   Icons.check_circle,
                                                   size: 32,
                                                   color: Color(0xFF10B981))),
                                           const SizedBox(height: 16),
-                                          const Text("FEEDBACK RECEIVED",
+                                          Text("FEEDBACK RECEIVED",
                                               style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w900,
-                                                  color: Color(0xFF1E293B),
+                                                  color: textColorPrimary,
                                                   fontStyle: FontStyle.italic,
                                                   letterSpacing: 1.5)),
                                           const SizedBox(height: 8),
-                                          Container(
+                                          AnimatedContainer(
+                                              duration: const Duration(milliseconds: 400),
                                               padding:
                                                   const EdgeInsets.symmetric(
                                                       horizontal: 16,
                                                       vertical: 12),
                                               decoration: BoxDecoration(
-                                                  color:
-                                                      const Color(0xFFF8FAFC),
+                                                  color: inputFieldBg,
                                                   borderRadius:
                                                       BorderRadius.circular(20),
                                                   border: Border.all(
-                                                      color: const Color(
-                                                          0xFFF1F5F9))),
-                                              child: const Text(
+                                                      color: borderColor)),
+                                              child: Text(
                                                   "Thank you for your response! Your ratings have been submitted successfully and securely recorded.",
                                                   textAlign: TextAlign.center,
                                                   style: TextStyle(
                                                       fontSize: 11,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: Color(0xFF64748B),
+                                                      color: textColorSecondary,
                                                       fontStyle:
                                                           FontStyle.italic))),
                                         ],
@@ -655,16 +681,17 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                   : // FEEDBACK FORM LIST (Compacted)
                                   Column(
                                       children: [
-                                        Container(
+                                        AnimatedContainer(
+                                          duration: const Duration(milliseconds: 400),
                                           margin:
                                               const EdgeInsets.only(bottom: 20),
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
-                                              color: Colors.blue.shade50,
+                                              color: isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : Colors.blue.shade50,
                                               borderRadius:
                                                   BorderRadius.circular(24),
                                               border: Border.all(
-                                                  color: Colors.blue.shade100)),
+                                                  color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100)),
                                           child: Row(
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
@@ -673,39 +700,38 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                   color: Color(0xFF42A5F5),
                                                   size: 20),
                                               const SizedBox(width: 12),
-                                              const Expanded(
+                                              Expanded(
                                                 child: Text(
                                                     "Please rate your teachers honestly. Your feedback helps the school improve your learning experience. Responses are secure.",
                                                     style: TextStyle(
                                                         fontSize: 11,
                                                         fontWeight:
                                                             FontWeight.bold,
-                                                        color:
-                                                            Color(0xFF1E3A8A),
+                                                        color: isDarkMode ? const Color(0xFF38BDF8) : const Color(0xFF1E3A8A),
                                                         height: 1.4)),
                                               )
                                             ],
                                           ),
                                         ).animate().fadeIn(),
                                         if (teachers.isEmpty)
-                                          Container(
+                                          AnimatedContainer(
+                                            duration: const Duration(milliseconds: 400),
                                             width: double.infinity,
                                             padding: const EdgeInsets.symmetric(
                                                 vertical: 40),
                                             decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                color: cardColor,
                                                 borderRadius:
                                                     BorderRadius.circular(30),
                                                 border: Border.all(
-                                                    color: const Color(
-                                                        0xFFE2E8F0))),
-                                            child: const Text(
+                                                    color: borderColor)),
+                                            child: Text(
                                                 "NO TEACHERS ASSIGNED TO YOUR CLASS YET.",
                                                 textAlign: TextAlign.center,
                                                 style: TextStyle(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w900,
-                                                    color: Color(0xFF94A3B8),
+                                                    color: textColorSecondary,
                                                     letterSpacing: 1.5)),
                                           )
                                         else
@@ -714,18 +740,18 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                             int currentRating =
                                                 evaluations[empId]?['rating'] ??
                                                     0;
-
-                                            return Container(
+  
+                                            return AnimatedContainer(
+                                              duration: const Duration(milliseconds: 400),
                                               margin: const EdgeInsets.only(
                                                   bottom: 20),
                                               padding: const EdgeInsets.all(20),
                                               decoration: BoxDecoration(
-                                                  color: Colors.white,
+                                                  color: cardColor,
                                                   borderRadius:
                                                       BorderRadius.circular(30),
                                                   border: Border.all(
-                                                      color: const Color(
-                                                          0xFFF1F5F9)),
+                                                      color: borderColor),
                                                   boxShadow: const [
                                                     BoxShadow(
                                                         color: Colors.black12,
@@ -738,57 +764,52 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                 children: [
                                                   Row(
                                                     children: [
-                                                      Container(
+                                                      AnimatedContainer(
+                                                          duration: const Duration(milliseconds: 400),
                                                           width: 40,
                                                           height: 40,
                                                           decoration: BoxDecoration(
-                                                              color: const Color(
-                                                                  0xFFF8FAFC),
+                                                              color: inputFieldBg,
                                                               shape: BoxShape
                                                                   .circle,
                                                               border: Border.all(
-                                                                  color: const Color(
-                                                                      0xFFE2E8F0))),
-                                                          child: const Icon(
+                                                                  color: inputFieldBorder)),
+                                                          child: Icon(
                                                               Icons
                                                                   .account_circle,
                                                               size: 24,
-                                                              color: Color(
-                                                                  0xFF94A3B8))),
+                                                              color: textColorSecondary)),
                                                       const SizedBox(width: 12),
                                                       Expanded(
                                                           child: Text(
                                                               t['teacherName']
                                                                   .toString()
                                                                   .toUpperCase(),
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                   fontSize: 16,
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w900,
-                                                                  color: Color(
-                                                                      0xFF1E293B),
+                                                                  color: textColorPrimary,
                                                                   fontStyle:
                                                                       FontStyle
                                                                           .italic))),
                                                     ],
                                                   ),
-                                                  const Padding(
+                                                  Padding(
                                                       padding:
-                                                          EdgeInsets.symmetric(
+                                                          const EdgeInsets.symmetric(
                                                               vertical: 12),
                                                       child: Divider(
-                                                          color:
-                                                              Color(0xFFF1F5F9),
+                                                          color: borderColor,
                                                           thickness: 1)),
-                                                  const Text(
+                                                  Text(
                                                       "GIVE RATING (1 TO 5 STARS)",
                                                       style: TextStyle(
                                                           fontSize: 9,
                                                           fontWeight:
                                                               FontWeight.w900,
-                                                          color:
-                                                              Color(0xFF475569),
+                                                          color: textColorPrimary,
                                                           letterSpacing: 1.5)),
                                                   const SizedBox(height: 10),
                                                   Row(
@@ -811,40 +832,37 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                                 ? const Color(
                                                                     0xFFFBBF24)
                                                                 : const Color(
-                                                                    0xFFE2E8F0)), // Star chhota kar diya (40->32)
+                                                                    0xFFE2E8F0)),
                                                       );
                                                     }),
                                                   ),
                                                   const SizedBox(height: 16),
-                                                  Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
+                                                  AnimatedContainer(
+                                                    duration: const Duration(milliseconds: 400),
+                                                    padding: const EdgeInsets.symmetric(
                                                         horizontal: 16,
                                                         vertical:
-                                                            4), // Padding kam ki
+                                                            4),
                                                     decoration: BoxDecoration(
-                                                        color: const Color(
-                                                            0xFFF8FAFC),
+                                                        color: inputFieldBg,
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(20),
                                                         border: Border.all(
-                                                            color: const Color(
-                                                                0xFFE2E8F0))),
+                                                            color: inputFieldBorder)),
                                                     child: Row(
                                                       crossAxisAlignment:
                                                           CrossAxisAlignment
                                                               .start,
                                                       children: [
-                                                        const Padding(
+                                                        Padding(
                                                             padding:
-                                                                EdgeInsets.only(
+                                                                const EdgeInsets.only(
                                                                     top: 14),
                                                             child: Icon(
                                                                 Icons.edit,
                                                                 size: 14,
-                                                                color: Color(
-                                                                    0xFF94A3B8))),
+                                                                color: textColorSecondary)),
                                                         const SizedBox(
                                                             width: 10),
                                                         Expanded(
@@ -853,16 +871,15 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                                 _handleComment(
                                                                     empId, val),
                                                             maxLines:
-                                                                2, // 3 -> 2
-                                                            style: const TextStyle(
+                                                                2,
+                                                            style: TextStyle(
                                                                 fontSize: 12,
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
-                                                                color: Color(
-                                                                    0xFF334155)),
+                                                                color: textColorPrimary),
                                                             decoration:
-                                                                const InputDecoration(
+                                                                InputDecoration(
                                                               hintText:
                                                                   "Suggestions/Comments? (Optional)",
                                                               hintStyle: TextStyle(
@@ -870,8 +887,7 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w900,
-                                                                  color: Color(
-                                                                      0xFF94A3B8),
+                                                                  color: textColorSecondary,
                                                                   fontStyle:
                                                                       FontStyle
                                                                           .italic),
@@ -932,10 +948,11 @@ class _StudentFeedbackState extends State<StudentFeedback> {
                                           ).animate().fadeIn()
                                       ],
                                     )
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    
                     const SizedBox(height: 50), // Standard bottom padding
                   ],
                 ),
@@ -944,6 +961,6 @@ class _StudentFeedbackState extends State<StudentFeedback> {
           ),
         ),
       ),
-    );
+    ));
   }
 }
