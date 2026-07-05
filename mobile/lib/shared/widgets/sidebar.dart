@@ -4,15 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class Sidebar extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget so it listens to theme changes
+class Sidebar extends ConsumerStatefulWidget {
   const Sidebar({super.key});
 
   @override
-  State<Sidebar> createState() => _SidebarState();
+  ConsumerState<Sidebar> createState() => _SidebarState();
 }
 
-class _SidebarState extends State<Sidebar> {
+class _SidebarState extends ConsumerState<Sidebar> {
   Map<String, dynamic>? user;
   final ScrollController _scrollController = ScrollController();
 
@@ -51,7 +54,6 @@ class _SidebarState extends State<Sidebar> {
   }
 
   void _navigate(String path) {
-
     print("Navigating to: $path");
     // 1. Koi pop() nahi, koi drawer close nahi. 
     // 2. WidgetsBinding ensure karega ki click hone ke turant baad (agle frame mein) seedha naya page khule.
@@ -63,21 +65,24 @@ class _SidebarState extends State<Sidebar> {
   // =======================================================================
   // --- THE PREMIUM LOGOUT MODAL (OVERLAYS EVERYTHING) ---
   // =======================================================================
-  void _showLogoutConfirmation(BuildContext context) {
+  void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
+    final Color modalBgColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color buttonNoBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color buttonNoBorderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Logout',
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (dialogContext, animation, secondaryAnimation) {
-        // Ye dialogContext use kar
         return Scaffold(
           backgroundColor: Colors.transparent,
           body: Stack(
             children: [
               GestureDetector(
-                onTap: () =>
-                    Navigator.pop(dialogContext), // Yahan dialogContext
+                onTap: () => Navigator.pop(dialogContext),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(color: Colors.black.withValues(alpha: 0.4)),
@@ -93,7 +98,7 @@ class _SidebarState extends State<Sidebar> {
                     padding: const EdgeInsets.all(35),
                     clipBehavior: Clip.hardEdge,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: modalBgColor,
                       borderRadius: BorderRadius.circular(50),
                       boxShadow: [
                         BoxShadow(
@@ -133,9 +138,9 @@ class _SidebarState extends State<Sidebar> {
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.red.shade50,
+                                color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.shade50,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.red.shade100),
+                                border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.shade100),
                                 boxShadow: const [
                                   BoxShadow(
                                       color: Colors.black12,
@@ -153,11 +158,11 @@ class _SidebarState extends State<Sidebar> {
                                       end: const Offset(1.1, 1.1)),
                             ),
                             const SizedBox(height: 25),
-                            const Text("Confirm Logout",
+                            Text("Confirm Logout",
                                 style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFF1E293B),
+                                    color: textColorPrimary,
                                     letterSpacing: -0.5)),
                             const SizedBox(height: 10),
                             const Text("Are you sure you want to logout?",
@@ -173,18 +178,15 @@ class _SidebarState extends State<Sidebar> {
                               children: [
                                 Expanded(
                                   child: ElevatedButton(
-                                    onPressed: () => Navigator.pop(
-                                        dialogContext), // Close modal (NO)
+                                    onPressed: () => Navigator.pop(dialogContext),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFF8FAFC),
+                                      backgroundColor: buttonNoBgColor,
                                       elevation: 0,
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 20),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(30),
-                                          side: const BorderSide(
-                                              color: Color(0xFFE2E8F0))),
+                                          borderRadius: BorderRadius.circular(30),
+                                          side: BorderSide(color: buttonNoBorderColor)),
                                     ),
                                     child: const Text("NO",
                                         style: TextStyle(
@@ -197,8 +199,7 @@ class _SidebarState extends State<Sidebar> {
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      Navigator.pop(
-                                          dialogContext); // Pehle modal hide karo
+                                      Navigator.pop(dialogContext); // Pehle modal hide karo
                                       _handleLogout(); // Phir log out API trigger karo
                                     },
                                     style: ElevatedButton.styleFrom(
@@ -246,6 +247,13 @@ class _SidebarState extends State<Sidebar> {
         ? (user?['enrollmentNo'] ?? 'ST-0000')
         : (user?['employeeId'] ?? 'EMP-0000');
 
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
     return Drawer(
       key: UniqueKey(),
       backgroundColor: Colors.transparent,
@@ -276,202 +284,197 @@ class _SidebarState extends State<Sidebar> {
             ),
           );
         },
-        child: Material(
-          elevation: 30,
-          color: const Color(0xFFF8FAFC),
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(28),
-            bottomRight: Radius.circular(28),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.only(
-                topRight: Radius.circular(28),
-                bottomRight: Radius.circular(28),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 35,
+                spreadRadius: 4,
+                offset: const Offset(10, 0),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 35,
-                  spreadRadius: 4,
-                  offset: const Offset(10, 0),
+            ],
+          ),
+          child: Column(
+            children: [
+              // --- HEADER SECTION ---
+              Container(
+                padding: const EdgeInsets.only(
+                    top: 50, left: 20, right: 20, bottom: 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDarkMode 
+                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                        : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius:
+                      const BorderRadius.only(bottomRight: Radius.circular(40)),
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 10,
+                        offset: Offset(0, 5))
+                  ],
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                // --- HEADER SECTION ---
-                Container(
-                  padding: const EdgeInsets.only(
-                      top: 50, left: 20, right: 20, bottom: 20),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF42A5F5), Color(0xFF1E88E5)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 60,
+                          height: 60,
+                          padding: const EdgeInsets.all(3),
+                          decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black26, blurRadius: 10)
+                              ]),
+                          child: const CircleAvatar(
+                            backgroundColor: Color(0xFFF1F5F9),
+                            child: Icon(Icons.person,
+                                color: Color(0xFF42A5F5), size: 30),
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name.toUpperCase(),
+                                style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    fontStyle: FontStyle.italic),
+                                overflow: TextOverflow.visible,
+                              ),
+                              Text(
+                                id,
+                                style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white70,
+                                    letterSpacing: 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    borderRadius:
-                        BorderRadius.only(bottomRight: Radius.circular(40)),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 10,
-                          offset: Offset(0, 5))
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            padding: const EdgeInsets.all(3),
-                            decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                      color: Colors.black26, blurRadius: 10)
-                                ]),
-                            child: const CircleAvatar(
-                              backgroundColor: Color(0xFFF1F5F9),
-                              child: Icon(Icons.person,
-                                  color: Color(0xFF42A5F5), size: 30),
-                            ),
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  name.toUpperCase(),
-                                  style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
-                                      fontStyle: FontStyle.italic),
-                                  overflow: TextOverflow.visible,
-                                ),
-                                Text(
-                                  id,
-                                  style: const TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white70,
-                                      letterSpacing: 1),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      // Quick Action Buttons
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(15),
-                          border:
-                              Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            _QuickAction(
-                                icon: Icons.person,
-                                label: "Account",
-                                onTap: () => _navigate('/my-account')),
-                            if (role != 'superadmin')
-                              _QuickAction(
-                                  icon: role == 'finance'
-                                      ? Icons.add_circle
-                                      : role == 'admin'
-                                          ? Icons.assignment
-                                          : Icons.help_outline,
-                                  label: role == 'finance'
-                                      ? "Add Pay"
-                                      : role == 'admin'
-                                          ? "Notices"
-                                          : "Support",
-                                  onTap: () => _navigate(role == 'finance'
-                                      ? '/finance/add-payment'
-                                      : role == 'admin'
-                                          ? '/notice-feed'
-                                          : '/support')),
-                            _QuickAction(
-                                icon: Icons.settings,
-                                label: "Settings",
-                                isRed: true,
-                                onTap: () => _navigate('/settings')),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // --- SCROLLABLE CATEGORIES ---
-                Expanded(
-                  child: ListView(
-                    key: UniqueKey(),
-                    padding: const EdgeInsets.only(top: 10, bottom: 20),
-                    physics: const BouncingScrollPhysics(),
-                    children: _buildRoleBasedMenu(role),
-                  ),
-                ),
-               // --- LOGOUT BUTTON ---
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                  ),
-                  child: InkWell(
-                    onTap: () {
-                      // Scroll crash kar raha tha, isko hata diya
-                      // Seedha premium modal open karo!
-                      _showLogoutConfirmation(context); 
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 15),
+                    const SizedBox(height: 20),
+                    // Quick Action Buttons
+                    Container(
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
-                        borderRadius: BorderRadius.circular(20),
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(15),
+                        border:
+                            Border.all(color: Colors.white.withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Icon(Icons.logout, color: Colors.redAccent),
-                          SizedBox(width: 10),
-                          Text(
-                            "LOGOUT",
-                            style: TextStyle(
-                                color: Colors.redAccent,
-                                fontWeight: FontWeight.w900,
-                                fontStyle: FontStyle.italic,
-                                letterSpacing: 2),
-                          )
+                          _QuickAction(
+                              icon: Icons.person,
+                              label: "Account",
+                              onTap: () => _navigate('/my-account')),
+                          if (role != 'superadmin')
+                            _QuickAction(
+                                icon: role == 'finance'
+                                    ? Icons.add_circle
+                                    : role == 'admin'
+                                        ? Icons.assignment
+                                        : Icons.help_outline,
+                                label: role == 'finance'
+                                    ? "Add Pay"
+                                    : role == 'admin'
+                                        ? "Notices"
+                                        : "Support",
+                                onTap: () => _navigate(role == 'finance'
+                                    ? '/finance/add-payment'
+                                    : role == 'admin'
+                                        ? '/notice-feed'
+                                        : '/support')),
+                          _QuickAction(
+                              icon: Icons.settings,
+                              label: "Settings",
+                              isRed: true,
+                              onTap: () => _navigate('/settings')),
                         ],
                       ),
                     ),
+                  ],
+                ),
+              ),
+
+              // --- SCROLLABLE CATEGORIES ---
+              Expanded(
+                child: ListView(
+                  key: UniqueKey(),
+                  padding: const EdgeInsets.only(top: 10, bottom: 20),
+                  physics: const BouncingScrollPhysics(),
+                  children: _buildRoleBasedMenu(role, isDarkMode),
+                ),
+              ),
+              
+              // --- LOGOUT BUTTON ---
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                ),
+                child: InkWell(
+                  onTap: () {
+                    _showLogoutConfirmation(context, isDarkMode); 
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    decoration: BoxDecoration(
+                      color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.withValues(alpha: 0.2)),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.logout, color: Colors.redAccent),
+                        SizedBox(width: 10),
+                        Text(
+                          "LOGOUT",
+                          style: TextStyle(
+                              color: Colors.redAccent,
+                              fontWeight: FontWeight.w900,
+                              fontStyle: FontStyle.italic,
+                              letterSpacing: 2),
+                        )
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ), // Container close
-        ), // Material close
-      ), // TweenAnimationBuilder close
-    ); // Drawer close
-  } // build method close
+              ),
+            ],
+          ),
+        ), 
+      ), 
+    ); 
+  } 
 
   // =======================================================================
   // CATEGORY & MENU RENDERERS
   // =======================================================================
-  List<Widget> _buildRoleBasedMenu(String role) {
+  List<Widget> _buildRoleBasedMenu(String role, bool isDarkMode) {
     switch (role) {
       case 'student':
         return [
@@ -480,111 +483,131 @@ class _SidebarState extends State<Sidebar> {
                 icon: Icons.calendar_month,
                 label: "Attendance",
                 path: '/attendance',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.access_time,
                 label: "TimeTable",
                 path: '/timetable',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.menu_book,
                 label: "Class Diary",
                 path: '/class-diary',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.videocam,
                 label: "Live Class",
                 path: '/live-classes',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Academic Center", [
             _MenuItem(
                 icon: Icons.menu_book,
                 label: "Syllabus",
                 path: '/syllabus',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.description,
                 label: "Assignment",
                 path: '/assignments',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.library_books,
                 label: "My Subjects",
                 path: '/my-subjects',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.book,
                 label: "Library",
                 path: '/library',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Examination Hub", [
             _MenuItem(
                 icon: Icons.calendar_today,
                 label: "Date Sheet",
                 path: '/exam-datesheet',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.fact_check,
                 label: "Admit Card",
                 path: '/exam-admit-card',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.bar_chart,
                 label: "Results",
                 path: '/exam-results',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.trending_up,
                 label: "Performance",
                 path: '/performance',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Campus & Support", [
             _MenuItem(
                 icon: Icons.credit_card,
                 label: "Fees",
                path: '/student/fees',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.directions_bus,
                 label: "Bus Tracker",
                 path: '/bus-tracker',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.assignment,
                 label: "Leave Request",
                 path: '/leave-request',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.people,
                 label: "Mentorship",
                 path: '/mentors',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Communication & Updates", [
             _MenuItem(
                 icon: Icons.campaign,
                 label: "Notices",
                 path: '/notice-feed',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.notifications,
                 label: "ERP Notices",
                 path: '/erp-notices',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.calendar_month,
                 label: "Holidays",
                 path: '/holidays',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.message,
                 label: "Feedback",
                 path: '/feedback',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
         ];
       case 'teacher':
         return [
@@ -593,57 +616,67 @@ class _SidebarState extends State<Sidebar> {
                 icon: Icons.check_box,
                 label: "Class Attendance",
                 path: '/teacher/attendance',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.add_circle_outline,
                 label: "Assignments",
                 path: '/teacher/assignments',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.layers,
                 label: "Syllabus",
                 path: '/teacher/upload-syllabus',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.calendar_month,
                 label: "Date Sheet",
                 path: '/teacher/datesheet',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Class Management", [
             _MenuItem(
                 icon: Icons.people,
                 label: "Class list",
                 path: '/teacher/students',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.calendar_month,
                 label: "Schedule",
                 path: '/timetable',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.videocam,
                 label: "Live class",
                 path: '/teacher/live-class',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Communication", [
             _MenuItem(
                 icon: Icons.smart_toy,
                 label: "Broadcast",
                 path: '/teacher/notices',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.campaign,
                 label: "Notice feed",
                 path: '/notice-feed',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.chat_bubble_outline,
                 label: "Support center",
                 path: '/teacher/support',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
         ];
       case 'admin':
         return [
@@ -652,54 +685,63 @@ class _SidebarState extends State<Sidebar> {
                 icon: Icons.add_circle_outline,
                 label: "Add Student",
                 path: '/admin/add-student',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.add_circle_outline,
                 label: "Manage Staff",
                 path: '/admin/add-teacher',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.people,
                 label: "User Control",
                 path: '/admin/manage-users',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Scheduling System", [
             _MenuItem(
                 icon: Icons.table_chart,
                 label: "Timetable",
                 path: '/admin/timetable',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.table_chart,
                 label: "Edit Timetable",
                 path: '/admin/edit-timetable',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.calendar_month,
                 label: "Datesheet",
                 path: '/admin/datesheet',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Communication Hub", [
             _MenuItem(
                 icon: Icons.campaign,
                 label: "Publish Notice",
                 path: '/admin/global-notice',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.assignment,
                 label: "Notice Archive",
                 path: '/notice-feed',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Analytics & Reports", [
             _MenuItem(
                 icon: Icons.bar_chart,
                 label: "Performance",
                 path: '/admin/attendance-report',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
         ];
       case 'finance':
         return [
@@ -708,32 +750,37 @@ class _SidebarState extends State<Sidebar> {
                 icon: Icons.add_circle_outline,
                 label: "Add Payment",
                 path: '/finance/add-payment',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.security,
                 label: "Payment Gateway",
                 path: '/finance/gateway',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Reports & Tracking", [
             _MenuItem(
                 icon: Icons.description,
                 label: "Finance Reports",
                 path: '/finance/reports',
-                onTap: _navigate),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
             _MenuItem(
                 icon: Icons.people,
                 label: "Fees Tracker",
                 path: '/finance/fees-tracker',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
           _buildCategory("Setup / Configuration", [
             _MenuItem(
                 icon: Icons.security,
                 label: "Fee Setup",
                 path: '/finance/reports',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
         ];
       default:
         return [
@@ -742,42 +789,35 @@ class _SidebarState extends State<Sidebar> {
                 icon: Icons.dashboard,
                 label: "Dashboard",
                 path: '/superadmin/dashboard',
-                onTap: _navigate),
-          ]),
+                onTap: _navigate,
+                isDarkMode: isDarkMode),
+          ], isDarkMode),
         ];
     }
   }
 
   // --- THE FIXED SNAKE BORDER CATEGORY CARD (HEADING INSIDE) ---
-  Widget _buildCategory(String title, List<Widget> items) {
+  Widget _buildCategory(String title, List<Widget> items, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: ClipRRect(
-        borderRadius:
-            BorderRadius.circular(25), // like React's rounded-[2.4rem]
+        borderRadius: BorderRadius.circular(25), 
         child: Stack(
           children: [
-            // 1. The Rotating Background Gradient (Double Snake effect)
             Positioned.fill(
               child: Transform.scale(
-                scale: 2.5, // Scale up so gradient doesn't clip at corners
+                scale: 2.5, 
                 child: Container(
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     gradient: SweepGradient(
                       colors: [
                         Colors.transparent,
-                        Color(0xFFEF4444), // red-500
+                        isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFEF4444), 
                         Colors.transparent,
-                        Color(0xFFEF4444), // red-500
+                        isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFEF4444), 
                         Colors.transparent
                       ],
-                      stops: [
-                        0.0,
-                        0.25,
-                        0.5,
-                        0.75,
-                        1.0
-                      ], // Creates the two chasing lines
+                      stops: const [0.0, 0.25, 0.5, 0.75, 1.0], 
                     ),
                   ),
                 )
@@ -786,31 +826,29 @@ class _SidebarState extends State<Sidebar> {
               ),
             ),
 
-            // 2. The Inner White Card (Masks the center)
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
               margin: const EdgeInsets.all(2), // 2px snake border width
               padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(23),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- HEADING MOVED INSIDE THE BOX ---
                   Padding(
                     padding: const EdgeInsets.only(left: 5, bottom: 12),
                     child: Text(
                       title.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF94A3B8),
+                          color: isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
                           letterSpacing: 1.5,
                           fontStyle: FontStyle.italic),
                     ),
                   ),
-                  // Render the actual menu items
                   ...items,
                 ],
               ),
@@ -871,12 +909,14 @@ class _MenuItem extends StatelessWidget {
   final String label;
   final String path;
   final Function(String) onTap;
+  final bool isDarkMode; // 🔥 NAYA THEME STATE INJECT KIYA
 
   const _MenuItem(
       {required this.icon,
       required this.label,
       required this.path,
-      required this.onTap});
+      required this.onTap,
+      required this.isDarkMode}); // Required me add kar diya
 
   @override
   Widget build(BuildContext context) {
@@ -887,27 +927,28 @@ class _MenuItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            Container(
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.red.shade50,
+                color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.shade50,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.red.shade100),
+                border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.shade100),
               ),
-              child: Icon(icon, color: Colors.redAccent, size: 20),
+              child: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 20), // Placeholder icon as previous one had no variable passed
             ),
             const SizedBox(width: 15),
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF334155),
+                    color: isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF334155),
                     fontStyle: FontStyle.italic),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.black54, size: 20),
+            Icon(Icons.chevron_right, color: isDarkMode ? Colors.white54 : Colors.black54, size: 20),
           ],
         ),
       ),

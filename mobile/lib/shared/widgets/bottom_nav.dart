@@ -4,15 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class BottomNav extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget for theme listening
+class BottomNav extends ConsumerStatefulWidget {
   const BottomNav({super.key});
 
   @override
-  State<BottomNav> createState() => _BottomNavState();
+  ConsumerState<BottomNav> createState() => _BottomNavState();
 }
 
-class _BottomNavState extends State<BottomNav> {
+class _BottomNavState extends ConsumerState<BottomNav> {
   Map<String, dynamic>? user;
   String currentRoute = '/';
 
@@ -37,7 +40,7 @@ class _BottomNavState extends State<BottomNav> {
     }
   }
 
-  void _showSchoolModal(BuildContext context) {
+  void _showSchoolModal(BuildContext context, bool isDarkMode) {
     // School Details
     final schoolData = user?['schoolData'] ?? {};
     final schoolName = schoolData['schoolName'] ?? "EduFlowAI Institution";
@@ -51,6 +54,14 @@ class _BottomNavState extends State<BottomNav> {
     if (avatar != null && !avatar.startsWith('http')) {
       avatar = "http://10.0.2.2:5000$avatar"; // 10.0.2.2 is local for Android
     }
+
+    // 🔥 DYNAMIC MODAL COLORS
+    final Color modalBg = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
+    final Color textSecondary = isDarkMode ? const Color(0xFF94A3B8) : Colors.grey.shade400;
+    final Color iconBg = isDarkMode ? const Color(0xFF334155) : Colors.grey.shade100;
+    final Color iconColor = isDarkMode ? const Color(0xFF94A3B8) : Colors.grey;
+    final Color watermarkText = isDarkMode ? const Color(0xFF334155) : const Color(0xFF1E293B).withOpacity(0.2);
 
     showGeneralDialog(
       context: context,
@@ -70,11 +81,9 @@ class _BottomNavState extends State<BottomNav> {
                   duration: const Duration(milliseconds: 300),
                   builder: (context, val, child) {
                     return BackdropFilter(
-                      filter:
-                          ImageFilter.blur(sigmaX: 20 * val, sigmaY: 20 * val),
+                      filter: ImageFilter.blur(sigmaX: 20 * val, sigmaY: 20 * val),
                       child: Container(
-                        color: const Color(0xFF020617)
-                            .withValues(alpha: 0.85 * val), // bg-slate-950/85
+                        color: const Color(0xFF020617).withOpacity(0.85 * val),
                       ),
                     );
                   },
@@ -87,12 +96,12 @@ class _BottomNavState extends State<BottomNav> {
                   margin: const EdgeInsets.symmetric(horizontal: 24),
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: modalBg, // 🔥 Dynamic
                     borderRadius: BorderRadius.circular(50),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                    border: Border.all(color: Colors.white.withOpacity(0.1)),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.8),
+                          color: Colors.black.withOpacity(0.8),
                           blurRadius: 100,
                           offset: const Offset(0, 40))
                     ],
@@ -110,11 +119,10 @@ class _BottomNavState extends State<BottomNav> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: iconBg, // 🔥 Dynamic
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.close,
-                                size: 20, color: Colors.grey),
+                            child: Icon(Icons.close, size: 20, color: iconColor), // 🔥 Dynamic
                           ),
                         ),
                       ),
@@ -130,8 +138,7 @@ class _BottomNavState extends State<BottomNav> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                    color: const Color(0xFF42A5F5)
-                                        .withValues(alpha: 0.4),
+                                    color: const Color(0xFF42A5F5).withOpacity(0.4),
                                     blurRadius: 40,
                                     spreadRadius: 10)
                               ],
@@ -171,10 +178,10 @@ class _BottomNavState extends State<BottomNav> {
                               Text(
                                 schoolName.toUpperCase(),
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.w900,
-                                    color: Color(0xFF0F172A),
+                                    color: textPrimary, // 🔥 Dynamic
                                     fontStyle: FontStyle.italic,
                                     height: 1.1,
                                     letterSpacing: -0.5),
@@ -196,14 +203,11 @@ class _BottomNavState extends State<BottomNav> {
                               const SizedBox(height: 25),
 
                               // Address Block
-                              _buildInfoBlock("School Address",
-                                  Icons.location_on, schoolAddress),
+                              _buildInfoBlock("School Address", Icons.location_on, schoolAddress, isDarkMode, textSecondary),
                               const SizedBox(height: 15),
 
                               // Contact Block
-                              _buildInfoBlock(
-                                  "Contact No.", Icons.phone, schoolContact,
-                                  isContact: true),
+                              _buildInfoBlock("Contact No.", Icons.phone, schoolContact, isDarkMode, textSecondary, isContact: true),
                             ],
                           ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2),
 
@@ -212,18 +216,14 @@ class _BottomNavState extends State<BottomNav> {
                           // --- WATERMARK ---
                           Column(
                             children: [
-                              Icon(Icons.verified_user,
-                                  size: 22,
-                                  color:
-                                      const Color(0xFF1E293B).withValues(alpha: 0.2)),
+                              Icon(Icons.verified_user, size: 22, color: watermarkText), // 🔥 Dynamic
                               const SizedBox(height: 5),
                               Text(
                                 "INSTITUTIONAL LEDGER VERIFIED",
                                 style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF1E293B)
-                                        .withValues(alpha: 0.2),
+                                    color: watermarkText, // 🔥 Dynamic
                                     letterSpacing: 4,
                                     fontStyle: FontStyle.italic),
                               )
@@ -233,10 +233,7 @@ class _BottomNavState extends State<BottomNav> {
                       ),
                     ],
                   ),
-                )
-                    .animate()
-                    .scale(duration: 400.ms, curve: Curves.easeOutBack)
-                    .fadeIn(),
+                ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack).fadeIn(),
               ),
             ],
           ),
@@ -252,8 +249,13 @@ class _BottomNavState extends State<BottomNav> {
     );
   }
 
-  Widget _buildInfoBlock(String title, IconData icon, String value,
-      {bool isContact = false}) {
+  // 🔥 UPDATE: Added theme colors to helper
+  Widget _buildInfoBlock(String title, IconData icon, String value, bool isDarkMode, Color textSecondary, {bool isContact = false}) {
+    final Color blockBg = isDarkMode ? const Color(0xFF0F172A) : Colors.grey.shade50.withOpacity(0.8);
+    final Color blockBorder = isDarkMode ? const Color(0xFF334155) : Colors.grey.shade200;
+    final Color iconBg = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColor = isDarkMode ? const Color(0xFFE2E8F0) : const Color(0xFF334155);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -264,8 +266,7 @@ class _BottomNavState extends State<BottomNav> {
             style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
-                color:
-                    isContact ? const Color(0xFF42A5F5) : Colors.grey.shade400,
+                color: isContact ? const Color(0xFF42A5F5) : textSecondary, // 🔥 Dynamic
                 letterSpacing: 1.5,
                 fontStyle: FontStyle.italic),
           ),
@@ -273,23 +274,19 @@ class _BottomNavState extends State<BottomNav> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isContact
-                ? Colors.blue.shade50.withValues(alpha: 0.5)
-                : Colors.grey.shade50.withValues(alpha: 0.8),
+            color: isContact ? Colors.blue.shade50.withOpacity(0.5) : blockBg, // 🔥 Dynamic
             borderRadius: BorderRadius.circular(35),
-            border: Border.all(
-                color: isContact ? Colors.blue.shade100 : Colors.grey.shade200),
+            border: Border.all(color: isContact ? Colors.blue.shade100 : blockBorder), // 🔥 Dynamic
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: iconBg, // 🔥 Dynamic
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05), blurRadius: 5)
+                      BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5)
                     ]),
                 child: Icon(icon, color: const Color(0xFF42A5F5), size: 18),
               ),
@@ -300,7 +297,7 @@ class _BottomNavState extends State<BottomNav> {
                   style: TextStyle(
                       fontSize: isContact ? 16 : 13,
                       fontWeight: isContact ? FontWeight.w900 : FontWeight.bold,
-                      color: const Color(0xFF334155),
+                      color: textColor, // 🔥 Dynamic
                       fontStyle: FontStyle.italic,
                       letterSpacing: isContact ? 2 : 0),
                 ),
@@ -312,23 +309,32 @@ class _BottomNavState extends State<BottomNav> {
     );
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
     bool isHome = currentRoute == '/' || currentRoute == '/dashboard';
     bool isFeed = currentRoute.contains('/notice-feed');
 
-    return Container(
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    final Color navBg = isDarkMode ? const Color(0xFF0F172A) : Colors.white;
+    final Color borderTop = isDarkMode ? const Color(0xFF1E293B) : Colors.grey.shade100;
+    final Color shadowColor = isDarkMode ? Colors.black.withOpacity(0.5) : Colors.black.withOpacity(0.06);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
       height: 90, // Perfect compact height
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: navBg, // 🔥 Dynamic
         borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
+              color: shadowColor, // 🔥 Dynamic
               blurRadius: 40,
-              offset: const Offset(0, -10)) // Shadow thoda kam kiya
+              offset: const Offset(0, -10)) 
         ],
-        border: Border(top: BorderSide(color: Colors.grey.shade100)),
+        border: Border(top: BorderSide(color: borderTop)), // 🔥 Dynamic
       ),
       
       padding: const EdgeInsets.only(left: 40, right: 40, bottom: 10, top: 5),
@@ -336,17 +342,16 @@ class _BottomNavState extends State<BottomNav> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // --- HOME NAV ITEM ---
-          _buildNavItem(
-              Icons.home_filled, "HOME", isHome, () => context.go('/')),
+          _buildNavItem(Icons.home_filled, "HOME", isHome, isDarkMode, () => context.go('/')),
 
           // --- CENTER FLOATING BUTTON ---
           Transform.translate(
-            offset: const Offset(0, -30), // Button ko thoda aur upar khiska diya
+            offset: const Offset(0, -30),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 GestureDetector(
-                  onTap: () => _showSchoolModal(context),
+                  onTap: () => _showSchoolModal(context, isDarkMode), // 🔥 Pass theme state
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
@@ -356,38 +361,37 @@ class _BottomNavState extends State<BottomNav> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFF42A5F5).withValues(alpha: 0.4),
+                                color: const Color(0xFF42A5F5).withOpacity(0.4),
                                 blurRadius: 15,
                                 spreadRadius: 5)
                           ],
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.all(10), // Icon thoda chhota kiya
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: const Color(0xFF42A5F5),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
+                          border: Border.all(color: navBg, width: 3), // 🔥 Dynamic border match bg
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFF42A5F5).withValues(alpha: 0.4),
+                                color: const Color(0xFF42A5F5).withOpacity(0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 10))
                           ],
                         ),
-                        child: const Icon(Icons.school,
-                            color: Colors.white, size: 24),
+                        child: const Icon(Icons.school, color: Colors.white, size: 24),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 11), // Text aur button ke beech gap kam
-                const Text(
+                const SizedBox(height: 11),
+                Text(
                   "DETAILS",
                   style: TextStyle(
                     fontSize: 7,
                     fontWeight: FontWeight.w900,
-                    color: Colors.grey,
+                    color: isDarkMode ? const Color(0xFF64748B) : Colors.grey, // 🔥 Dynamic
                     letterSpacing: 1.5,
                     fontStyle: FontStyle.italic,
                   ),
@@ -397,15 +401,16 @@ class _BottomNavState extends State<BottomNav> {
           ),
 
           // --- FEED NAV ITEM ---
-          _buildNavItem(
-              Icons.campaign, "FEED", isFeed, () => context.go('/notice-feed')),
+          _buildNavItem(Icons.campaign, "FEED", isFeed, isDarkMode, () => context.go('/notice-feed')),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(
-      IconData icon, String label, bool isActive, VoidCallback onTap) {
+  // 🔥 UPDATE: Added theme colors to nav item
+  Widget _buildNavItem(IconData icon, String label, bool isActive, bool isDarkMode, VoidCallback onTap) {
+    final Color inactiveColor = isDarkMode ? const Color(0xFF64748B) : Colors.grey.shade400;
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -413,14 +418,14 @@ class _BottomNavState extends State<BottomNav> {
         children: [
           Icon(icon,
               size: 24,
-              color: isActive ? const Color(0xFF42A5F5) : Colors.grey.shade400),
+              color: isActive ? const Color(0xFF42A5F5) : inactiveColor),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
-              color: isActive ? const Color(0xFF42A5F5) : Colors.grey.shade400,
+              color: isActive ? const Color(0xFF42A5F5) : inactiveColor,
               letterSpacing: -0.5,
             ),
           ),

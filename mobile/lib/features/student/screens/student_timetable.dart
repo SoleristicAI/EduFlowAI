@@ -4,17 +4,20 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class StudentTimetable extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget so it listens to theme changes
+class StudentTimetable extends ConsumerStatefulWidget {
   const StudentTimetable({super.key});
 
   @override
-  State<StudentTimetable> createState() => _StudentTimetableState();
+  ConsumerState<StudentTimetable> createState() => _StudentTimetableState();
 }
 
-class _StudentTimetableState extends State<StudentTimetable> {
+class _StudentTimetableState extends ConsumerState<StudentTimetable> {
   Map<String, dynamic>? user;
   Map<String, dynamic>? timetable;
   bool loading = true;
@@ -55,7 +58,7 @@ class _StudentTimetableState extends State<StudentTimetable> {
   Future<void> _fetchTimetable() async {
     final grade = user?['grade'];
     if (grade == null) {
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
       return;
     }
 
@@ -63,10 +66,10 @@ class _StudentTimetableState extends State<StudentTimetable> {
       final response = await ApiClient.dio.get('/timetable/$grade');
       timetable = response.data;
 
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     } catch (e) {
       print("Timetable sync failed: $e");
-      setState(() => loading = false);
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -87,6 +90,17 @@ class _StudentTimetableState extends State<StudentTimetable> {
       }
     }
 
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA);
+
     return PopScope(
         canPop: false, // 1. Phone ke default back button se app exit ko roko
         onPopInvokedWithResult: (didPop, result) {
@@ -99,12 +113,15 @@ class _StudentTimetableState extends State<StudentTimetable> {
             context.go('/');
           }
         },
-        child: Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          color: bgColor,
+          child: Scaffold(
+            backgroundColor: Colors.transparent, // Transparent for AnimatedContainer
             // --- NAYA CODE: RefreshIndicator ---
             body: RefreshIndicator(
               color: const Color(0xFF42A5F5),
-              backgroundColor: Colors.white,
+              backgroundColor: cardColor,
               onRefresh: _fetchTimetable, // Asli API function laga diya!
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(), // FIXED
@@ -114,22 +131,20 @@ class _StudentTimetableState extends State<StudentTimetable> {
                     // ==========================================================
                     // HEADER SECTION (Blue Gradient + Days Scroller)
                     // ==========================================================
-                    // ==========================================================
-                    // HEADER SECTION (Blue Gradient + Days Scroller)
-                    // ==========================================================
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.only(top: 60, bottom: 50),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF42A5F5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF42A5F5),
                         gradient: LinearGradient(
-                          colors: [Color(0xFF64B5F6), Color(0xFF42A5F5)],
+                          colors: isDarkMode 
+                                ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                                : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                         ),
-                        borderRadius:
-                            BorderRadius.vertical(bottom: Radius.circular(55)),
-                        boxShadow: [
+                        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                        boxShadow: const [
                           BoxShadow(
                               color: Colors.black12,
                               blurRadius: 15,
@@ -147,23 +162,19 @@ class _StudentTimetableState extends State<StudentTimetable> {
                                 // Back Button
                                 GestureDetector(
                                   onTap: () {
-                                    // Agar pichla page stack mein hai, toh pop karo
                                     if (context.canPop()) {
                                       context.pop();
                                     } else {
-                                      // Agar stack khali hai, toh seedha Dashboard par bhej do
                                       context.go('/');
                                     }
-                                  }, // Back jayega perfectly
+                                  },
                                   child: Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color:
-                                          Colors.white.withValues(alpha: 0.2),
+                                      color: Colors.white.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
-                                          color: Colors.white
-                                              .withValues(alpha: 0.1)),
+                                          color: Colors.white.withOpacity(0.1)),
                                     ),
                                     child: const Icon(Icons.arrow_back,
                                         color: Colors.white, size: 24),
@@ -189,8 +200,7 @@ class _StudentTimetableState extends State<StudentTimetable> {
                                       style: TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white
-                                              .withValues(alpha: 0.8),
+                                          color: Colors.white.withOpacity(0.8),
                                           letterSpacing: 2),
                                     ),
                                   ],
@@ -200,11 +210,10 @@ class _StudentTimetableState extends State<StudentTimetable> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.2),
+                                    color: Colors.white.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.1)),
+                                        color: Colors.white.withOpacity(0.1)),
                                   ),
                                   child: const Icon(Icons.watch_later_outlined,
                                       color: Colors.white, size: 24),
@@ -227,22 +236,19 @@ class _StudentTimetableState extends State<StudentTimetable> {
                                       setState(() => activeDay = day['full']!),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 300),
-                                    curve: Curves
-                                        .easeOut, // FIXED: easeOutBack hata diya taaki shadow minus mein na jaye!
+                                    curve: Curves.easeOut,
                                     margin: const EdgeInsets.only(right: 12),
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 20, vertical: 12),
                                     decoration: BoxDecoration(
                                       color: isActive
-                                          ? Colors.white
-                                          : Colors.white.withValues(alpha: 0.1),
+                                          ? (isDarkMode ? const Color(0xFF0F172A) : Colors.white) // 🔥 ADAPTS TO THEME
+                                          : Colors.white.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                           color: isActive
-                                              ? Colors.white
-                                              : Colors.white
-                                                  .withValues(alpha: 0.2)),
-                                      // FIXED: Shadow ab kabhi error nahi dega kyunki transparent se interpolate hoga
+                                              ? (isDarkMode ? const Color(0xFF0F172A) : Colors.white)
+                                              : Colors.white.withOpacity(0.2)),
                                       boxShadow: [
                                         BoxShadow(
                                           color: isActive
@@ -262,8 +268,7 @@ class _StudentTimetableState extends State<StudentTimetable> {
                                         fontWeight: FontWeight.w900,
                                         color: isActive
                                             ? const Color(0xFF42A5F5)
-                                            : Colors.white
-                                                .withValues(alpha: 0.8),
+                                            : Colors.white.withOpacity(0.8),
                                         fontStyle: FontStyle.italic,
                                         letterSpacing: 1,
                                       ),
@@ -294,8 +299,7 @@ class _StudentTimetableState extends State<StudentTimetable> {
                               opacity: animation,
                               child: SlideTransition(
                                 position: Tween<Offset>(
-                                  begin: const Offset(
-                                      0, 0.05), // Halki si neeche se aayegi
+                                  begin: const Offset(0, 0.05),
                                   end: Offset.zero,
                                 ).animate(animation),
                                 child: child,
@@ -304,34 +308,35 @@ class _StudentTimetableState extends State<StudentTimetable> {
                           },
                           child: currentPeriods.isNotEmpty
                               ? Column(
-                                  // KEY is very important here to prevent the Red Screen crash!
                                   key: ValueKey('filled_$activeDay'),
                                   children: currentPeriods.map((item) {
-                                    return _buildPeriodCard(item);
+                                    return _buildPeriodCard(item, cardColor, borderColor, textColorPrimary, textColorSecondary, isDarkMode);
                                   }).toList(),
                                 )
                               : _buildEmptyState(
-                                  key: ValueKey('empty_$activeDay')),
+                                  key: ValueKey('empty_$activeDay'), cardColor: cardColor, borderColor: borderColor),
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-            )));
+            ))),
+    );
   }
 
-  // --- PERIOD CARD UI ---
-  Widget _buildPeriodCard(Map<String, dynamic> item) {
-    return Container(
+  // --- PERIOD CARD UI DYNAMIC THEME PASSED ---
+  Widget _buildPeriodCard(Map<String, dynamic> item, Color cardColor, Color borderColor, Color textColorPrimary, Color textColorSecondary, bool isDarkMode) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(40), // rounded-[2.5rem]
-        border: Border.all(color: const Color(0xFFDDE3EA)),
+        color: cardColor, // 🔥 DYNAMIC BG
+        borderRadius: BorderRadius.circular(40), 
+        border: Border.all(color: borderColor), // 🔥 DYNAMIC BORDER
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8)
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)
         ],
       ),
       child: Row(
@@ -339,8 +344,8 @@ class _StudentTimetableState extends State<StudentTimetable> {
           // Left Side: Time Block
           Container(
             padding: const EdgeInsets.only(right: 20),
-            decoration: const BoxDecoration(
-              border: Border(right: BorderSide(color: Color(0xFFDDE3EA))),
+            decoration: BoxDecoration(
+              border: Border(right: BorderSide(color: borderColor)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -350,19 +355,19 @@ class _StudentTimetableState extends State<StudentTimetable> {
                 const SizedBox(height: 8),
                 Text(
                   item['startTime'] ?? "--:--",
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black38,
+                      color: isDarkMode ? Colors.white38 : Colors.black38,
                       fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),
                 Text(
                   "TO\n${item['endTime'] ?? '--:--'}",
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
-                      color: Colors.black38,
+                      color: isDarkMode ? Colors.white38 : Colors.black38,
                       fontStyle: FontStyle.italic,
                       height: 1.2),
                   textAlign: TextAlign.center,
@@ -379,10 +384,10 @@ class _StudentTimetableState extends State<StudentTimetable> {
               children: [
                 Text(
                   (item['subject'] ?? "Unknown").toString().toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF1E293B),
+                      color: textColorPrimary, // 🔥 DYNAMIC TEXT
                       fontStyle: FontStyle.italic),
                 ),
                 const SizedBox(height: 5),
@@ -397,15 +402,13 @@ class _StudentTimetableState extends State<StudentTimetable> {
                     Expanded(
                       child: Text(
                         "Teacher: ${item['teacherName'] ?? 'Not Assigned'}",
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w900,
-                            color: Color(0xFF64748B),
+                            color: textColorSecondary, // 🔥 DYNAMIC TEXT
                             fontStyle: FontStyle.italic),
-                        // --- YE CHANGES KARNE HAI ---
                         overflow: TextOverflow.visible,
-                        maxLines:
-                            2, // Agar naam bahut bada hai toh 2 lines lega
+                        maxLines: 2, 
                       ),
                     ),
                   ],
@@ -416,9 +419,9 @@ class _StudentTimetableState extends State<StudentTimetable> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : Colors.blue.shade50,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blue.shade100),
+                    border: Border.all(color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -446,17 +449,17 @@ class _StudentTimetableState extends State<StudentTimetable> {
     );
   }
 
-  // --- EMPTY STATE UI ---
-  Widget _buildEmptyState({Key? key}) {
-    return Container(
-      key: key, // Key attach kar di
+  // --- EMPTY STATE UI DYNAMIC THEME ---
+  Widget _buildEmptyState({Key? key, required Color cardColor, required Color borderColor}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      key: key, 
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 80),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor, // 🔥 DYNAMIC BG
         borderRadius: BorderRadius.circular(55),
-        // Faking dashed border with a solid light border (Flutter dashed borders need extra packages)
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+        border: Border.all(color: borderColor, width: 2), // 🔥 DYNAMIC BORDER
       ),
       child: const Column(
         children: [

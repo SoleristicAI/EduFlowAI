@@ -4,8 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class Navbar extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget so it listens to theme changes
+class Navbar extends ConsumerStatefulWidget {
   final String searchQuery;
   final Function(String) onSearchChanged;
   final VoidCallback onSupportClick;
@@ -20,10 +23,10 @@ class Navbar extends StatefulWidget {
   });
 
   @override
-  State<Navbar> createState() => _NavbarState();
+  ConsumerState<Navbar> createState() => _NavbarState();
 }
 
-class _NavbarState extends State<Navbar> {
+class _NavbarState extends ConsumerState<Navbar> {
   Map<String, dynamic>? user;
   String greetingText = "Good Morning";
   String greetingEmoji = "☀️";
@@ -76,6 +79,10 @@ class _NavbarState extends State<Navbar> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
     final role = user?['role'] ?? 'student';
     final name = user?['name'] ?? 'Guest';
     final firstName = name.split(' ')[0];
@@ -91,12 +98,18 @@ class _NavbarState extends State<Navbar> {
         bottomLeft: Radius.circular(40),
         bottomRight: Radius.circular(40),
       ),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500), // Smooth color transition
         padding: const EdgeInsets.only(top: 30, left: 20, right: 20, bottom: 15),
-        decoration: const BoxDecoration(
-          color: Color(0xFF42A5F5),
+        decoration: BoxDecoration(
+          // 🔥 DYNAMIC BACKGROUND: Light mode me Blue, Dark mode me Dark Slate/Blue
+          color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5),
           boxShadow: [
-            BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 4)),
+            BoxShadow(
+              color: isDarkMode ? Colors.black54 : Colors.black26, 
+              blurRadius: 10, 
+              offset: const Offset(0, 4)
+            ),
           ],
         ),
         child: Stack(
@@ -184,7 +197,7 @@ class _NavbarState extends State<Navbar> {
                                       decoration: BoxDecoration(
                                         color: Colors.redAccent,
                                         shape: BoxShape.circle,
-                                        border: Border.all(color: const Color(0xFF42A5F5), width: 2),
+                                        border: Border.all(color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5), width: 2), // Dynamic border for badge
                                       ),
                                       child: Text(
                                         unreadCount.toString(),
@@ -243,6 +256,7 @@ class _NavbarState extends State<Navbar> {
                 _AnimatedSearchBar(
                   searchQuery: widget.searchQuery,
                   onSearchChanged: widget.onSearchChanged,
+                  isDarkMode: isDarkMode, // 🔥 Paasing theme state to search bar
                 ),
               ],
             ),
@@ -256,8 +270,13 @@ class _NavbarState extends State<Navbar> {
 class _AnimatedSearchBar extends StatefulWidget {
   final String searchQuery;
   final Function(String) onSearchChanged;
+  final bool isDarkMode; // 🔥 NAYA THEME STATE
 
-  const _AnimatedSearchBar({required this.searchQuery, required this.onSearchChanged});
+  const _AnimatedSearchBar({
+    required this.searchQuery, 
+    required this.onSearchChanged,
+    required this.isDarkMode,
+  });
 
   @override
   State<_AnimatedSearchBar> createState() => _AnimatedSearchBarState();
@@ -265,7 +284,7 @@ class _AnimatedSearchBar extends StatefulWidget {
 
 class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
   bool _isPressed = false;
-  late TextEditingController _controller; // Controller added to clear text
+  late TextEditingController _controller; 
 
   @override
   void initState() {
@@ -287,6 +306,11 @@ class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    // 🔥 DYNAMIC COLORS FOR SEARCH BAR 🔥
+    final Color barBg = widget.isDarkMode ? const Color(0xFF0F172A) : Colors.white;
+    final Color textColor = widget.isDarkMode ? Colors.white : const Color(0xFF334155);
+    final Color hintColor = widget.isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
@@ -296,7 +320,7 @@ class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
         curve: Curves.easeOutBack,
         transform: Matrix4.identity()..scale(_isPressed ? 0.97 : 1.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: barBg,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -309,16 +333,16 @@ class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
         child: TextField(
           controller: _controller,
           onChanged: widget.onSearchChanged,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF334155), fontStyle: FontStyle.italic),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor, fontStyle: FontStyle.italic),
           decoration: InputDecoration(
             hintText: "Search modules...",
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.bold),
-            prefixIcon: const Icon(Icons.search, color: Color(0xFF94A3B8), size: 20),
+            hintStyle: TextStyle(color: hintColor, fontWeight: FontWeight.bold),
+            prefixIcon: Icon(Icons.search, color: hintColor, size: 20),
             
             // FIXED: Clear (Cross) Button Logic
             suffixIcon: widget.searchQuery.isNotEmpty 
                 ? IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey, size: 20),
+                    icon: Icon(Icons.close, color: hintColor, size: 20),
                     onPressed: _clearSearch,
                   )
                 : null,

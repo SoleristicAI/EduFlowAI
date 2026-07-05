@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import '../../../core/network/api_client.dart'; // Apna ApiClient path check kar lena
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
+import '../../../core/network/api_client.dart';
 import 'package:dio/dio.dart';
 import '../../../shared/widgets/custom_loader.dart';
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class StudentAttendance extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget so it listens to theme changes
+class StudentAttendance extends ConsumerStatefulWidget {
   const StudentAttendance({super.key});
 
   @override
-  State<StudentAttendance> createState() => _StudentAttendanceState();
+  ConsumerState<StudentAttendance> createState() => _StudentAttendanceState();
 }
 
-class _StudentAttendanceState extends State<StudentAttendance> {
+class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
   Map<String, dynamic>? stats;
   bool loading = true;
   DateTime currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
@@ -106,6 +109,18 @@ class _StudentAttendanceState extends State<StudentAttendance> {
       return const CustomLoader(); // <--- TERA NAYA PREMIUM LOADER
     }
 
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF334155);
+    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final Color subtleBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
     return PopScope(
         canPop: false, // System ke default back button se app exit roko
         onPopInvokedWithResult: (didPop, result) {
@@ -118,12 +133,15 @@ class _StudentAttendanceState extends State<StudentAttendance> {
             context.go('/');
           }
         },
-        child: Scaffold(
-            backgroundColor: const Color(0xFFF8FAFC),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 500),
+          color: bgColor,
+          child: Scaffold(
+            backgroundColor: Colors.transparent, // Transparent for AnimatedContainer
             // --- NAYA CODE: RefreshIndicator ---
             body: RefreshIndicator(
               color: const Color(0xFF42A5F5),
-              backgroundColor: Colors.white,
+              backgroundColor: cardColor,
               // (NOTE: Agar tere attendance mein API call ka function '_fetchAttendance' hai toh wo likhna)
               onRefresh: () async {
                 // Yahan tera attendance load hone wala function call hoga
@@ -142,17 +160,21 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                     // ==========================================================
                     // 1. HEADER SECTION (Blue Curve)
                     // ==========================================================
-                    // ==========================================================
-                    // 1. HEADER SECTION (Blue Curve)
-                    // ==========================================================
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.only(top: 60, bottom: 40),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF42A5F5),
-                        borderRadius: BorderRadius.vertical(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF42A5F5),
+                        gradient: LinearGradient(
+                            colors: isDarkMode 
+                                ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                                : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(55)), // rounded-b-[3.5rem]
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
                               color: Colors.black12,
                               blurRadius: 15,
@@ -292,26 +314,29 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                                 _buildStatCard(
                                     "Total days",
                                     stats?['totalDays']?.toString() ?? '0',
-                                    const Color(0xFFFFFFFF),
-                                    const Color(0xFF475569),
+                                    isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFFFFFFF),
+                                    isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF475569),
                                     Icons.calendar_month,
-                                    const Color(0xFF2196F3)),
+                                    const Color(0xFF2196F3),
+                                    borderColor),
                                 const SizedBox(width: 12),
                                 _buildStatCard(
                                     "Present",
                                     stats?['presentDays']?.toString() ?? '0',
-                                    const Color(0xFFE0F2F1),
-                                    const Color(0xFF059669),
+                                    isDarkMode ? const Color(0xFF064E3B).withOpacity(0.3) : const Color(0xFFE0F2F1),
+                                    isDarkMode ? const Color(0xFF34D399) : const Color(0xFF059669),
                                     Icons.check_circle,
-                                    const Color(0xFF10B981)),
+                                    const Color(0xFF10B981),
+                                    isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFDDE3EA)),
                                 const SizedBox(width: 12),
                                 _buildStatCard(
                                     "Absent",
                                     stats?['absentDays']?.toString() ?? '0',
-                                    const Color(0xFFFFEBEE),
-                                    const Color(0xFFE11D48),
+                                    isDarkMode ? const Color(0xFF881337).withOpacity(0.3) : const Color(0xFFFFEBEE),
+                                    isDarkMode ? const Color(0xFFFB7185) : const Color(0xFFE11D48),
                                     Icons.cancel,
-                                    const Color(0xFFF43F5E)),
+                                    const Color(0xFFF43F5E),
+                                    isDarkMode ? const Color(0xFF881337) : const Color(0xFFDDE3EA)),
                               ],
                             )
                                 .animate()
@@ -323,14 +348,14 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                             // ==========================================================
                             // 3. MONTH NAVIGATOR
                             // ==========================================================
-                            Container(
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 20, vertical: 16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cardColor,
                                 borderRadius: BorderRadius.circular(30),
-                                border:
-                                    Border.all(color: const Color(0xFFDDE3EA)),
+                                border: Border.all(color: borderColor),
                                 boxShadow: [
                                   BoxShadow(
                                       color:
@@ -356,10 +381,10 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                                       Text(
                                         DateFormat('MMMM yyyy')
                                             .format(currentMonth),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF334155),
+                                            color: textColorPrimary,
                                             fontStyle: FontStyle.italic),
                                       ),
                                     ],
@@ -381,13 +406,13 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                             // ==========================================================
                             // 4. CALENDAR BOARD
                             // ==========================================================
-                            Container(
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: cardColor,
                                 borderRadius: BorderRadius.circular(50),
-                                border:
-                                    Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(color: borderColor),
                                 boxShadow: [
                                   BoxShadow(
                                       color:
@@ -427,7 +452,7 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                                   const SizedBox(height: 15),
 
                                   // Dates Grid
-                                  _buildCalendarGrid(),
+                                  _buildCalendarGrid(isDarkMode, subtleBgColor),
                                 ],
                               ),
                             )
@@ -444,14 +469,15 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeOutBack,
                               child: selectedDateLog != null
-                                  ? Container(
+                                  ? AnimatedContainer(
+                                      duration: const Duration(milliseconds: 400),
                                       width: double.infinity,
                                       padding: const EdgeInsets.all(30),
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: cardColor,
                                         borderRadius: BorderRadius.circular(45),
                                         border: Border.all(
-                                            color: Colors.blue.shade50,
+                                            color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade50,
                                             width: 4),
                                         boxShadow: [
                                           BoxShadow(
@@ -467,15 +493,15 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                                             selectedDateLog!['formattedDate']
                                                 .toString()
                                                 .toUpperCase(),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.w900,
-                                                color: Color(0xFF334155),
+                                                color: textColorPrimary,
                                                 letterSpacing: 2),
                                           ),
                                           const SizedBox(height: 20),
                                           _buildStatusContent(
-                                              selectedDateLog!['status']),
+                                              selectedDateLog!['status'], isDarkMode, subtleBgColor, borderColor),
                                         ],
                                       ),
                                     ).animate().fadeIn().slideY(begin: 0.5)
@@ -488,20 +514,22 @@ class _StudentAttendanceState extends State<StudentAttendance> {
                   ],
                 ),
               ),
-            )));
+            ))),
+    );
   }
 
   // --- WIDGET BUILDERS ---
 
   Widget _buildStatCard(String label, String value, Color bg, Color textColor,
-      IconData icon, IconDataColor) {
+      IconData icon, Color iconColor, Color borderColor) {
     return Expanded(
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 400),
         height: 110,
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: const Color(0xFFDDE3EA)),
+          border: Border.all(color: borderColor),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02), blurRadius: 5)
@@ -510,7 +538,7 @@ class _StudentAttendanceState extends State<StudentAttendance> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: IconDataColor, size: 22),
+            Icon(icon, color: iconColor, size: 22),
             const SizedBox(height: 6),
             Text(value,
                 style: TextStyle(
@@ -529,7 +557,7 @@ class _StudentAttendanceState extends State<StudentAttendance> {
     );
   }
 
-  Widget _buildCalendarGrid() {
+  Widget _buildCalendarGrid(bool isDarkMode, Color subtleBgColor) {
     int daysInMonth =
         DateTime(currentMonth.year, currentMonth.month + 1, 0).day;
     int firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1)
@@ -560,27 +588,27 @@ class _StudentAttendanceState extends State<StudentAttendance> {
         bool isSelected =
             selectedDateLog != null && selectedDateLog!['day'] == day;
 
-        // Default Style
-        Color bgColor = const Color(0xFFF8FAFC);
-        Color textColor = const Color(0xFF475569);
-        Color borderColor = const Color(0xFFF1F5F9);
+        // Default Style dynamically adapting to theme
+        Color bgColor = subtleBgColor;
+        Color textColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF475569);
+        Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
         Color? dotColor;
 
         if (log != null) {
           if (log['status'] == 'Present') {
-            bgColor = const Color(0xFFECFDF5);
-            textColor = const Color(0xFF059669);
-            borderColor = const Color(0xFFA7F3D0);
+            bgColor = isDarkMode ? const Color(0xFF064E3B).withOpacity(0.3) : const Color(0xFFECFDF5);
+            textColor = isDarkMode ? const Color(0xFF34D399) : const Color(0xFF059669);
+            borderColor = isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFA7F3D0);
             dotColor = const Color(0xFF10B981);
           } else if (log['status'] == 'Absent') {
-            bgColor = const Color(0xFFFFF1F2);
-            textColor = const Color(0xFFE11D48);
-            borderColor = const Color(0xFFFECDD3);
+            bgColor = isDarkMode ? const Color(0xFF881337).withOpacity(0.3) : const Color(0xFFFFF1F2);
+            textColor = isDarkMode ? const Color(0xFFFB7185) : const Color(0xFFE11D48);
+            borderColor = isDarkMode ? const Color(0xFF881337) : const Color(0xFFFECDD3);
             dotColor = const Color(0xFFF43F5E);
           } else if (log['status'] == 'On Leave') {
-            bgColor = const Color(0xFFFFFBEB);
-            textColor = const Color(0xFFD97706);
-            borderColor = const Color(0xFFFDE68A);
+            bgColor = isDarkMode ? const Color(0xFF78350F).withOpacity(0.3) : const Color(0xFFFFFBEB);
+            textColor = isDarkMode ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+            borderColor = isDarkMode ? const Color(0xFF78350F) : const Color(0xFFFDE68A);
             dotColor = const Color(0xFFF59E0B);
           }
         }
@@ -630,7 +658,7 @@ class _StudentAttendanceState extends State<StudentAttendance> {
     );
   }
 
-  Widget _buildStatusContent(String status) {
+  Widget _buildStatusContent(String status, bool isDarkMode, Color subtleBgColor, Color themeBorderColor) {
     IconData icon;
     Color color;
     Color bgColor;
@@ -640,37 +668,38 @@ class _StudentAttendanceState extends State<StudentAttendance> {
 
     if (status == 'Present') {
       icon = Icons.check_circle;
-      color = const Color(0xFF059669);
-      bgColor = const Color(0xFFECFDF5);
-      borderColor = const Color(0xFFA7F3D0);
+      color = isDarkMode ? const Color(0xFF34D399) : const Color(0xFF059669);
+      bgColor = isDarkMode ? const Color(0xFF064E3B).withOpacity(0.3) : const Color(0xFFECFDF5);
+      borderColor = isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFA7F3D0);
       title = "PRESENT";
       subtitle = "Verified by EduFlowAI System";
     } else if (status == 'Absent') {
       icon = Icons.cancel;
-      color = const Color(0xFFE11D48);
-      bgColor = const Color(0xFFFFF1F2);
-      borderColor = const Color(0xFFFECDD3);
+      color = isDarkMode ? const Color(0xFFFB7185) : const Color(0xFFE11D48);
+      bgColor = isDarkMode ? const Color(0xFF881337).withOpacity(0.3) : const Color(0xFFFFF1F2);
+      borderColor = isDarkMode ? const Color(0xFF881337) : const Color(0xFFFECDD3);
       title = "ABSENT";
       subtitle = "Verified by EduFlowAI System";
     } else if (status == 'On Leave') {
       icon = Icons.lock;
-      color = const Color(0xFFD97706);
-      bgColor = const Color(0xFFFFFBEB);
-      borderColor = const Color(0xFFFDE68A);
+      color = isDarkMode ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+      bgColor = isDarkMode ? const Color(0xFF78350F).withOpacity(0.3) : const Color(0xFFFFFBEB);
+      borderColor = isDarkMode ? const Color(0xFF78350F) : const Color(0xFFFDE68A);
       title = "ON LEAVE";
       subtitle = "Approved by Teacher";
     } else {
       icon = Icons.calendar_month;
-      color = const Color(0xFF475569);
-      bgColor = const Color(0xFFF8FAFC);
-      borderColor = const Color(0xFFE2E8F0);
+      color = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+      bgColor = subtleBgColor;
+      borderColor = themeBorderColor;
       title = "NO RECORD";
       subtitle = "Attendance was not registered for this day.";
     }
 
     return Column(
       children: [
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 400),
           width: 80,
           height: 80,
           decoration: BoxDecoration(
