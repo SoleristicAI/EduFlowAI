@@ -42,7 +42,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
   void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     final backup = prefs.getString('superadmin_backup');
-
+    ref.read(themeProvider.notifier).resetTheme();
     if (backup != null) {
       await prefs.setString('user', backup);
       await prefs.remove('superadmin_backup');
@@ -55,7 +55,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
   void _navigate(String path) {
     print("Navigating to: $path");
-    // 1. Koi pop() nahi, koi drawer close nahi. 
+    // 1. Koi pop() nahi, koi drawer close nahi.
     // 2. WidgetsBinding ensure karega ki click hone ke turant baad (agle frame mein) seedha naya page khule.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.push(path); // Seedha attendance page khulega poori screen pe
@@ -66,10 +66,14 @@ class _SidebarState extends ConsumerState<Sidebar> {
   // --- THE PREMIUM LOGOUT MODAL (OVERLAYS EVERYTHING) ---
   // =======================================================================
   void _showLogoutConfirmation(BuildContext context, bool isDarkMode) {
-    final Color modalBgColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
-    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
-    final Color buttonNoBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final Color buttonNoBorderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
+    final Color modalBgColor =
+        isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary =
+        isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color buttonNoBgColor =
+        isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color buttonNoBorderColor =
+        isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
 
     showGeneralDialog(
       context: context,
@@ -138,9 +142,14 @@ class _SidebarState extends ConsumerState<Sidebar> {
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
-                                color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.shade50,
+                                color: isDarkMode
+                                    ? const Color(0xFF7F1D1D).withOpacity(0.3)
+                                    : Colors.red.shade50,
                                 shape: BoxShape.circle,
-                                border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.shade100),
+                                border: Border.all(
+                                    color: isDarkMode
+                                        ? const Color(0xFF7F1D1D)
+                                        : Colors.red.shade100),
                                 boxShadow: const [
                                   BoxShadow(
                                       color: Colors.black12,
@@ -178,15 +187,18 @@ class _SidebarState extends ConsumerState<Sidebar> {
                               children: [
                                 Expanded(
                                   child: ElevatedButton(
-                                    onPressed: () => Navigator.pop(dialogContext),
+                                    onPressed: () =>
+                                        Navigator.pop(dialogContext),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: buttonNoBgColor,
                                       elevation: 0,
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 20),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(30),
-                                          side: BorderSide(color: buttonNoBorderColor)),
+                                          borderRadius:
+                                              BorderRadius.circular(30),
+                                          side: BorderSide(
+                                              color: buttonNoBorderColor)),
                                     ),
                                     child: const Text("NO",
                                         style: TextStyle(
@@ -199,14 +211,15 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                 Expanded(
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      Navigator.pop(dialogContext); // Pehle modal hide karo
+                                      Navigator.pop(
+                                          dialogContext); // Pehle modal hide karo
                                       _handleLogout(); // Phir log out API trigger karo
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.redAccent,
                                       elevation: 15,
-                                      shadowColor:
-                                          Colors.redAccent.withValues(alpha: 0.5),
+                                      shadowColor: Colors.redAccent
+                                          .withValues(alpha: 0.5),
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 20),
                                       shape: RoundedRectangleBorder(
@@ -252,7 +265,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
     // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
-    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color bgColor =
+        isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
     return Drawer(
       key: UniqueKey(),
@@ -309,8 +323,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     top: 50, left: 20, right: 20, bottom: 20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isDarkMode 
-                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                    colors: isDarkMode
+                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)]
                         : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -336,8 +350,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                               color: Colors.white,
                               shape: BoxShape.circle,
                               boxShadow: [
-                                BoxShadow(
-                                    color: Colors.black26, blurRadius: 10)
+                                BoxShadow(color: Colors.black26, blurRadius: 10)
                               ]),
                           child: const CircleAvatar(
                             backgroundColor: Color(0xFFF1F5F9),
@@ -379,8 +392,8 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(15),
-                        border:
-                            Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -427,23 +440,32 @@ class _SidebarState extends ConsumerState<Sidebar> {
                   children: _buildRoleBasedMenu(role, isDarkMode),
                 ),
               ),
-              
+
               // --- LOGOUT BUTTON ---
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0))),
+                  border: Border(
+                      top: BorderSide(
+                          color: isDarkMode
+                              ? const Color(0xFF334155)
+                              : const Color(0xFFE2E8F0))),
                 ),
                 child: InkWell(
                   onTap: () {
-                    _showLogoutConfirmation(context, isDarkMode); 
+                    _showLogoutConfirmation(context, isDarkMode);
                   },
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     decoration: BoxDecoration(
-                      color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.withValues(alpha: 0.1),
-                      border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.withValues(alpha: 0.2)),
+                      color: isDarkMode
+                          ? const Color(0xFF7F1D1D).withOpacity(0.3)
+                          : Colors.red.withValues(alpha: 0.1),
+                      border: Border.all(
+                          color: isDarkMode
+                              ? const Color(0xFF7F1D1D)
+                              : Colors.red.withValues(alpha: 0.2)),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(
@@ -466,10 +488,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
               ),
             ],
           ),
-        ), 
-      ), 
-    ); 
-  } 
+        ),
+      ),
+    );
+  }
 
   // =======================================================================
   // CATEGORY & MENU RENDERERS
@@ -478,320 +500,368 @@ class _SidebarState extends ConsumerState<Sidebar> {
     switch (role) {
       case 'student':
         return [
-          _buildCategory("Daily Routine", [
-            _MenuItem(
-                icon: Icons.calendar_month,
-                label: "Attendance",
-                path: '/attendance',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.access_time,
-                label: "TimeTable",
-                path: '/timetable',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.menu_book,
-                label: "Class Diary",
-                path: '/class-diary',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.videocam,
-                label: "Live Class",
-                path: '/live-classes',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Academic Center", [
-            _MenuItem(
-                icon: Icons.menu_book,
-                label: "Syllabus",
-                path: '/syllabus',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.description,
-                label: "Assignment",
-                path: '/assignments',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.library_books,
-                label: "My Subjects",
-                path: '/my-subjects',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.book,
-                label: "Library",
-                path: '/library',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Examination Hub", [
-            _MenuItem(
-                icon: Icons.calendar_today,
-                label: "Date Sheet",
-                path: '/exam-datesheet',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.fact_check,
-                label: "Admit Card",
-                path: '/exam-admit-card',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.bar_chart,
-                label: "Results",
-                path: '/exam-results',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.trending_up,
-                label: "Performance",
-                path: '/performance',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Campus & Support", [
-            _MenuItem(
-                icon: Icons.credit_card,
-                label: "Fees",
-               path: '/student/fees',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.directions_bus,
-                label: "Bus Tracker",
-                path: '/bus-tracker',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.assignment,
-                label: "Leave Request",
-                path: '/leave-request',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.people,
-                label: "Mentorship",
-                path: '/mentors',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Communication & Updates", [
-            _MenuItem(
-                icon: Icons.campaign,
-                label: "Notices",
-                path: '/notice-feed',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.notifications,
-                label: "ERP Notices",
-                path: '/erp-notices',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.calendar_month,
-                label: "Holidays",
-                path: '/holidays',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.message,
-                label: "Feedback",
-                path: '/feedback',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
+          _buildCategory(
+              "Daily Routine",
+              [
+                _MenuItem(
+                    icon: Icons.calendar_month,
+                    label: "Attendance",
+                    path: '/attendance',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.access_time,
+                    label: "TimeTable",
+                    path: '/timetable',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.menu_book,
+                    label: "Class Diary",
+                    path: '/class-diary',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.videocam,
+                    label: "Live Class",
+                    path: '/live-classes',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Academic Center",
+              [
+                _MenuItem(
+                    icon: Icons.menu_book,
+                    label: "Syllabus",
+                    path: '/syllabus',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.description,
+                    label: "Assignment",
+                    path: '/assignments',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.library_books,
+                    label: "My Subjects",
+                    path: '/my-subjects',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.book,
+                    label: "Library",
+                    path: '/library',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Examination Hub",
+              [
+                _MenuItem(
+                    icon: Icons.calendar_today,
+                    label: "Date Sheet",
+                    path: '/exam-datesheet',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.fact_check,
+                    label: "Admit Card",
+                    path: '/exam-admit-card',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.bar_chart,
+                    label: "Results",
+                    path: '/exam-results',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.trending_up,
+                    label: "Performance",
+                    path: '/performance',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Campus & Support",
+              [
+                _MenuItem(
+                    icon: Icons.credit_card,
+                    label: "Fees",
+                    path: '/student/fees',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.directions_bus,
+                    label: "Bus Tracker",
+                    path: '/bus-tracker',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.assignment,
+                    label: "Leave Request",
+                    path: '/leave-request',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.people,
+                    label: "Mentorship",
+                    path: '/mentors',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Communication & Updates",
+              [
+                _MenuItem(
+                    icon: Icons.campaign,
+                    label: "Notices",
+                    path: '/notice-feed',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.notifications,
+                    label: "ERP Notices",
+                    path: '/erp-notices',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.calendar_month,
+                    label: "Holidays",
+                    path: '/holidays',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.message,
+                    label: "Feedback",
+                    path: '/feedback',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
         ];
       case 'teacher':
         return [
-          _buildCategory("Academic Management", [
-            _MenuItem(
-                icon: Icons.check_box,
-                label: "Class Attendance",
-                path: '/teacher/attendance',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.add_circle_outline,
-                label: "Assignments",
-                path: '/teacher/assignments',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.layers,
-                label: "Syllabus",
-                path: '/teacher/upload-syllabus',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.calendar_month,
-                label: "Date Sheet",
-                path: '/teacher/datesheet',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Class Management", [
-            _MenuItem(
-                icon: Icons.people,
-                label: "Class list",
-                path: '/teacher/students',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.calendar_month,
-                label: "Schedule",
-                path: '/timetable',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.videocam,
-                label: "Live class",
-                path: '/teacher/live-class',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Communication", [
-            _MenuItem(
-                icon: Icons.smart_toy,
-                label: "Broadcast",
-                path: '/teacher/notices',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.campaign,
-                label: "Notice feed",
-                path: '/notice-feed',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.chat_bubble_outline,
-                label: "Support center",
-                path: '/teacher/support',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
+          _buildCategory(
+              "Academic Management",
+              [
+                _MenuItem(
+                    icon: Icons.check_box,
+                    label: "Class Attendance",
+                    path: '/teacher/attendance',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: "Assignments",
+                    path: '/teacher/assignments',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.layers,
+                    label: "Syllabus",
+                    path: '/teacher/upload-syllabus',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.calendar_month,
+                    label: "Date Sheet",
+                    path: '/teacher/datesheet',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Class Management",
+              [
+                _MenuItem(
+                    icon: Icons.people,
+                    label: "Class list",
+                    path: '/teacher/students',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.calendar_month,
+                    label: "Schedule",
+                    path: '/timetable',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.videocam,
+                    label: "Live class",
+                    path: '/teacher/live-class',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Communication",
+              [
+                _MenuItem(
+                    icon: Icons.smart_toy,
+                    label: "Broadcast",
+                    path: '/teacher/notices',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.campaign,
+                    label: "Notice feed",
+                    path: '/notice-feed',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.chat_bubble_outline,
+                    label: "Support center",
+                    path: '/teacher/support',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
         ];
       case 'admin':
         return [
-          _buildCategory("Personnel Management", [
-            _MenuItem(
-                icon: Icons.add_circle_outline,
-                label: "Add Student",
-                path: '/admin/add-student',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.add_circle_outline,
-                label: "Manage Staff",
-                path: '/admin/add-teacher',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.people,
-                label: "User Control",
-                path: '/admin/manage-users',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Scheduling System", [
-            _MenuItem(
-                icon: Icons.table_chart,
-                label: "Timetable",
-                path: '/admin/timetable',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.table_chart,
-                label: "Edit Timetable",
-                path: '/admin/edit-timetable',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.calendar_month,
-                label: "Datesheet",
-                path: '/admin/datesheet',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Communication Hub", [
-            _MenuItem(
-                icon: Icons.campaign,
-                label: "Publish Notice",
-                path: '/admin/global-notice',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.assignment,
-                label: "Notice Archive",
-                path: '/notice-feed',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Analytics & Reports", [
-            _MenuItem(
-                icon: Icons.bar_chart,
-                label: "Performance",
-                path: '/admin/attendance-report',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
+          _buildCategory(
+              "Personnel Management",
+              [
+                _MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: "Add Student",
+                    path: '/admin/add-student',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: "Manage Staff",
+                    path: '/admin/add-teacher',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.people,
+                    label: "User Control",
+                    path: '/admin/manage-users',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Scheduling System",
+              [
+                _MenuItem(
+                    icon: Icons.table_chart,
+                    label: "Timetable",
+                    path: '/admin/timetable',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.table_chart,
+                    label: "Edit Timetable",
+                    path: '/admin/edit-timetable',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.calendar_month,
+                    label: "Datesheet",
+                    path: '/admin/datesheet',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Communication Hub",
+              [
+                _MenuItem(
+                    icon: Icons.campaign,
+                    label: "Publish Notice",
+                    path: '/admin/global-notice',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.assignment,
+                    label: "Notice Archive",
+                    path: '/notice-feed',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Analytics & Reports",
+              [
+                _MenuItem(
+                    icon: Icons.bar_chart,
+                    label: "Performance",
+                    path: '/admin/attendance-report',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
         ];
       case 'finance':
         return [
-          _buildCategory("Payments", [
-            _MenuItem(
-                icon: Icons.add_circle_outline,
-                label: "Add Payment",
-                path: '/finance/add-payment',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.security,
-                label: "Payment Gateway",
-                path: '/finance/gateway',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Reports & Tracking", [
-            _MenuItem(
-                icon: Icons.description,
-                label: "Finance Reports",
-                path: '/finance/reports',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-            _MenuItem(
-                icon: Icons.people,
-                label: "Fees Tracker",
-                path: '/finance/fees-tracker',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
-          _buildCategory("Setup / Configuration", [
-            _MenuItem(
-                icon: Icons.security,
-                label: "Fee Setup",
-                path: '/finance/reports',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
+          _buildCategory(
+              "Payments",
+              [
+                _MenuItem(
+                    icon: Icons.add_circle_outline,
+                    label: "Add Payment",
+                    path: '/finance/add-payment',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.security,
+                    label: "Payment Gateway",
+                    path: '/finance/gateway',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Reports & Tracking",
+              [
+                _MenuItem(
+                    icon: Icons.description,
+                    label: "Finance Reports",
+                    path: '/finance/reports',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.people,
+                    label: "Fees Tracker",
+                    path: '/finance/fees-tracker',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Setup / Configuration",
+              [
+                _MenuItem(
+                    icon: Icons.security,
+                    label: "Fee Setup",
+                    path: '/finance/reports',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
         ];
       default:
         return [
-          _buildCategory("System", [
-            _MenuItem(
-                icon: Icons.dashboard,
-                label: "Dashboard",
-                path: '/superadmin/dashboard',
-                onTap: _navigate,
-                isDarkMode: isDarkMode),
-          ], isDarkMode),
+          _buildCategory(
+              "System",
+              [
+                _MenuItem(
+                    icon: Icons.dashboard,
+                    label: "Dashboard",
+                    path: '/superadmin/dashboard',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
         ];
     }
   }
@@ -801,23 +871,27 @@ class _SidebarState extends ConsumerState<Sidebar> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(25), 
+        borderRadius: BorderRadius.circular(25),
         child: Stack(
           children: [
             Positioned.fill(
               child: Transform.scale(
-                scale: 2.5, 
+                scale: 2.5,
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: SweepGradient(
                       colors: [
                         Colors.transparent,
-                        isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFEF4444), 
+                        isDarkMode
+                            ? const Color(0xFF7F1D1D)
+                            : const Color(0xFFEF4444),
                         Colors.transparent,
-                        isDarkMode ? const Color(0xFF7F1D1D) : const Color(0xFFEF4444), 
+                        isDarkMode
+                            ? const Color(0xFF7F1D1D)
+                            : const Color(0xFFEF4444),
                         Colors.transparent
                       ],
-                      stops: const [0.0, 0.25, 0.5, 0.75, 1.0], 
+                      stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
                     ),
                   ),
                 )
@@ -825,7 +899,6 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     .rotate(duration: 4.seconds),
               ),
             ),
-
             AnimatedContainer(
               duration: const Duration(milliseconds: 400),
               margin: const EdgeInsets.all(2), // 2px snake border width
@@ -844,7 +917,9 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w900,
-                          color: isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                          color: isDarkMode
+                              ? const Color(0xFF64748B)
+                              : const Color(0xFF94A3B8),
                           letterSpacing: 1.5,
                           fontStyle: FontStyle.italic),
                     ),
@@ -886,7 +961,8 @@ class _QuickAction extends StatelessWidget {
                 color: Colors.white,
                 shape: BoxShape.circle,
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 5)
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1), blurRadius: 5)
                 ]),
             child: Icon(icon,
                 size: 18,
@@ -931,11 +1007,19 @@ class _MenuItem extends StatelessWidget {
               duration: const Duration(milliseconds: 400),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : Colors.red.shade50,
+                color: isDarkMode
+                    ? const Color(0xFF7F1D1D).withOpacity(0.3)
+                    : Colors.red.shade50,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: isDarkMode ? const Color(0xFF7F1D1D) : Colors.red.shade100),
+                border: Border.all(
+                    color: isDarkMode
+                        ? const Color(0xFF7F1D1D)
+                        : Colors.red.shade100),
               ),
-              child: const Icon(Icons.arrow_forward_ios, color: Colors.redAccent, size: 20), // Placeholder icon as previous one had no variable passed
+              child: const Icon(Icons.arrow_forward_ios,
+                  color: Colors.redAccent,
+                  size:
+                      20), // Placeholder icon as previous one had no variable passed
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -944,11 +1028,14 @@ class _MenuItem extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF334155),
+                    color: isDarkMode
+                        ? const Color(0xFFF8FAFC)
+                        : const Color(0xFF334155),
                     fontStyle: FontStyle.italic),
               ),
             ),
-            Icon(Icons.chevron_right, color: isDarkMode ? Colors.white54 : Colors.black54, size: 20),
+            Icon(Icons.chevron_right,
+                color: isDarkMode ? Colors.white54 : Colors.black54, size: 20),
           ],
         ),
       ),

@@ -1,14 +1,17 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 THEME KE LIYE NAYA IMPORT
+import '../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER (path check kar lena)
 
-class CustomLoader extends StatefulWidget {
+// 🔥 StatefulWidget ko ConsumerStatefulWidget mein badal diya
+class CustomLoader extends ConsumerStatefulWidget {
   const CustomLoader({super.key});
 
   @override
-  State<CustomLoader> createState() => _CustomLoaderState();
+  ConsumerState<CustomLoader> createState() => _CustomLoaderState();
 }
 
-class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderStateMixin {
+class _CustomLoaderState extends ConsumerState<CustomLoader> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   
   // L ki height (36 se 0 aur wapas 36)
@@ -62,16 +65,24 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
-    const TextStyle textStyle = TextStyle(
+    // 🔥 GLOBAL THEME CHECK
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    // 🔥 DYNAMIC COLORS
+    final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : Colors.white;
+    final Color elementColor = isDarkMode ? Colors.white : Colors.black; // Text & Dot color
+
+    final TextStyle textStyle = TextStyle(
       fontFamily: 'Roboto',
       fontSize: 55,
       fontWeight: FontWeight.w300,
-      color: Colors.black,
+      color: elementColor, // 🔥 Dynamic Text Color
       height: 1.0,
     );
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: bgColor, // 🔥 Dynamic Background
       body: Center(
         child: Transform.scale(
           scale: 0.85,
@@ -90,7 +101,7 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                   child: Container(
                     width: 45,
                     height: 15,
-                    color: Colors.white,
+                    color: bgColor, // 🔥 Divider background match karega
                   ),
                 ),
 
@@ -116,7 +127,7 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                               Container(
                                 width: 25,
                                 height: 4.5,
-                                color: Colors.black,
+                                color: elementColor, // 🔥 Dynamic
                               ),
                               // The vertical animated stem of L
                               AnimatedBuilder(
@@ -125,7 +136,7 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                                   return Container(
                                     width: 4.5,
                                     height: _lLineHeightAnim.value + 4.5, // Total height based on animation
-                                    color: Colors.black,
+                                    color: elementColor, // 🔥 Dynamic
                                   );
                                 },
                               ),
@@ -134,11 +145,11 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                         ),
                         
                         const SizedBox(width: 8),
-                        const Text('o', style: textStyle),
+                        Text('o', style: textStyle),
                         const SizedBox(width: 8),
-                        const Text('a', style: textStyle),
+                        Text('a', style: textStyle),
                         const SizedBox(width: 8),
-                        const Text('d', style: textStyle),
+                        Text('d', style: textStyle),
                         const SizedBox(width: 8),
 
                         // --- THE LETTER 'i' (Without the dot) ---
@@ -157,7 +168,7 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                                   child: Container(
                                     width: 4.5,
                                     height: 38, // Base height of the stem
-                                    color: Colors.black,
+                                    color: elementColor, // 🔥 Dynamic
                                   ),
                                 );
                               },
@@ -166,9 +177,9 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                         ),
                         
                         const SizedBox(width: 8),
-                        const Text('n', style: textStyle),
+                        Text('n', style: textStyle),
                         const SizedBox(width: 8),
-                        const Text('g', style: textStyle),
+                        Text('g', style: textStyle),
                       ],
                     ),
                   ),
@@ -199,8 +210,8 @@ class _CustomLoaderState extends State<CustomLoader> with SingleTickerProviderSt
                       child: Container(
                         width: 7, // Size of the 'i' dot
                         height: 7,
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
+                        decoration: BoxDecoration(
+                          color: elementColor, // 🔥 Dynamic
                           shape: BoxShape.circle,
                         ),
                       ),

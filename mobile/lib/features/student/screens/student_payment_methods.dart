@@ -6,17 +6,20 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
+import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
 
-class StudentPaymentMethods extends StatefulWidget {
+// 🔥 ConsumerStatefulWidget for theme listening
+class StudentPaymentMethods extends ConsumerStatefulWidget {
   const StudentPaymentMethods({super.key});
 
   @override
-  State<StudentPaymentMethods> createState() => _StudentPaymentMethodsState();
+  ConsumerState<StudentPaymentMethods> createState() => _StudentPaymentMethodsState();
 }
 
-class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
+class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
   Map<String, dynamic>? summary;
   bool loading = true;
   bool isProcessing = false;
@@ -128,55 +131,65 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
     final schoolName = summary!['schoolName'] ?? 'EduFlowAI';
     final String upiLink = "upi://pay?pa=$schoolPhone&pn=$schoolName&am=$grandTotal&cu=INR";
 
+    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
+    final themeMode = ref.watch(themeProvider);
+    final bool isDarkMode = themeMode == ThemeMode.dark;
+
+    final Color scaffoldBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _handleBack(); // Hardware back button bhi UI layout ke hisaab se peeche jayega
       },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        body: SafeArea(
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: const EdgeInsets.only(top: 40, bottom: 120, left: 24, right: 24),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  switchInCurve: Curves.easeOutBack,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SlideTransition(
-                        position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(animation),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _buildCurrentState(upiLink),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        color: scaffoldBg,
+        child: Scaffold(
+          backgroundColor: Colors.transparent, // Background se color lenge
+          body: SafeArea(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  padding: const EdgeInsets.only(top: 40, bottom: 120, left: 24, right: 24),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    switchInCurve: Curves.easeOutBack,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(animation),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: _buildCurrentState(upiLink, isDarkMode), // 🔥 isDarkMode pass kar diya
+                  ),
                 ),
-              ),
 
-              // --- FOOTER MESH ---
-              const Positioned(
-                bottom: 30,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.security, size: 14, color: Colors.black38),
-                    SizedBox(width: 8),
-                    Text(
-                      "NEURAL ENCRYPTED GATEWAY",
-                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.black38, letterSpacing: 3),
-                    ),
-                  ],
+                // --- FOOTER MESH ---
+                Positioned(
+                  bottom: 30,
+                  left: 0,
+                  right: 0,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.security, size: 14, color: isDarkMode ? Colors.white38 : Colors.black38),
+                      const SizedBox(width: 8),
+                      Text(
+                        "NEURAL ENCRYPTED GATEWAY",
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDarkMode ? Colors.white38 : Colors.black38, letterSpacing: 3),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -184,7 +197,15 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
   }
 
   // --- STATE MACHINE UI RENDERER ---
-  Widget _buildCurrentState(String upiLink) {
+  Widget _buildCurrentState(String upiLink, bool isDarkMode) {
+    // 🔥 DYNAMIC COLORS
+    final Color cardBg = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
+    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8);
+    final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA);
+    final Color iconBgLight = isDarkMode ? const Color(0xFF0F172A) : Colors.blue.shade50;
+    final Color subtleBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+
     // STEP 1: SELECT MODE
     if (paymentMode == null) {
       return Column(
@@ -197,12 +218,12 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                 onTap: _handleBack,
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
+                  decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
                   child: const Icon(Icons.arrow_back, color: Color(0xFF42A5F5), size: 20),
                 ),
               ),
               const SizedBox(width: 16),
-              const Text("Select gateway", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF1E293B), letterSpacing: -0.5)),
+              Text("Select gateway", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColorPrimary, letterSpacing: -0.5)),
             ],
           ),
           const SizedBox(height: 30),
@@ -212,22 +233,22 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
             onTap: () => setState(() => paymentMode = 'upi'),
             child: Container(
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
+              decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(40), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
               child: Row(
                 children: [
-                  Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.bolt, color: Color(0xFF42A5F5), size: 28)),
+                  Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: iconBgLight, borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.bolt, color: Color(0xFF42A5F5), size: 28)),
                   const SizedBox(width: 20),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text("UPI portal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF1E293B))),
-                        SizedBox(height: 4),
-                        Text("GPay, PhonePe, Paytm QR", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
+                        Text("UPI portal", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColorPrimary)),
+                        const SizedBox(height: 4),
+                        Text("GPay, PhonePe, Paytm QR", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColorSecondary)),
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios, color: Color(0xFF94A3B8), size: 18),
+                  Icon(Icons.arrow_forward_ios, color: textColorSecondary, size: 18),
                 ],
               ),
             ),
@@ -241,18 +262,18 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
               opacity: 0.6,
               child: Container(
                 padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(40), border: Border.all(color: const Color(0xFFF1F5F9)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
+                decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(40), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
                 child: Row(
                   children: [
-                    Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.account_balance, color: Color(0xFFCBD5E1), size: 28)),
+                    Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: subtleBg, borderRadius: BorderRadius.circular(20)), child: Icon(Icons.account_balance, color: isDarkMode ? Colors.white38 : const Color(0xFFCBD5E1), size: 28)),
                     const SizedBox(width: 20),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("Net banking", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF94A3B8))),
-                          SizedBox(height: 4),
-                          Text("Coming soon", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFCBD5E1))),
+                          Text("Net banking", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColorSecondary)),
+                          const SizedBox(height: 4),
+                          Text("Coming soon", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white24 : const Color(0xFFCBD5E1))),
                         ],
                       ),
                     ),
@@ -274,7 +295,7 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
             onTap: _handleBack,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
+              decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -288,13 +309,13 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
           const SizedBox(height: 40),
           Container(
             padding: const EdgeInsets.all(40),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(55), border: Border.all(color: const Color(0xFFDDE3EA), width: 2, style: BorderStyle.solid)), // Dashed requires external package, using solid
+            decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(55), border: Border.all(color: borderColor, width: 2, style: BorderStyle.solid)),
             child: const Icon(Icons.engineering, color: Color(0xFF42A5F5), size: 80).animate(onPlay: (c) => c.repeat(reverse: true)).slideY(begin: -0.1, end: 0.1, duration: 1.seconds),
           ),
           const SizedBox(height: 30),
-          const Text("Module under construction", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF1E293B)), textAlign: TextAlign.center),
+          Text("Module under construction", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColorPrimary), textAlign: TextAlign.center),
           const SizedBox(height: 10),
-          const Text("Secure system protocol 130 is active", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
+          Text("Secure system protocol 130 is active", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColorSecondary)),
         ],
       );
     }
@@ -310,12 +331,12 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                 onTap: _handleBack,
                 child: Container(
                   padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
+                  decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 5, offset: Offset(0, 2))]),
                   child: const Icon(Icons.arrow_back, color: Color(0xFF42A5F5), size: 20),
                 ),
               ),
               const SizedBox(width: 16),
-              const Text("Select method", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF1E293B), letterSpacing: -0.5)),
+              Text("Select method", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColorPrimary, letterSpacing: -0.5)),
             ],
           ),
           const SizedBox(height: 30),
@@ -325,11 +346,11 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
             child: Container(
               margin: const EdgeInsets.only(bottom: 16),
               padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(35), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
+              decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(35), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(app, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF334155))),
+                  Text(app, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColorPrimary)),
                   Container(
                     width: 12, height: 12, 
                     decoration: BoxDecoration(color: const Color(0xFF42A5F5), shape: BoxShape.circle, boxShadow: [BoxShadow(color: const Color(0xFF42A5F5).withValues(alpha: 0.4), blurRadius: 10, spreadRadius: 2)]),
@@ -347,17 +368,17 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
       key: const ValueKey('step3_qr'),
       width: double.infinity,
       padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(55), border: Border.all(color: const Color(0xFFDDE3EA)), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))]),
+      decoration: BoxDecoration(color: cardBg, borderRadius: BorderRadius.circular(55), border: Border.all(color: borderColor), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))]),
       child: isProcessing 
-        ? const Column(
+        ? Column(
             children: [
-              SizedBox(height: 40),
-              SizedBox(width: 60, height: 60, child: CircularProgressIndicator(color: Color(0xFF42A5F5), strokeWidth: 5)),
-              SizedBox(height: 30),
-              Text("Finalizing uplink", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF1E293B))),
-              SizedBox(height: 10),
-              Text("Uploading evidence to secure node...", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8))),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
+              const SizedBox(width: 60, height: 60, child: CircularProgressIndicator(color: Color(0xFF42A5F5), strokeWidth: 5)),
+              const SizedBox(height: 30),
+              Text("Finalizing uplink", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textColorPrimary)),
+              const SizedBox(height: 10),
+              Text("Uploading evidence to secure node...", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: textColorSecondary)),
+              const SizedBox(height: 40),
             ],
           )
         : Column(
@@ -367,7 +388,7 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                 children: [
                   GestureDetector(
                     onTap: _handleBack,
-                    child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFF1F5F9))), child: const Icon(Icons.arrow_back, size: 18, color: Color(0xFF94A3B8))),
+                    child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: subtleBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)), child: Icon(Icons.arrow_back, size: 18, color: textColorSecondary)),
                   ),
                   const Row(
                     children: [
@@ -381,30 +402,29 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
               ),
               const SizedBox(height: 30),
 
-             // QR Code Render
+             // QR Code Render (Force light background for better scanability)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
+                  color: Colors.white, // 🔥 QR hamesha white background pe rehna chahiye warna scan nahi hoga
                   borderRadius: BorderRadius.circular(40),
-                  border: Border.all(color: const Color(0xFFDDE3EA), width: 2),
-                  // --- FIX: Inset shadow hata kar ye background gradient add kiya ---
+                  border: Border.all(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA), width: 2),
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFE2E8F0), // Thoda darker shade
-                      Color(0xFFF8FAFC), // Original color
+                      Color(0xFFE2E8F0), 
+                      Colors.white, 
                     ],
                   ),
                 ),
                 child: summary!['schoolPhone'] != null
                     ? QrImageView(data: upiLink, version: QrVersions.auto, size: 180, foregroundColor: const Color(0xFF1E293B))
-                    : const Column(
+                    : Column(
                         children: [
-                          Icon(Icons.qr_code_scanner, size: 50, color: Color(0xFFCBD5E1)),
-                          SizedBox(height: 10),
-                          Text("No QR available right now\nYou can try again later", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF94A3B8), letterSpacing: 1), textAlign: TextAlign.center),
+                          const Icon(Icons.qr_code_scanner, size: 50, color: Color(0xFFCBD5E1)),
+                          const SizedBox(height: 10),
+                          Text("No QR available right now\nYou can try again later", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: isDarkMode ? Colors.black54 : const Color(0xFF94A3B8), letterSpacing: 1), textAlign: TextAlign.center),
                         ],
                       ),
               ),
@@ -412,7 +432,7 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
 
               Text("₹${NumberFormat('#,##0').format(summary!['grandTotal'] ?? 0)}", style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF42A5F5), letterSpacing: -1)),
               if (summary!['schoolPhone'] != null)
-                Text("UPI ID: ${summary!['schoolPhone']}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8), letterSpacing: 2))
+                Text("UPI ID: ${summary!['schoolPhone']}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColorSecondary, letterSpacing: 2))
               else
                 const Text("GATEWAY NOT CONFIGURED", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, color: Colors.redAccent, letterSpacing: 2)),
               
@@ -426,7 +446,7 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(30),
-                      decoration: BoxDecoration(color: Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(35), border: Border.all(color: Colors.blue.shade100, width: 2)),
+                      decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(35), border: Border.all(color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100, width: 2)),
                       child: Column(
                         children: [
                           const Icon(Icons.cloud_upload, color: Color(0xFF42A5F5), size: 36).animate(onPlay: (c) => c.repeat(reverse: true)).slideY(begin: -0.1, end: 0.1),
@@ -445,7 +465,7 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                           Container(
                             width: double.infinity,
                             height: 180,
-                            decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFF42A5F5).withValues(alpha: 0.3), width: 2)),
+                            decoration: BoxDecoration(color: subtleBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFF42A5F5).withValues(alpha: 0.3), width: 2)),
                             child: ClipRRect(borderRadius: BorderRadius.circular(22), child: Image.file(screenshot!, fit: BoxFit.contain)),
                           ),
                           Positioned(
@@ -463,7 +483,6 @@ class _StudentPaymentMethodsState extends State<StudentPaymentMethods> {
                         children: [
                           Icon(Icons.check_circle, size: 18, color: Color(0xFF10B981)),
                           SizedBox(width: 8),
-                          // NAYA CODE: Expanded aur maxLines lagaya taaki overflow na ho
                           Expanded(
                             child: Text(
                               "Screenshot captured successfully", 

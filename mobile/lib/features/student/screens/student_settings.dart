@@ -113,15 +113,6 @@ class _StudentSettingsState extends ConsumerState<StudentSettings> {
         'bg': isDarkMode ? const Color(0xFF713F12).withOpacity(0.2) : const Color(0xFFF8FAFC),
         'actionType': 'themeToggle', 
       },
-      {
-        'title': 'Language',
-        'subtitle': 'Select your preferred language',
-        'icon': Icons.language,
-        'color': const Color(0xFF3B82F6), 
-        'bg': isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : const Color(0xFFEFF6FF), 
-        'path': null,
-        'actionType': 'navigate',
-      },
     ];
 
     return PopScope(

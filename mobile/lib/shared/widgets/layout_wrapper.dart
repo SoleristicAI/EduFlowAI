@@ -26,6 +26,16 @@ class _LayoutWrapperState extends ConsumerState<LayoutWrapper> {
   bool isSidebarOpen = false;
 
   @override
+  void initState() {
+    super.initState();
+    
+    // Naya logged-in user aate hi uski saved theme fetch karega
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(themeProvider.notifier).loadThemeForCurrentUser();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     bool isMobile = MediaQuery.of(context).size.width < 800;
 

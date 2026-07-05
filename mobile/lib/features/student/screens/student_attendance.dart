@@ -117,7 +117,7 @@ class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
     final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
     final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF334155);
-    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
+    // final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
     final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFE2E8F0);
     final Color subtleBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 

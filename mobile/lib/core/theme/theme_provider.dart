@@ -5,11 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeNotifier extends StateNotifier<ThemeMode> {
   ThemeNotifier() : super(ThemeMode.light) {
-    _loadThemeForUser();
+    loadThemeForCurrentUser(); // App start hone par chalega
   }
 
-  // App start hone par User ID check karke uska theme fetch karega
-  Future<void> _loadThemeForUser() async {
+  // 🔥 NAYA METHOD: Jab bhi naya banda login karega, ye uski ID ka theme load karega
+  Future<void> loadThemeForCurrentUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
     
@@ -17,13 +17,18 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
       final user = jsonDecode(userStr);
       final userId = user['_id'] ?? 'default';
       
-      // Har user ka theme alag key se save hoga
       final isDark = prefs.getBool('theme_$userId') ?? false;
       state = isDark ? ThemeMode.dark : ThemeMode.light;
+    } else {
+      state = ThemeMode.light; // Agar koi logged in nahi hai to default light
     }
   }
 
-  // Toggle dabane par State + Database dono update honge
+  // 🔥 NAYA METHOD: Logout ke waqt theme ko wapas default light par lane ke liye
+  void resetTheme() {
+    state = ThemeMode.light;
+  }
+
   Future<void> toggleTheme() async {
     state = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     
@@ -39,7 +44,6 @@ class ThemeNotifier extends StateNotifier<ThemeMode> {
   }
 }
 
-// Global Provider jisko poori app access karegi
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeMode>((ref) {
   return ThemeNotifier();
 });
