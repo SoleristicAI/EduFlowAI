@@ -15,6 +15,7 @@ import '../features/student/screens/notice_feed.dart';
 import '../features/student/screens/student_performance.dart';
 import '../features/student/screens/mentorship.dart';
 import '../features/student/screens/student_calendar.dart';
+import '../features/student/screens/student_my_subjects.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -110,6 +111,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/holidays', // Apne StudentHome ke path se theek mila lena ise
       builder: (context, state) => const StudentAcademicCalendar(),
+    ),
+
+    GoRoute(
+      path: '/my-subjects', // Apne StudentHome mein subModules ke path se match kar lena
+      builder: (context, state) => const StudentMySubjects(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---

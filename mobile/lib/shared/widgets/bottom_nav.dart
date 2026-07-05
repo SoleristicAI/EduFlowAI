@@ -330,7 +330,7 @@ class _BottomNavState extends State<BottomNav> {
         ],
         border: Border(top: BorderSide(color: Colors.grey.shade100)),
       ),
-      // Padding ko balance kiya
+      
       padding: const EdgeInsets.only(left: 40, right: 40, bottom: 10, top: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
