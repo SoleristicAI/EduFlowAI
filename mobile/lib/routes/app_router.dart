@@ -25,6 +25,7 @@ import '../features/student/screens/library.dart';
 import '../features/student/screens/student_transport.dart';
 import '../features/student/screens/student_assignments.dart';
 import '../features/student/screens/student_leave_request.dart';
+import '../features/student/screens/student_leave_history.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -172,6 +173,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/leave',
       builder: (context, state) => const StudentLeaveRequest(),
+    ),
+
+    GoRoute(
+      path: '/student/leave-history',
+      builder: (context, state) => const StudentLeaveHistory(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---
