@@ -24,6 +24,7 @@ import '../features/student/screens/change_password.dart';
 import '../features/student/screens/library.dart';
 import '../features/student/screens/student_transport.dart';
 import '../features/student/screens/student_assignments.dart';
+import '../features/student/screens/student_leave_request.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -122,49 +123,56 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/my-subjects', // Apne StudentHome mein subModules ke path se match kar lena
+      path:
+          '/my-subjects', // Apne StudentHome mein subModules ke path se match kar lena
       builder: (context, state) => const StudentMySubjects(),
     ),
 
     GoRoute(
-      path: '/live-classes', // Apne StudentHome mein subModules ke path se match kar lena
+      path:
+          '/live-classes', // Apne StudentHome mein subModules ke path se match kar lena
       builder: (context, state) => const StudentLiveClass(),
     ),
 
     GoRoute(
-      path: '/erp-notices', 
+      path: '/erp-notices',
       builder: (context, state) => const StudentErpNotices(),
     ),
 
     GoRoute(
-      path: '/feedback', 
+      path: '/feedback',
       builder: (context, state) => const StudentFeedback(),
     ),
 
     GoRoute(
-      path: '/settings', 
+      path: '/settings',
       builder: (context, state) => const StudentSettings(),
     ),
 
     GoRoute(
-      path: '/change-password', 
+      path: '/change-password',
       builder: (context, state) => const ChangePassword(),
     ),
 
     GoRoute(
-      path: '/library', 
+      path: '/library',
       builder: (context, state) => const StudentLibrary(),
     ),
 
     GoRoute(
-      path: '/transport', 
+      path: '/transport',
       builder: (context, state) => const StudentTransport(),
     ),
 
     GoRoute(
-  path: '/assignments',
-  builder: (context, state) => const StudentAssignments(),
-),
+      path: '/assignments',
+      builder: (context, state) => const StudentAssignments(),
+    ),
+
+    GoRoute(
+      path: '/leave',
+      builder: (context, state) => const StudentLeaveRequest(),
+    ),
 
     // --- STUDENT/TEACHER DASHBOARD ---
     GoRoute(

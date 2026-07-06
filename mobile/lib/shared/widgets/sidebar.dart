@@ -599,13 +599,13 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 _MenuItem(
                     icon: Icons.directions_bus,
                     label: "Bus Tracker",
-                    path: '/bus-tracker',
+                    path: '/transport',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
                     icon: Icons.assignment,
                     label: "Leave Request",
-                    path: '/leave-request',
+                    path: '/leave',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
