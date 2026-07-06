@@ -27,6 +27,7 @@ import '../features/student/screens/student_assignments.dart';
 import '../features/student/screens/student_leave_request.dart';
 import '../features/student/screens/student_leave_history.dart';
 import '../features/student/screens/student_syllabus.dart';
+import '../features/student/screens/student_datesheet.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -185,6 +186,11 @@ final appRouter = GoRouter(
       path: '/syllabus', // Ya '/student/syllabus' jo tera structure hai
       builder: (context, state) => const StudentSyllabus(),
     ),
+
+    GoRoute(
+  path: '/exam-datesheet',
+  builder: (context, state) => const StudentDatesheet(),
+),
 
     // --- STUDENT/TEACHER DASHBOARD ---
     GoRoute(
