@@ -26,6 +26,7 @@ import '../features/student/screens/student_transport.dart';
 import '../features/student/screens/student_assignments.dart';
 import '../features/student/screens/student_leave_request.dart';
 import '../features/student/screens/student_leave_history.dart';
+import '../features/student/screens/student_syllabus.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -178,6 +179,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/student/leave-history',
       builder: (context, state) => const StudentLeaveHistory(),
+    ),
+
+    GoRoute(
+      path: '/syllabus', // Ya '/student/syllabus' jo tera structure hai
+      builder: (context, state) => const StudentSyllabus(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---
