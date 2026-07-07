@@ -30,6 +30,7 @@ import '../features/student/screens/student_syllabus.dart';
 import '../features/student/screens/student_datesheet.dart';
 import '../features/student/screens/student_exam_result.dart';
 import '../features/student/screens/student_admit_card.dart';
+import '../shared/widgets/technical_support_modal.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -202,6 +203,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/admit-card',
       builder: (context, state) => const StudentAdmitCard(),
+    ),
+
+    GoRoute(
+      path: '/support',
+      builder: (context, state) => const TechnicalSupportModal(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---

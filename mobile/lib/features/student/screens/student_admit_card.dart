@@ -171,8 +171,28 @@ class _StudentAdmitCardState extends ConsumerState<StudentAdmitCard> {
         }
       }
 
-      schoolLogoImg = await fetchImage(selectedAdmitCard!['schoolLogo']);
-      studentPhotoImg = await fetchImage(user!['avatar']);
+     // 🔥 NAYA CODE: BASE64 LOGO DECODER 🔥
+      try {
+        final logoRes = await ApiClient.dio.get('/school/logo');
+        if (logoRes.data != null && logoRes.data['logo'] != null) {
+          String logoData = logoRes.data['logo'].toString();
+          
+          // Check agar data base64 image hai
+          if (logoData.startsWith('data:image')) {
+            // "data:image/png;base64," wala part hata ke sirf code extract karo
+            String base64String = logoData.split(',').last;
+            schoolLogoImg = pw.MemoryImage(base64Decode(base64String));
+          } else {
+            // Agar normal link hai toh purana function
+            schoolLogoImg = await fetchImage(logoData);
+          }
+        }
+      } catch (e) {
+        debugPrint("Admit Card Logo Fetch Failed: $e");
+      }
+      if (user != null && user!['avatar'] != null) {
+         studentPhotoImg = await fetchImage(user!['avatar']);
+      }
       
       if (selectedAdmitCard!['datesheetId'] != null && selectedAdmitCard!['datesheetId']['signatures'] != null) {
         inchargeSignImg = await fetchImage(selectedAdmitCard!['datesheetId']['signatures']['incharge']);
