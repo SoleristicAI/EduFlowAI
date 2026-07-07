@@ -77,7 +77,7 @@ class _LayoutWrapperState extends ConsumerState<LayoutWrapper> {
             ],
           ),
 
-          if (widget.role == 'student' && isMobile)
+          if ((widget.role == 'student' || widget.role == 'teacher') && isMobile)
             Positioned(
               left: 0,
               right: 0,

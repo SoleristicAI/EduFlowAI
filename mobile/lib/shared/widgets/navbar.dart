@@ -101,7 +101,7 @@ class _NavbarState extends ConsumerState<Navbar> {
     } else if (hour < 21) {
       setState(() {
         greetingText = "Good Evening";
-        greetingEmoji = "🌇";
+        greetingEmoji = "👋";
       });
     } else {
       setState(() {

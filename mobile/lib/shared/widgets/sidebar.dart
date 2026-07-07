@@ -283,7 +283,6 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
 
     return Drawer(
-      key: UniqueKey(),
       backgroundColor: Colors.transparent,
       elevation: 0,
       width: MediaQuery.of(context).size.width * 0.72,
@@ -433,17 +432,23 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                     ? Icons.add_circle
                                     : role == 'admin'
                                         ? Icons.assignment
-                                        : Icons.help_outline,
+                                        : role == 'teacher'
+                                            ? Icons.chat_bubble_outline // Teacher ke liye MessageCircle icon
+                                            : Icons.help_outline,
                                 label: role == 'finance'
                                     ? "Add Pay"
                                     : role == 'admin'
                                         ? "Notices"
-                                        : "Support",
+                                        : role == 'teacher'
+                                            ? "Help desk" // 🔥 Teacher Specific Label
+                                            : "Support",
                                 onTap: () => _navigate(role == 'finance'
                                     ? '/finance/add-payment'
                                     : role == 'admin'
                                         ? '/notice-feed'
-                                        : '/support')),
+                                        : role == 'teacher'
+                                            ? '/teacher/support' // 🔥 Teacher Specific Route
+                                            : '/support')),
                           _QuickAction(
                               icon: Icons.settings,
                               label: "Settings",
@@ -458,11 +463,18 @@ class _SidebarState extends ConsumerState<Sidebar> {
 
               // --- SCROLLABLE CATEGORIES ---
               Expanded(
-                child: ListView(
-                  key: UniqueKey(),
-                  padding: const EdgeInsets.only(top: 10, bottom: 20),
-                  physics: const BouncingScrollPhysics(),
-                  children: _buildRoleBasedMenu(role, isDarkMode),
+                child: RefreshIndicator(
+                  color: const Color(0xFF42A5F5),
+                  backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                  onRefresh: _loadUser, // 🔥 Ye seedha tera function call karega aur naya data layega
+                  child: ListView(
+                    padding: const EdgeInsets.only(top: 10, bottom: 20),
+                    // 🔥 RefreshIndicator ko chalane ke liye AlwaysScrollable zaroori hai
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    children: _buildRoleBasedMenu(role, isDarkMode),
+                  ),
                 ),
               ),
 

@@ -31,13 +31,14 @@ import '../features/student/screens/student_datesheet.dart';
 import '../features/student/screens/student_exam_result.dart';
 import '../features/student/screens/student_admit_card.dart';
 import '../shared/widgets/technical_support_modal.dart';
-import '../shared/widgets/my_account.dart';
+import '../shared/widgets//my_account.dart'; // Apna actual path check kar lena
 import '../features/student/screens/student_support.dart';
+import '../features/teacher/screens/teacher_home.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/splash', // FIXED: Ab sabse pehle hamesha Splash khulega
+  initialLocation: '/splash',
 
   redirect: (context, state) async {
     final prefs = await SharedPreferences.getInstance();
@@ -46,23 +47,29 @@ final appRouter = GoRouter(
 
     final isGoingToLogin = state.uri.path == '/login';
     final isGoingToSplash = state.uri.path == '/splash';
+    final isGoingToRoot = state.uri.path == '/';
 
-    // 1. Agar Splash Screen par hai, toh usko wahi rehne do (Animation puri hone do)
+    // 1. Agar Splash Screen par hai, toh usko wahi rehne do
     if (isGoingToSplash) return null;
 
-    // 2. Agar Login NAHI hai, aur Splash ya Login ke alawa kahin ja raha hai -> Pakad ke Login pe dalo
+    // 2. Agar Login NAHI hai, aur Splash ya Login ke alawa kahin ja raha hai -> Login pe dalo
     if (!isLoggedIn && !isGoingToLogin) {
       return '/login';
     }
 
-    // 3. Agar Login HAI, aur galti se Login screen maang raha hai -> Seedha Dashboard pe phek do
-    if (isLoggedIn && isGoingToLogin) {
-      final role = jsonDecode(userStr)['role'] ?? 'student';
+    // 3. 🔥 MAIN FIX YAHAN HAI 🔥
+    if (isLoggedIn) {
+      final role = jsonDecode(userStr!)['role'] ?? 'student';
 
-      if (role == 'superadmin') return '/superadmin/dashboard';
-      if (role == 'finance') return '/finance/dashboard';
-
-      return '/';
+      // Agar user Login screen ya Root '/' screen par ja raha hai, toh use uske role ke hisaab se patko
+      if (isGoingToLogin || isGoingToRoot) {
+        if (role == 'superadmin') return '/superadmin/dashboard';
+        if (role == 'finance') return '/finance/dashboard';
+        if (role == 'teacher') return '/teacher/home'; // Teacher gaya teacher home pe
+        
+        // Agar inme se koi nahi hai toh matlab student hai
+        if (isGoingToLogin) return '/'; // Student ko root pe bhej do
+      }
     }
 
     return null;
@@ -126,19 +133,17 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/holidays', // Apne StudentHome ke path se theek mila lena ise
+      path: '/holidays',
       builder: (context, state) => const StudentAcademicCalendar(),
     ),
 
     GoRoute(
-      path:
-          '/my-subjects', // Apne StudentHome mein subModules ke path se match kar lena
+      path: '/my-subjects',
       builder: (context, state) => const StudentMySubjects(),
     ),
 
     GoRoute(
-      path:
-          '/live-classes', // Apne StudentHome mein subModules ke path se match kar lena
+      path: '/live-classes',
       builder: (context, state) => const StudentLiveClass(),
     ),
 
@@ -188,7 +193,7 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/syllabus', // Ya '/student/syllabus' jo tera structure hai
+      path: '/syllabus',
       builder: (context, state) => const StudentSyllabus(),
     ),
 
@@ -208,7 +213,7 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-      path: '/support', // Sidebar se ye hit hoga
+      path: '/support', 
       builder: (context, state) => const StudentSupport(),
     ),
 
@@ -217,7 +222,18 @@ final appRouter = GoRouter(
       builder: (context, state) => const MyAccount(),
     ),
 
-    // --- STUDENT/TEACHER DASHBOARD ---
+    // 🔥 MAIN FIX 2: TEACHER HOME KE UPAR BHI LAYOUT WRAPPER LAGA DIYA 🔥
+    GoRoute(
+      path: '/teacher/home',
+      builder: (context, state) {
+        return LayoutWrapper(
+          role: 'teacher',
+          childBuilder: (query) => TeacherHome(searchQuery: query),
+        );
+      },
+    ),
+
+    // --- STUDENT DASHBOARD (ROOT ROUTE) ---
     GoRoute(
       path: '/',
       builder: (context, state) {
