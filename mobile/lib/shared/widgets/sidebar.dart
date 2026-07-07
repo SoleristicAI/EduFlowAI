@@ -268,6 +268,20 @@ class _SidebarState extends ConsumerState<Sidebar> {
     final Color bgColor =
         isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
+    // 🔥 NAYA CODE: AVATAR URL SANITIZATION 🔥
+    String? avatarUrl;
+    final String currentLaptopIP = "10.163.134.38"; // Tera current IP
+    if (user?['avatar'] != null && user!['avatar'].toString().isNotEmpty) {
+      String rawAvatar = user!['avatar'].toString();
+      if (rawAvatar.startsWith('http')) {
+        avatarUrl = rawAvatar
+            .replaceAll('localhost', currentLaptopIP)
+            .replaceAll('127.0.0.1', currentLaptopIP);
+      } else {
+        avatarUrl = "http://$currentLaptopIP:5000$rawAvatar";
+      }
+    }
+
     return Drawer(
       key: UniqueKey(),
       backgroundColor: Colors.transparent,
@@ -352,10 +366,21 @@ class _SidebarState extends ConsumerState<Sidebar> {
                               boxShadow: [
                                 BoxShadow(color: Colors.black26, blurRadius: 10)
                               ]),
-                          child: const CircleAvatar(
-                            backgroundColor: Color(0xFFF1F5F9),
-                            child: Icon(Icons.person,
-                                color: Color(0xFF42A5F5), size: 30),
+                          // 🔥 NAYA CODE: AVATAR PREVIEW WITH FALLBACK 🔥
+                          child: ClipOval(
+                            child: avatarUrl != null
+                                ? Image.network(
+                                    avatarUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const CircleAvatar(
+                                      backgroundColor: Color(0xFFF1F5F9),
+                                      child: Icon(Icons.person, color: Color(0xFF42A5F5), size: 30),
+                                    ),
+                                  )
+                                : const CircleAvatar(
+                                    backgroundColor: Color(0xFFF1F5F9),
+                                    child: Icon(Icons.person, color: Color(0xFF42A5F5), size: 30),
+                                  ),
                           ),
                         ),
                         const SizedBox(width: 15),

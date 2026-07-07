@@ -44,15 +44,22 @@ router.post('/reset-password', resetPassword);
 
 router.put('/update-profile', protect, upload.single('avatar'), async (req, res) => {
     try {
-        const user = await User.findOne({ _id: req.user._id, schoolId: req.user.schoolId }); // FIXED Isolation
-        if (user) {
-            if (req.file) {
-                user.avatar = `/uploads/avatars/${req.file.filename}`;
-            }
-            user.phone = req.body.phone || user.phone;
+        // 🔥 FIXED: Direct Update to bypass Mongoose strict validation on old records 🔥
+        let updateFields = {};
+        if (req.file) {
+            updateFields.avatar = `/uploads/avatars/${req.file.filename}`;
+        }
+        if (req.body.phone) {
+            updateFields.phone = req.body.phone;
+        }
 
-            const updatedUser = await user.save();
-            
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: req.user._id, schoolId: req.user.schoolId }, // Find condition
+            { $set: updateFields }, // Sirf wahi update karo jo bheja hai
+            { new: true } // Update hone ke baad naya data return karo
+        );
+
+        if (updatedUser) {
             res.json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
@@ -60,13 +67,14 @@ router.put('/update-profile', protect, upload.single('avatar'), async (req, res)
                 role: updatedUser.role,
                 avatar: updatedUser.avatar,
                 phone: updatedUser.phone,
-                schoolId: updatedUser.schoolId, // FIXED
+                schoolId: updatedUser.schoolId, 
                 token: req.headers.authorization.split(' ')[1]
             });
         } else {
             res.status(404).json({ message: 'User not found' });
         }
     } catch (error) {
+        console.error("MONGOOSE UPLOAD CRASH PREVENTED:", error);
         res.status(500).json({ message: 'Profile update failed' });
     }
 });
