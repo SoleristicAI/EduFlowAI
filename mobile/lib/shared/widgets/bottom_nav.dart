@@ -52,7 +52,7 @@ class _BottomNavState extends ConsumerState<BottomNav> {
     final studentName = user?['name'] ?? "Student Name";
     String? avatar = user?['avatar'];
     if (avatar != null && !avatar.startsWith('http')) {
-      avatar = "http://10.0.2.2:5000$avatar"; // 10.0.2.2 is local for Android
+      avatar = "http://10.163.134.38:5000$avatar"; // 10.0.2.2 is local for Android
     }
 
     // 🔥 DYNAMIC MODAL COLORS

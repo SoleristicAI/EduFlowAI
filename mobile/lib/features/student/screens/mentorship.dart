@@ -227,7 +227,7 @@ class _MentorshipState extends ConsumerState<Mentorship> {
                                           clipBehavior: Clip.hardEdge,
                                           child: (mentor?['avatar'] != null && mentor!['avatar'].toString().isNotEmpty)
                                               // Handle backend IP if running on emulator (localhost to 10.0.2.2)
-                                              ? Image.network("http://10.0.2.2:5000${mentor!['avatar']}", fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 60, color: Color(0xFF42A5F5)))
+                                              ? Image.network("http://10.163.134.38:5000${mentor!['avatar']}", fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.person, size: 60, color: Color(0xFF42A5F5)))
                                               : const Icon(Icons.person, size: 60, color: Color(0xFF42A5F5)),
                                         ),
                                         Positioned(
