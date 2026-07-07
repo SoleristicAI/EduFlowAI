@@ -31,6 +31,7 @@ import '../features/student/screens/student_datesheet.dart';
 import '../features/student/screens/student_exam_result.dart';
 import '../features/student/screens/student_admit_card.dart';
 import '../shared/widgets/technical_support_modal.dart';
+import '../features/student/screens/student_support.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -205,9 +206,14 @@ final appRouter = GoRouter(
       builder: (context, state) => const StudentAdmitCard(),
     ),
 
+    // GoRoute(
+    //   path: '/support',
+    //   builder: (context, state) => const TechnicalSupportModal(),
+    // ),
+
     GoRoute(
-      path: '/support',
-      builder: (context, state) => const TechnicalSupportModal(),
+      path: '/support', // Sidebar se ye hit hoga
+      builder: (context, state) => const StudentSupport(),
     ),
 
     // --- STUDENT/TEACHER DASHBOARD ---

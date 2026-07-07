@@ -570,7 +570,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                 _MenuItem(
                     icon: Icons.fact_check,
                     label: "Admit Card",
-                    path: '/exam-admit-card',
+                    path: '/admit-card',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(

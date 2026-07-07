@@ -485,13 +485,13 @@ class _NoticeFeedState extends ConsumerState<NoticeFeed> {
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                                 decoration: BoxDecoration(color: const Color(0xFF42A5F5), borderRadius: BorderRadius.circular(12), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 2)]),
-                                                child: Text((n['authorRole'] ?? 'Root').toString().toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
+                                                child: Text((n['authorRole'] ?? 'Root').toString().toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1)),
                                               ),
                                               const SizedBox(height: 8), 
                                               Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                                 decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : Colors.blue.shade50, borderRadius: BorderRadius.circular(12), border: Border.all(color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100)),
-                                                child: Text("To: $targetLabel", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1)),
+                                                child: Text("To: $targetLabel", style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1)),
                                               ),
                                             ],
                                           ),
@@ -506,9 +506,9 @@ class _NoticeFeedState extends ConsumerState<NoticeFeed> {
                                       ],
                                     ),
                                     const SizedBox(height: 20),
-                                    Text(n['title']?.toString().toUpperCase() ?? 'UNTITLED', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textPrimary, height: 1.1)),
+                                    Text(n['title']?.toString().toUpperCase() ?? 'UNTITLED', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textPrimary, height: 1.1)),
                                     const SizedBox(height: 12),
-                                    Text(n['content'] ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontStyle: FontStyle.italic, color: textSecondary, height: 1.5)),
+                                    Text(n['content'] ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, fontStyle: FontStyle.italic, color: textSecondary, height: 1.5)),
                                     const SizedBox(height: 20),
                                     Divider(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9), thickness: 1), // 🔥 Dynamic Divider
                                     const SizedBox(height: 16),
