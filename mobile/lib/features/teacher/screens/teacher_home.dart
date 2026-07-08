@@ -60,7 +60,7 @@ class _TeacherHomeState extends ConsumerState<TeacherHome> {
 
     final List<Map<String, dynamic>> teacherModules = [
       {'title': 'Attendance', 'icon': Icons.check_box_outlined, 'path': '/teacher/attendance'},
-      {'title': 'Schedule', 'icon': Icons.calendar_month_outlined, 'path': '/timetable'},
+      {'title': 'Schedule', 'icon': Icons.calendar_month_outlined, 'path': '/teacher/timetable'},
       {'title': 'Broadcast', 'icon': Icons.smart_toy_outlined, 'path': '/teacher/notices'},
       {'title': 'Support center', 'icon': Icons.chat_bubble_outline, 'path': '/teacher/support'},
       {'title': 'Notice feed', 'icon': Icons.campaign_outlined, 'path': '/notice-feed'},

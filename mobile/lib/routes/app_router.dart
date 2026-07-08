@@ -36,6 +36,7 @@ import '../features/student/screens/student_support.dart';
 import '../features/teacher/screens/teacher_home.dart';
 import '../features/teacher/screens/teacher_attendance.dart';
 import '../features/teacher/screens/teacher_leave_requests.dart';
+import '../features/teacher/screens/teacher_timetable.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -241,6 +242,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/teacher/leave-requests',
       builder: (context, state) => const TeacherLeaveRequests(),
+    ),
+
+    GoRoute(
+      path: '/teacher/timetable',
+      builder: (context, state) => const TeacherTimetable(),
     ),
 
     GoRoute(
