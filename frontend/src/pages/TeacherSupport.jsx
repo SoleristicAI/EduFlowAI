@@ -66,34 +66,34 @@ const TeacherSupport = () => {
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header Section */}
             <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
-    <div className="flex justify-between items-center relative z-10">
+                <div className="flex justify-between items-center relative z-10">
 
-        {/* Back Button */}
-        <button
-            onClick={() => navigate(-1)}
-            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
-        >
-            <ArrowLeft size={24} />
-        </button>
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
 
-        {/* Center Title */}
-        <div className="text-center">
-            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
-                Class Support
-            </h1>
+                    {/* Center Title */}
+                    <div className="text-center">
+                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                            Class Support
+                        </h1>
 
-            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
-                Assigned Class Queries Only
-            </p>
-        </div>
+                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                            Assigned Class Queries Only
+                        </p>
+                    </div>
 
-        {/* Right Icon */}
-        <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
-            <HelpCircle size={24} />
-        </div>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+                        <HelpCircle size={24} />
+                    </div>
 
-    </div>
-</div>
+                </div>
+            </div>
 
             <div className="px-5 -mt-10 space-y-8 relative z-20">
                 {queries.length > 0 ? queries.map((q) => (
