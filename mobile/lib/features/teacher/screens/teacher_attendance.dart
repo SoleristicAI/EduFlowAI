@@ -193,13 +193,82 @@ class _TeacherAttendanceState extends ConsumerState<TeacherAttendance> {
     final bool isFutureDate = selectedDate.isAfter(DateTime.now());
 
     if (assignedClass == null) {
-      return Scaffold(
-        backgroundColor: bgColor,
-        body: Center(
-          child: Text(
-            "NO CLASS ASSIGNED TO YOU!\nContact admin to assign you a class.",
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: textColorSecondary, fontStyle: FontStyle.italic, height: 1.5),
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          // 🔥 SAFE ROUTING FOR HARDWARE BACK BUTTON 🔥
+          if (context.canPop()) {
+            context.pop(); 
+          } else {
+            context.go('/teacher/home');
+          }
+        },
+        child: Scaffold(
+          backgroundColor: bgColor,
+          body: Column(
+            children: [
+              // --- PREMIUM HEADER WITH BACK BUTTON ---
+              Container(
+                padding: const EdgeInsets.only(top: 60, bottom: 30, left: 24, right: 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDarkMode 
+                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                        : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
+                ),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        // 🔥 SAFE ROUTING FOR UI BACK BUTTON 🔥
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/teacher/home');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                        child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          "Access Denied", 
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Balancing layout
+                  ],
+                ),
+              ),
+              
+              // --- MAIN BLANK MESSAGE ---
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.block, size: 60, color: textColorSecondary.withOpacity(0.5)),
+                      const SizedBox(height: 20),
+                      Text(
+                        "NO CLASS ASSIGNED TO YOU!\nContact admin to assign you a class.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: textColorSecondary, fontStyle: FontStyle.italic, height: 1.5, letterSpacing: 1),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );

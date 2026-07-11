@@ -140,26 +140,92 @@ class _TeacherStudentListState extends ConsumerState<TeacherStudentList> {
     }).toList();
 
     // No Assigned Class State
-    if (assignedClass.isEmpty && students.isEmpty) {
-      return Scaffold(
-        backgroundColor: bgColor,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+   if (assignedClass.isEmpty && students.isEmpty) {
+      return PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          // 🔥 SAFE ROUTING FOR HARDWARE BACK BUTTON 🔥
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/teacher/home');
+          }
+        },
+        child: Scaffold(
+          backgroundColor: bgColor,
+          body: Column(
             children: [
-              const Icon(Icons.shield, size: 80, color: Colors.grey),
-              const SizedBox(height: 16),
-              Text("NO CLASS ASSIGNED!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic, letterSpacing: 1.5)),
-              const SizedBox(height: 8),
-              const Text("Initialize class mapping via admin.", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF42A5F5))),
-              const SizedBox(height: 32),
-              GestureDetector(
-                onTap: () {
-                  if (context.canPop()) context.pop();
-                  else context.go('/teacher/home');
-                },
-                child: const Text("RETURN TO HUB", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 2, decoration: TextDecoration.underline)),
-              )
+              // --- PREMIUM HEADER WITH BACK BUTTON ---
+              Container(
+                padding: const EdgeInsets.only(top: 60, bottom: 30, left: 24, right: 24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDarkMode 
+                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
+                        : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
+                    begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                  ),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                  boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
+                ),
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        // 🔥 SAFE ROUTING FOR UI BACK BUTTON 🔥
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go('/teacher/home');
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                        child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Center(
+                        child: Text(
+                          "Access Denied", 
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Balancing layout ke liye
+                  ],
+                ),
+              ),
+              
+              // --- TERA PURANA MAIN CONTENT (DESIGN MAINTAINED) ---
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.shield, size: 80, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text("NO CLASS ASSIGNED!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic, letterSpacing: 1.5)),
+                      const SizedBox(height: 8),
+                      const Text("Initialize class mapping via admin.", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF42A5F5))),
+                      const SizedBox(height: 32),
+                      GestureDetector(
+                        onTap: () {
+                          // 🔥 SAME SAFE ROUTING YAHAN BHI 🔥
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go('/teacher/home');
+                          }
+                        },
+                        child: const Text("RETURN TO HUB", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 2, decoration: TextDecoration.underline)),
+                      )
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),

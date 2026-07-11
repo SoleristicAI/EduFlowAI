@@ -43,6 +43,7 @@ import '../features/teacher/screens/teacher_student_list.dart';
 import '../features/teacher/screens/teacher_academic_calendar.dart';
 import '../features/teacher/screens/teacher_live_class.dart';
 import '../features/teacher/screens/teacher_datesheet.dart';
+import '../features/teacher/screens/teacher_upload_result.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -276,13 +277,18 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-      path:'/teacher/live-class', 
+      path: '/teacher/live-class',
       builder: (context, state) => const TeacherLiveClass(),
     ),
 
     GoRoute(
       path: '/teacher/datesheet',
       builder: (context, state) => const TeacherDatesheet(),
+    ),
+
+    GoRoute(
+      path: '/teacher/results',
+      builder: (context, state) => const TeacherUploadResult(),
     ),
 
     GoRoute(
