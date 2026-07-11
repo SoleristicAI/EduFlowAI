@@ -5,6 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
+/// ============================================================
+/// EDUFLOW AI — "MST BHAYANKAR" LIGHT PREMIUM SPLASH SCREEN
+/// ============================================================
+/// Light glassmorphism stage. Every letter flies in from a DIFFERENT
+/// direction (top / bottom / left / right). The "E" crashes in on
+/// its own with a big bounce, and right after it lands, a graduation
+/// cap drops from above and sits on top of it (school branding).
+/// "AI" gets its own shimmering gradient + glow treatment to stand
+/// apart from the rest of the name.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -14,398 +23,438 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController robotController;
+  late AnimationController floatController;
+  late AnimationController shimmerController;
 
   @override
   void initState() {
     super.initState();
 
-    robotController = AnimationController(
+    floatController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
 
-    // 5.5 Seconds Cinematic Experience
-    Future.delayed(const Duration(milliseconds: 5500), () {
-      if (mounted) {
-        context.go('/login');
-      }
+    shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    )..repeat();
+
+    Future.delayed(const Duration(milliseconds: 6200), () {
+      if (mounted) context.go('/login');
     });
   }
 
   @override
   void dispose() {
-    robotController.dispose();
+    floatController.dispose();
+    shimmerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    const rest = "duFlowAI";
+    final size = MediaQuery.of(context).size;
+    const navy = Color(0xFF1E293B);
+    const blue = Color(0xFF2F80FF);
+    const purple = Color(0xFF9C6BFF);
+    const gold = Color(0xFFFFB020);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          /// 1. ULTRA-PREMIUM LIQUID GRADIENT BACKGROUND
+          /// 1. PREMIUM LIGHT GRADIENT BASE
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFFE0F7FA),
-                  Color(0xFFF1F5F9),
-                  Color(0xFFE3F2FD)
-                ],
+                colors: [Color(0xFFEFF6FF), Color(0xFFF8FAFC), Color(0xFFF3E8FF)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                stops: [0.1, 0.5, 0.9],
+                stops: [0.0, 0.5, 1.0],
               ),
             ),
           ),
 
-          /// 2. BLURRED GLOW ORBS (Glassmorphism Effect)
+          /// 2. BIG SOFT GLOW ORBS
           Positioned(
-            top: -100,
-            left: -50,
+            top: -90,
+            left: -60,
             child: Container(
-              width: 350,
-              height: 350,
+              width: 320,
+              height: 320,
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF4FC3F7).withValues(alpha: 0.4)),
+                  shape: BoxShape.circle, color: blue.withValues(alpha: 0.28)),
             )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .scale(
                     duration: 5.seconds,
                     begin: const Offset(1, 1),
-                    end: const Offset(1.3, 1.3))
-                .moveX(begin: 0, end: 30, duration: 4.seconds),
+                    end: const Offset(1.35, 1.35))
+                .moveX(begin: 0, end: 35, duration: 4.seconds),
           ),
-
           Positioned(
-            bottom: -150,
-            right: -100,
+            bottom: -140,
+            right: -90,
             child: Container(
-              width: 400,
-              height: 400,
+              width: 380,
+              height: 380,
               decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFF7E57C2).withValues(alpha: 0.3)),
+                  shape: BoxShape.circle, color: purple.withValues(alpha: 0.24)),
             )
                 .animate(onPlay: (c) => c.repeat(reverse: true))
                 .scale(
                     duration: 6.seconds,
                     begin: const Offset(1, 1),
                     end: const Offset(1.4, 1.4))
-                .moveY(begin: 0, end: -40, duration: 5.seconds),
+                .moveY(begin: 0, end: -35, duration: 5.seconds),
+          ),
+          Positioned(
+            top: size.height * 0.35,
+            right: -70,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle, color: gold.withValues(alpha: 0.18)),
+            )
+                .animate(onPlay: (c) => c.repeat(reverse: true))
+                .scale(
+                    duration: 4.seconds,
+                    begin: const Offset(1, 1),
+                    end: const Offset(1.25, 1.25)),
           ),
 
-          // Glass Blur Layer over Orbs
+          // Glass blur layer
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-              child: Container(color: Colors.white.withValues(alpha: 0.2)),
+              filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
+              child: Container(color: Colors.white.withValues(alpha: 0.18)),
             ),
           ),
 
-          /// 3. QUANTUM PARTICLES (Organic Floating)
-          ...List.generate(25, (index) {
-            final double size = Random().nextDouble() * 5 + 2;
+          /// 3. SPARKLE PARTICLES (floating + twinkling)
+          ...List.generate(28, (index) {
+            final double s = Random().nextDouble() * 5 + 2;
             return Positioned(
-              left: Random().nextDouble() * MediaQuery.of(context).size.width,
-              top: Random().nextDouble() * MediaQuery.of(context).size.height,
+              left: Random().nextDouble() * size.width,
+              top: Random().nextDouble() * size.height,
               child: Container(
-                width: size,
-                height: size,
+                width: s,
+                height: s,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                        color: const Color(0xFF42A5F5), blurRadius: size * 2)
-                  ],
+                  boxShadow: [BoxShadow(color: blue.withValues(alpha: 0.7), blurRadius: s * 2.5)],
                 ),
               )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .moveY(
                       begin: 0,
-                      end: -50 - Random().nextDouble() * 50,
-                      duration: (2000 + index * 150).ms,
+                      end: -45 - Random().nextDouble() * 55,
+                      duration: (2000 + index * 130).ms,
                       curve: Curves.easeInOutSine)
-                  .moveX(
-                      begin: 0,
-                      end: 20 - Random().nextDouble() * 40,
-                      duration: (2000 + index * 200).ms,
-                      curve: Curves.easeInOutSine)
-                  .fadeIn(duration: 800.ms),
+                  .fadeIn(duration: 700.ms, delay: (index * 40).ms)
+                  .then()
+                  .fadeOut(delay: 1200.ms, duration: 600.ms)
+                  .then()
+                  .fadeIn(duration: 400.ms),
             );
           }),
 
-          /// 4. HOLOGRAPHIC ROBOT MASCOT
-          Positioned(
-            top: MediaQuery.of(context).size.height * 0.15,
-            left: 0,
-            right: 0,
-            child: AnimatedBuilder(
-              animation: robotController,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, sin(robotController.value * pi) * 15),
-                  child: Transform.rotate(
-                    angle: sin(robotController.value * pi * 2) * 0.05,
-                    child: child,
-                  ),
-                );
-              },
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Outer Glow Ring
-                  Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: const Color(0xFF42A5F5).withValues(alpha: 0.3),
-                          width: 2),
-                    ),
-                  )
-                      .animate(onPlay: (c) => c.repeat())
-                      .scale(
-                          begin: const Offset(0.8, 0.8),
-                          end: const Offset(1.5, 1.5),
-                          duration: 2.seconds)
-                      .fadeOut(duration: 2.seconds),
+          /// 4. SPINNING SPARKLE STARS AROUND THE LOGO ZONE (extra "wow")
+          ...List.generate(6, (i) {
+            final angle = (pi * 2 / 6) * i;
+            const radius = 150.0;
+            return Positioned(
+              top: size.height * 0.42 + radius * sin(angle),
+              left: size.width / 2 + radius * cos(angle) - 10,
+              child: Icon(Icons.auto_awesome_rounded,
+                      size: 16 + Random().nextInt(10).toDouble(),
+                      color: [blue, purple, gold][i % 3].withValues(alpha: 0.8))
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .fadeIn(delay: (3800 + i * 150).ms, duration: 500.ms)
+                  .scale(
+                      begin: const Offset(0.4, 0.4),
+                      end: const Offset(1.1, 1.1),
+                      duration: 1200.ms)
+                  .then()
+                  .rotate(duration: 2.seconds, begin: 0, end: 0.15),
+            );
+          }),
 
-                  // Robot Glass Capsule
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF42A5F5).withValues(alpha: 0.5),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                        BoxShadow(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          blurRadius: 12,
-                          spreadRadius: -2,
-                          offset: const Offset(-2, -2),
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.smart_toy_rounded,
-                          size: 50, color: Color(0xFF1E293B)),
-                    ),
-                  ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 1.seconds).scale(
-                begin: const Offset(0.5, 0.5), curve: Curves.easeOutBack),
-          ),
-
-          /// 5. NETFLIX-STYLE LOGO REVEAL
+          /// 5. THE LOGO STAGE — every letter enters from a different side
           Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // --- THE GIANT 'E' ---
-                const Text(
-                  "E",
-                  style: TextStyle(
-                    fontSize: 85,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -2,
-                    color: Color(0xFF1E293B),
-                    fontStyle: FontStyle.italic,
-                  ),
-                )
-                    .animate()
-                    .scale(
-                        begin: const Offset(3, 3),
-                        end: const Offset(1, 1),
-                        duration: 1200.ms,
-                        curve: Curves.elasticOut)
-                    .fadeIn(duration: 800.ms)
-                    .custom(
-                      duration: 1000.ms,
-                      builder: (context, value, child) => Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                                color: const Color(0xFF42A5F5)
-                                    .withValues(alpha: 0.4 * value),
-                                blurRadius: 40 * value)
+            child: Padding(
+              padding: EdgeInsets.only(top: size.height * 0.02),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  /// --- THE 'E' + GRADUATION CAP STACK ---
+                  Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.center,
+                    children: [
+                      // The big E — crashes down from way above with a bounce
+                      Text(
+                        "E",
+                        style: TextStyle(
+                          fontSize: 88,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -2,
+                          fontStyle: FontStyle.italic,
+                          color: navy,
+                          shadows: [
+                            Shadow(color: blue.withValues(alpha: 0.35), blurRadius: 25),
                           ],
                         ),
-                        child: child,
+                      )
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .slideY(
+                              begin: -3.5,
+                              end: 0,
+                              duration: 900.ms,
+                              curve: Curves.bounceOut)
+                          .then(delay: 100.ms)
+                          .shake(duration: 350.ms, hz: 5, rotation: 0.03),
+
+                      // Graduation cap — drops from above, lands on the E
+                      Positioned(
+                        top: -34,
+                        child: Icon(Icons.school_rounded, size: 40, color: gold)
+                            .animate()
+                            .fadeIn(delay: 1250.ms, duration: 250.ms)
+                            .slideY(
+                                begin: -2.5,
+                                end: 0,
+                                delay: 1250.ms,
+                                duration: 550.ms,
+                                curve: Curves.bounceOut)
+                            .rotate(
+                                delay: 1250.ms,
+                                begin: -0.3,
+                                end: -0.08,
+                                duration: 550.ms,
+                                curve: Curves.easeOutBack)
+                            .then()
+                            .shimmer(
+                                delay: 300.ms,
+                                duration: 1200.ms,
+                                color: Colors.white.withValues(alpha: 0.8)),
                       ),
-                    ),
+                    ],
+                  ),
 
-                // --- THE REST OF THE NAME ---
-                ...rest.split('').asMap().entries.map((entry) {
-                  int i = entry.key;
-                  String letter = entry.value;
-                  bool isAI = letter == "A" || letter == "I";
+                  /// --- "duFlow" — each letter flies in from a random direction
+                  ...("duFlow".split('')).asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final letter = entry.value;
+                    // alternate entrance directions for chaos-but-controlled effect
+                    final dirs = [
+                      const Offset(0, -2.2), // from top
+                      const Offset(0, 2.2), // from bottom
+                      const Offset(-2.5, 0), // from left
+                      const Offset(2.5, 0), // from right
+                      const Offset(0, -2.2),
+                      const Offset(0, 2.2),
+                    ];
+                    final dir = dirs[i % dirs.length];
+                    return Text(
+                      letter,
+                      style: const TextStyle(
+                        fontSize: 62,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1,
+                        fontStyle: FontStyle.italic,
+                        color: navy,
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(delay: (1600 + i * 120).ms, duration: 350.ms)
+                        .slide(
+                            begin: dir,
+                            end: Offset.zero,
+                            delay: (1600 + i * 120).ms,
+                            duration: 450.ms,
+                            curve: Curves.easeOutBack)
+                        .then()
+                        .shake(duration: 200.ms, hz: 4, rotation: 0.015);
+                  }),
 
-                  return Text(
-                    letter,
-                    style: TextStyle(
-                      fontSize: 65,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                      color: isAI
-                          ? const Color(0xFF42A5F5)
-                          : const Color(0xFF334155),
-                      fontStyle: FontStyle.italic,
+                  /// --- "AI" — distinct shimmering gradient treatment
+                  AnimatedBuilder(
+                    animation: shimmerController,
+                    builder: (context, child) {
+                      return ShaderMask(
+                        shaderCallback: (bounds) {
+                          final t = shimmerController.value;
+                          return LinearGradient(
+                            colors: const [blue, purple, gold, blue],
+                            stops: const [0.0, 0.35, 0.65, 1.0],
+                            begin: Alignment(-1 + 2 * t, 0),
+                            end: Alignment(1 + 2 * t, 0),
+                          ).createShader(bounds);
+                        },
+                        child: child,
+                      );
+                    },
+                    child: const Text(
+                      "AI",
+                      style: TextStyle(
+                        fontSize: 66,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1,
+                        fontStyle: FontStyle.italic,
+                        color: Colors.white, // masked by shader
+                      ),
                     ),
                   )
                       .animate()
-                      .fadeIn(
-                          delay: (1500 + i * 80).ms,
-                          duration: 400.ms) // Domino effect
-                      .slideX(
-                          begin: 0.5,
-                          end: 0,
-                          duration: 400.ms,
-                          curve: Curves.easeOutBack)
+                      .fadeIn(delay: 2450.ms, duration: 300.ms)
                       .scale(
-                          begin: const Offset(0.5, 0.5),
+                          begin: const Offset(0.2, 0.2),
+                          end: const Offset(1.25, 1.25),
+                          delay: 2450.ms,
+                          duration: 450.ms,
+                          curve: Curves.easeOutBack)
+                      .then()
+                      .scale(
+                          begin: const Offset(1.25, 1.25),
                           end: const Offset(1, 1),
-                          duration: 400.ms);
-                }),
+                          duration: 200.ms)
+                      .then()
+                      .custom(
+                        duration: 1000.ms,
+                        builder: (context, value, child) => Container(
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                  color: purple.withValues(alpha: 0.5 * value),
+                                  blurRadius: 45 * value),
+                            ],
+                          ),
+                          child: child,
+                        ),
+                      ),
 
-                // --- V2.0 BADGE ---
-                Container(
-                  margin: const EdgeInsets.only(left: 8, top: 20),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.amberAccent,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.5), blurRadius: 10)
-                    ],
-                  ),
-                  child: const Text("v2.0",
+                  // --- V2.0 BADGE
+                  Container(
+                    margin: const EdgeInsets.only(left: 8, top: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: gold,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.5), blurRadius: 12)],
+                    ),
+                    child: const Text(
+                      "v2.0",
                       style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          fontStyle: FontStyle.italic)),
-                )
-                    .animate()
-                    .fadeIn(delay: 2400.ms)
-                    .scale(curve: Curves.elasticOut),
-              ],
+                          fontStyle: FontStyle.italic),
+                    ),
+                  ).animate().fadeIn(delay: 3100.ms).scale(curve: Curves.elasticOut),
+                ],
+              ),
             ),
           ),
 
-          /// 6. LASER SCANNER (Sweeps across the text)
+          /// 6. LIGHT SWEEP ACROSS FULL LOGO ONCE EVERYTHING HAS LANDED
           Positioned.fill(
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: const Alignment(0, -0.06),
               child: Container(
-                width: 5,
-                height: 120,
+                width: 6,
+                height: 130,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                        color: const Color(0xFF42A5F5).withValues(alpha: 0.8),
-                        blurRadius: 20,
-                        spreadRadius: 5),
-                    BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        blurRadius: 5,
-                        spreadRadius: 2),
-                  ],
+                  gradient: LinearGradient(colors: [
+                    Colors.white.withValues(alpha: 0.0),
+                    Colors.white.withValues(alpha: 0.95),
+                    Colors.white.withValues(alpha: 0.0),
+                  ]),
+                  boxShadow: [BoxShadow(color: blue.withValues(alpha: 0.6), blurRadius: 18)],
                 ),
               )
                   .animate()
-                  .fadeIn(delay: 1000.ms, duration: 100.ms)
+                  .fadeIn(delay: 3300.ms, duration: 100.ms)
                   .moveX(
-                      begin: -50,
-                      end: MediaQuery.of(context).size.width + 50,
-                      duration: 1800.ms,
-                      curve: Curves.easeInOutSine)
-                  .fadeOut(delay: 2700.ms, duration: 100.ms),
+                      begin: -size.width / 2 - 60,
+                      end: size.width / 2 + 60,
+                      duration: 900.ms,
+                      curve: Curves.easeInOutCubic)
+                  .fadeOut(delay: 4150.ms, duration: 150.ms),
             ),
           ),
 
-          /// 7. BOTTOM ICONS (Elegant Slide Up)
+          /// 7. BOTTOM FEATURE ICONS
           Positioned(
-            bottom: 120,
+            bottom: size.height * 0.16,
             left: 0,
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildBottomIcon(Icons.school_rounded, 2800.ms),
-                const SizedBox(width: 40),
-                _buildBottomIcon(Icons.auto_awesome, 3000.ms,
-                    isBlue: true), // Magic/AI Icon
-                const SizedBox(width: 40),
-                _buildBottomIcon(Icons.memory_rounded, 3200.ms),
+                _bottomIcon(Icons.menu_book_rounded, navy, 4300.ms),
+                const SizedBox(width: 36),
+                _bottomIcon(Icons.auto_awesome_rounded, blue, 4450.ms, glow: blue),
+                const SizedBox(width: 36),
+                _bottomIcon(Icons.emoji_events_rounded, gold, 4600.ms),
               ],
             ),
           ),
 
           /// 8. TAGLINE
           Positioned(
-            bottom: 50,
+            bottom: size.height * 0.08,
             left: 0,
             right: 0,
             child: const Center(
               child: Text(
-                "Smart School. Smart Future.",
+                "SMART SCHOOL. SMART FUTURE.",
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF64748B),
                   fontStyle: FontStyle.italic,
-                  letterSpacing: 2,
+                  letterSpacing: 3,
                 ),
               ),
             )
                 .animate()
-                .fadeIn(delay: 3500.ms)
-                .slideY(begin: 1, curve: Curves.easeOutBack),
+                .fadeIn(delay: 5000.ms, duration: 500.ms)
+                .slideY(begin: 1, end: 0, curve: Curves.easeOutBack),
           ),
         ],
       ),
     );
   }
 
-  // Helper for Bottom Icons
-  Widget _buildBottomIcon(IconData icon, Duration delay,
-      {bool isBlue = false}) {
+  Widget _bottomIcon(IconData icon, Color color, Duration delay, {Color? glow}) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isBlue ? const Color(0xFF42A5F5).withValues(alpha: 0.1) : Colors.white,
+        color: Colors.white,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 5))
+              color: (glow ?? Colors.black).withValues(alpha: glow != null ? 0.25 : 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 5)),
         ],
       ),
-      child: Icon(icon,
-          size: 26,
-          color: isBlue ? const Color(0xFF42A5F5) : const Color(0xFF94A3B8)),
+      child: Icon(icon, size: 24, color: color),
     )
         .animate()
         .fadeIn(delay: delay)
-        .slideY(begin: 1, curve: Curves.easeOutBack);
+        .slideY(begin: 1, end: 0, curve: Curves.easeOutBack)
+        .then()
+        .scale(
+            begin: const Offset(1, 1), end: const Offset(1.12, 1.12), duration: 300.ms)
+        .then()
+        .scale(begin: const Offset(1.12, 1.12), end: const Offset(1, 1), duration: 200.ms);
   }
 }
