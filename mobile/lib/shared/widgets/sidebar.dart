@@ -846,33 +846,33 @@ class _SidebarState extends ConsumerState<Sidebar> {
       case 'finance':
         return [
           _buildCategory(
-              "Payments",
+              "Collection & Gateway",
               [
                 _MenuItem(
-                    icon: Icons.add_circle_outline,
+                    icon: Icons.account_balance_wallet_outlined,
                     label: "Add Payment",
                     path: '/finance/add-payment',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
-                    icon: Icons.security,
-                    label: "Payment Gateway",
+                    icon: Icons.security_outlined,
+                    label: "Configure Gateway",
                     path: '/finance/gateway',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],
               isDarkMode),
           _buildCategory(
-              "Reports & Tracking",
+              "Records & Analytics",
               [
                 _MenuItem(
-                    icon: Icons.description,
-                    label: "Finance Reports",
+                    icon: Icons.trending_up,
+                    label: "Monthly Reports",
                     path: '/finance/reports',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
-                    icon: Icons.people,
+                    icon: Icons.people_outline,
                     label: "Fees Tracker",
                     path: '/finance/fees-tracker',
                     onTap: _navigate,
@@ -880,12 +880,18 @@ class _SidebarState extends ConsumerState<Sidebar> {
               ],
               isDarkMode),
           _buildCategory(
-              "Setup / Configuration",
+              "Management",
               [
                 _MenuItem(
-                    icon: Icons.security,
+                    icon: Icons.layers_outlined,
                     label: "Fee Setup",
-                    path: '/finance/reports',
+                    path: '/finance/fee-setup', // 🔥 Path theek kar diya hai
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.campaign_outlined,
+                    label: "Fees Notice Hub", // 🔥 Naya module add kar diya
+                    path: '/finance/fees-notice',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],
