@@ -49,6 +49,7 @@ import '../features/teacher/screens/teacher_assignments.dart';
 import '../features/finance/screens/finance_dashboard.dart';
 import '../features/finance/screens/finance_add_payment.dart';
 import '../features/finance/screens/finance_fee_receipt.dart';
+import '../features/finance/screens/finance_fee_reports.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -327,6 +328,11 @@ final appRouter = GoRouter(
         final id = state.pathParameters['id']!;
         return FinanceFeeReceipt(receiptId: id);
       },
+    ),
+
+    GoRoute(
+      path: '/finance/reports',
+      builder: (context, state) => const FinanceFeeReports(),
     ),
 
     GoRoute(
