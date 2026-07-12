@@ -47,6 +47,7 @@ import '../features/teacher/screens/teacher_upload_result.dart';
 import '../features/teacher/screens/teacher_upload_syllabus.dart';
 import '../features/teacher/screens/teacher_assignments.dart';
 import '../features/finance/screens/finance_dashboard.dart';
+import '../features/finance/screens/finance_add_payment.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -312,6 +313,11 @@ final appRouter = GoRouter(
           childBuilder: (query) => FinanceDashboard(searchQuery: query),
         );
       },
+    ),
+
+    GoRoute(
+      path: '/finance/add-payment',
+      builder: (context, state) => const FinanceAddPayment(),
     ),
 
     GoRoute(

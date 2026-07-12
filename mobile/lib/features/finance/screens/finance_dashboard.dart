@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/theme_provider.dart';
+import 'package:flutter/services.dart';
 
 class FinanceDashboard extends ConsumerStatefulWidget {
   final String? searchQuery;
@@ -17,6 +18,7 @@ class FinanceDashboard extends ConsumerStatefulWidget {
 class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
   bool isLoading = true;
   Timer? _pollingTimer;
+  DateTime? _lastPressedAt;
 
   Map<String, dynamic> stats = {
     'collectedToday': 0,
@@ -119,10 +121,62 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        if (context.canPop()) {
-          context.pop();
+
+        final now = DateTime.now();
+        if (_lastPressedAt == null ||
+            now.difference(_lastPressedAt!) > const Duration(seconds: 2)) {
+          _lastPressedAt = now;
+          // 🔥 PREMIUM EXIT TOAST 🔥
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.only(
+                bottom: 740, // Height check kar lena apne hisaab se
+                left: 35,
+                right: 35,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              content: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.36),
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.white.withValues(alpha: 0.04),
+                      blurRadius: 25,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  "Press BACK again to EXIT app",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontStyle: FontStyle.italic,
+                    color: Color(0xFFE2E8F0),
+                    fontSize: 10,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          );
         } else {
-          context.go('/finance/dashboard');
+          SystemNavigator.pop(); // 🔥 APP BAND HO JAYEGI 🔥
         }
       },
       child: Container(
@@ -321,7 +375,7 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 120), // 🔥 LOCK 120px EXTRA BOTTOM SPACE FOR NAVIGATION BAR 🔥
+                    const SizedBox(height: 80), // 🔥 LOCK 120px EXTRA BOTTOM SPACE FOR NAVIGATION BAR 🔥
                   ],
                 ),
               ),
