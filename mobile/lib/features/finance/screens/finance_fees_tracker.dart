@@ -330,7 +330,7 @@ class _FinanceFeesTrackerState extends ConsumerState<FinanceFeesTracker> {
                                                   const SizedBox(height: 6),
                                                   Row(
                                                     children: [
-                                                      Text("ADM: ${student['admissionNo'] ?? 'N/A'}", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1)),
+                                                      // Text("ADM: ${student['admissionNo'] ?? 'N/A'}", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1)),
                                                       Container(margin: const EdgeInsets.symmetric(horizontal: 6), width: 3, height: 3, decoration: BoxDecoration(color: textColorSecondary, shape: BoxShape.circle)),
                                                       Text("ENR: ${student['enrollmentNo'] ?? 'N/A'}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 1)),
                                                     ],

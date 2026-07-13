@@ -53,6 +53,7 @@ import '../features/finance/screens/finance_fee_reports.dart';
 import '../features/finance/screens/finance_fee_setup.dart';
 import '../features/finance/screens/finance_fees_notice.dart';
 import '../features/finance/screens/finance_fees_tracker.dart';
+import '../features/finance/screens/finance_student_ledger.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -352,7 +353,14 @@ final appRouter = GoRouter(
       path: '/finance/fees-tracker',
       builder: (context, state) => const FinanceFeesTracker(),
     ),
-    
+
+    GoRoute(
+      path: '/finance/student-ledger/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return FinanceStudentLedger(studentId: id);
+      },
+    ),
 
     GoRoute(
       path: '/',
