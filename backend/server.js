@@ -1,27 +1,27 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
-const path = require('path'); // File path handle karne ke liye
+const path = require('path');
 const connectDB = require('./config/db.js');
-const upload = require('./middleware/uploadMiddleware'); // Step 2 wala middleware
+const upload = require('./middleware/uploadMiddleware');
 
 // Routes Import
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const timetableRoutes = require('./routes/timetableRoutes');
-const feeRoutes = require('./routes/feeRoutes'); 
+const feeRoutes = require('./routes/feeRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 const noticeRoutes = require('./routes/noticeRoutes');
 const supportRoutes = require('./routes/supportRoutes');
-const syllabusRoutes = require('./routes/syllabusRoutes')
+const syllabusRoutes = require('./routes/syllabusRoutes');
 const libraryRoutes = require('./routes/libraryRoutes');
 const liveClassRoutes = require('./routes/liveClassRoutes');
 const superAdminRoutes = require('./routes/superAdminRoutes');
 const schoolRoutes = require('./routes/schoolRoutes');
 const technicalRoutes = require('./routes/technicalRoutes');
 const homeworkRoutes = require('./routes/homeworkRoutes');
-const feeNoticeRoutes = require('./routes/feeNoticeRoutes'); 
+const feeNoticeRoutes = require('./routes/feeNoticeRoutes');
 const leaveRoutes = require('./routes/leaveRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const examSyllabusRoutes = require('./routes/examSyllabusRoutes');
@@ -40,27 +40,58 @@ require('./utils/penaltyCron');
 
 const app = express();
 
+/* =========================
+   CORS CONFIGURATION
+========================= */
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://eduflowai.uk",
+  "https://www.eduflowai.uk"
+];
+
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+  origin: function (origin, callback) {
+    // Postman ya mobile apps ke liye
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization"
+  ]
 }));
+
+// Preflight requests handle karega
+app.options('*', cors());
+
+/* ========================= */
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// --- DAY 44: STATIC FOLDER & UPLOAD API ---
-// Isse browser hamare uploads folder ki files dekh payega
-app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+// Static Uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// File Upload Route
+// Upload Route
 app.post('/api/upload', upload.single('file'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-    }
-    // File ka path frontend ko wapas bhej rahe hain
-    res.send(`/${req.file.path.replace(/\\/g, "/")}`);
+  if (!req.file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  res.send(`/${req.file.path.replace(/\\/g, "/")}`);
 });
-// ------------------------------------------
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -80,24 +111,27 @@ app.use('/api/technical', technicalRoutes);
 app.use('/api/homework', homeworkRoutes);
 app.use('/api/fee-notices', feeNoticeRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/leaves', require('./routes/leaveRoutes'));
+app.use('/api/leaves', leaveRoutes);
 app.use('/api/exam-syllabus', examSyllabusRoutes);
 app.use('/api/datesheet', datesheetRoutes);
 app.use('/api/admitcard', admitCardRoutes);
 app.use('/api/exam-results', resultRoutes);
 app.use('/api/academic-calendar', academicCalendarRoutes);
 app.use('/api/feedback', feedbackRoutes);
+
 app.get('/', (req, res) => {
-    res.send('EduFlowAI API is running...');
+  res.send('EduFlowAI API is running...');
 });
 
-// Error handling for undefined routes
-app.use((req, res, next) => {
-    res.status(404).json({ message: "Route not found" });
+// 404
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
 });
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(
+    `🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
+  );
 });
