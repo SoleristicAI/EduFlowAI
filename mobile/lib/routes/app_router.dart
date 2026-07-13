@@ -51,6 +51,7 @@ import '../features/finance/screens/finance_add_payment.dart';
 import '../features/finance/screens/finance_fee_receipt.dart';
 import '../features/finance/screens/finance_fee_reports.dart';
 import '../features/finance/screens/finance_fee_setup.dart';
+import '../features/finance/screens/finance_fees_notice.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -339,6 +340,11 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/finance/fee-setup',
       builder: (context, state) => const FinanceFeeSetup(),
+    ),
+
+    GoRoute(
+      path: '/finance/fees-notice',
+      builder: (context, state) => const FinanceFeesNotice(),
     ),
 
     GoRoute(

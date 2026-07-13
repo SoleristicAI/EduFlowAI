@@ -191,51 +191,13 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
               child: SingleChildScrollView(
                 // BouncingScrollPhysics ensures pull down refresh triggers smoothly
                 physics: const BouncingScrollPhysics(),
-                child: Column(
-                  children: [
-                    // --- SEAMLESS HEADER ---
-                    Transform.translate(
-                      offset: const Offset(0, -3), // Seamlessly merges with LayoutWrapper Navbar
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 30, bottom: 80, left: 24, right: 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isDarkMode ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] : [const Color(0xFF64B5F6), const Color(0xFF42A5F5)],
-                            begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                          ),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
-                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text("Finance Hub", style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)),
-                                Text("ACCOUNTANT PANEL", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
-                              ],
-                            ),
-                            GestureDetector(
-                              onTap: () => context.push('/finance/add-payment'),
-                              child: Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))]),
-                                child: const Icon(Icons.add, color: Color(0xFF42A5F5), size: 24),
-                              ),
-                            ).animate().scale(curve: Curves.easeOutBack),
-                          ],
-                        ),
-                      ),
-                    ).animate().slideY(begin: -0.2, duration: 500.ms),
-
-                    // --- BODY CONTENT ---
-                    Transform.translate(
-                      offset: const Offset(0, -30),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Column(
-                          children: [
+              child: Column(
+                children: [
+                  // --- BODY CONTENT ---
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
+                    child: Column(
+                      children: [
                             // 1. ANALYTICS GRID
                             GridView.builder(
                               padding: EdgeInsets.zero,
@@ -374,7 +336,6 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
                           ],
                         ),
                       ),
-                    ),
                     const SizedBox(height: 80), // 🔥 LOCK 120px EXTRA BOTTOM SPACE FOR NAVIGATION BAR 🔥
                   ],
                 ),
