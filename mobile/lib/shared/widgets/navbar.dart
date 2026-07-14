@@ -57,16 +57,17 @@ class _NavbarState extends ConsumerState<Navbar> {
     super.dispose();
   }
 
- // 🔥 EXTRACT PATH CORRECTION IN NAVBAR 🔥
+  // 🔥 EXTRACT PATH CORRECTION IN NAVBAR 🔥
   Future<void> _fetchUnreadCount() async {
     try {
       // 🔴 REPLACED UNREAD-COUNT WITH ACTUAL ENDPOINT '/notices/my-notices'
       final response = await ApiClient.dio.get('/notices/my-notices');
-      
+
       if (mounted && response.data != null) {
         // Response map ke andar se 'unreadCount' key nikal rahe hain
-        final int fetchedCount = int.tryParse(response.data['unreadCount'].toString()) ?? 0;
-        
+        final int fetchedCount =
+            int.tryParse(response.data['unreadCount'].toString()) ?? 0;
+
         if (fetchedCount != unreadCount) {
           setState(() {
             unreadCount = fetchedCount;
@@ -124,9 +125,6 @@ class _NavbarState extends ConsumerState<Navbar> {
     // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
-    
-    // 🔥 THE MASTER FIX: Get top safe area (Dynamic Island/Notch size) 🔥
-    final double topSafeArea = MediaQuery.of(context).padding.top;
 
     final role = user?['role'] ?? 'student';
     final name = user?['name'] ?? 'Guest';
@@ -138,6 +136,9 @@ class _NavbarState extends ConsumerState<Navbar> {
         ? role[0].toUpperCase() + role.substring(1).toLowerCase()
         : '';
 
+    // 🔥 DYNAMIC TOP PADDING: Notch/Dynamic Island se bachane ke liye 🔥
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         bottomLeft: Radius.circular(40),
@@ -145,12 +146,9 @@ class _NavbarState extends ConsumerState<Navbar> {
       ),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500), // Smooth color transition
-        // 🔥 FIX: Hardcoded '30' ki jagah SafeArea ki padding add kardi + 10px breathing room
+        // 🔥 Yahan humne top padding ko statusBarHeight + 15 kar diya hai 🔥
         padding: EdgeInsets.only(
-            top: topSafeArea > 0 ? topSafeArea + 10 : 30, 
-            left: 20, 
-            right: 20, 
-            bottom: 15),
+            top: statusBarHeight + 15, left: 20, right: 20, bottom: 20),
         decoration: BoxDecoration(
           // 🔥 DYNAMIC BACKGROUND: Light mode me Blue, Dark mode me Dark Slate/Blue
           color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5),
@@ -161,151 +159,57 @@ class _NavbarState extends ConsumerState<Navbar> {
                 offset: const Offset(0, 4)),
           ],
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
+        // 🔥 Red line hata di aur direct Column laga diya 🔥
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // --- 1. TOP MOVING ORANGE LINE ANIMATION ---
-            Positioned(
-              top: -55,
-              left: -24,
-              right: -24,
-              child: Container(
-                height: 4,
-                width: double.infinity,
-                color: Colors.red.withValues(alpha: 0.1),
-                child: Stack(
-                  children: [
-                    Container(
-                      width: 150,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.orangeAccent,
-                            Colors.transparent
-                          ],
-                        ),
-                      ),
-                    ).animate(onPlay: (c) => c.repeat()).slideX(
-                        begin: -5,
-                        end: 5,
-                        duration: 2.5.seconds,
-                        curve: Curves.linear),
-                  ],
-                ),
-              ),
-            ),
-
-            // --- MAIN CONTENT ---
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: widget.onMenuClick,
-                          child: const Icon(Icons.menu,
-                                  color: Colors.white, size: 26)
-                              .animate()
-                              .fadeIn()
-                              .scale(),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.3)),
-                          ),
-                          child: const Icon(Icons.memory,
-                                  color: Colors.white, size: 16)
-                              .animate(onPlay: (c) => c.repeat())
-                              .rotate(duration: 4.seconds),
-                        ),
-                        const SizedBox(width: 10),
-                        const Text(
-                          "EduFlowAI v2.0",
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: Colors.white,
-                              fontStyle: FontStyle.italic),
-                        ),
-                      ],
+                    GestureDetector(
+                      onTap: widget.onMenuClick,
+                      child: const Icon(Icons.menu, color: Colors.white, size: 26)
+                          .animate()
+                          .fadeIn()
+                          .scale(),
                     ),
-                    Row(
-                      children: [
-                        if (role != 'superadmin')
-                          GestureDetector(
-                            onTap: _handleBellClick,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                        color: Colors.white
-                                            .withValues(alpha: 0.2)),
-                                  ),
-                                  child: const Icon(Icons.notifications_none,
-                                      color: Colors.white, size: 20),
-                                ),
-                                // 🔥 YAHAN AUTO UPDATE HOGA BADGE JAISE HI unreadCount > 0 HOGA 🔥
-                                if (role != 'admin' && unreadCount > 0)
-                                  Positioned(
-                                    top: -4,
-                                    right: -4,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                            color: isDarkMode
-                                                ? const Color(0xFF1E293B)
-                                                : const Color(0xFF42A5F5),
-                                            width: 2),
-                                      ),
-                                      child: Text(
-                                        unreadCount.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w900,
-                                            color: Colors.white),
-                                      ),
-                                    )
-                                        .animate(
-                                            onPlay: (c) =>
-                                                c.repeat(reverse: true))
-                                        .scale(
-                                            begin: const Offset(1, 1),
-                                            end: const Offset(1.2, 1.2)),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(width: 12),
-                        if (role != 'superadmin')
-                          GestureDetector(
-                            onTap: () {
-                              // 🔥 SEEDHA MODAL CALL HO RAHA HAI YAHAN SE 🔥
-                              showDialog(
-                                context: context,
-                                barrierColor: Colors.transparent,
-                                builder: (context) =>
-                                    const TechnicalSupportModal(),
-                              );
-                            },
-                            child: Container(
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.3)),
+                      ),
+                      child: const Icon(Icons.memory,
+                              color: Colors.white, size: 16)
+                          .animate(onPlay: (c) => c.repeat())
+                          .rotate(duration: 4.seconds),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      "EduFlowAI v2.0",
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    if (role != 'superadmin')
+                      GestureDetector(
+                        onTap: _handleBellClick,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.1),
@@ -313,64 +217,112 @@ class _NavbarState extends ConsumerState<Navbar> {
                                 border: Border.all(
                                     color: Colors.white.withValues(alpha: 0.2)),
                               ),
-                              child: const Icon(Icons.headset_mic_outlined,
+                              child: const Icon(Icons.notifications_none,
                                   color: Colors.white, size: 20),
                             ),
+                            // 🔥 YAHAN AUTO UPDATE HOGA BADGE JAISE HI unreadCount > 0 HOGA 🔥
+                            if (role != 'admin' && unreadCount > 0)
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: isDarkMode
+                                            ? const Color(0xFF1E293B)
+                                            : const Color(0xFF42A5F5),
+                                        width: 2),
+                                  ),
+                                  child: Text(
+                                    unreadCount.toString(),
+                                    style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white),
+                                  ),
+                                )
+                                    .animate(
+                                        onPlay: (c) => c.repeat(reverse: true))
+                                    .scale(
+                                        begin: const Offset(1, 1),
+                                        end: const Offset(1.2, 1.2)),
+                              ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(width: 12),
+                    if (role != 'superadmin')
+                      GestureDetector(
+                        onTap: () {
+                          // 🔥 SEEDHA MODAL CALL HO RAHA HAI YAHAN SE 🔥
+                          showDialog(
+                            context: context,
+                            barrierColor: Colors.transparent,
+                            builder: (context) => const TechnicalSupportModal(),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2)),
                           ),
-                      ],
-                    ),
+                          child: const Icon(Icons.headset_mic_outlined,
+                              color: Colors.white, size: 20),
+                        ),
+                      ),
                   ],
                 ),
-                const SizedBox(height: 15),
-
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    border:
-                        Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "$capitalizedRole Portal",
-                    style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1,
-                        fontStyle: FontStyle.italic),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                          text: "$greetingText $greetingEmoji ",
-                          style: const TextStyle(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.bold)),
-                      TextSpan(
-                          text: capitalizedName,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900)),
-                    ],
-                  ),
-                  style: const TextStyle(
-                      fontSize: 24, fontStyle: FontStyle.italic),
-                ),
-                const SizedBox(height: 8),
-
-                // FIXED: Animated Search Bar with Clear Button
-                _AnimatedSearchBar(
-                  searchQuery: widget.searchQuery,
-                  onSearchChanged: widget.onSearchChanged,
-                  isDarkMode:
-                      isDarkMode, // 🔥 Paasing theme state to search bar
-                ),
               ],
+            ),
+            const SizedBox(height: 15),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "$capitalizedRole Portal",
+                style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                    fontStyle: FontStyle.italic),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                      text: "$greetingText $greetingEmoji ",
+                      style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold)),
+                  TextSpan(
+                      text: capitalizedName,
+                      style: const TextStyle(
+                          color: Colors.white, fontWeight: FontWeight.w900)),
+                ],
+              ),
+              style: const TextStyle(fontSize: 24, fontStyle: FontStyle.italic),
+            ),
+            const SizedBox(height: 8),
+
+            // FIXED: Animated Search Bar with Clear Button
+            _AnimatedSearchBar(
+              searchQuery: widget.searchQuery,
+              onSearchChanged: widget.onSearchChanged,
+              isDarkMode: isDarkMode, // 🔥 Paasing theme state to search bar
             ),
           ],
         ),
