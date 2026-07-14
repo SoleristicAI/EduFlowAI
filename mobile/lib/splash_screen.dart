@@ -8,12 +8,6 @@ import 'package:go_router/go_router.dart';
 /// ============================================================
 /// EDUFLOW AI — "MST BHAYANKAR" LIGHT PREMIUM SPLASH SCREEN
 /// ============================================================
-/// Light glassmorphism stage. Every letter flies in from a DIFFERENT
-/// direction (top / bottom / left / right). The "E" crashes in on
-/// its own with a big bounce, and right after it lands, a graduation
-/// cap drops from above and sits on top of it (school branding).
-/// "AI" gets its own shimmering gradient + glow treatment to stand
-/// apart from the rest of the name.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -133,7 +127,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
 
-          /// 3. SPARKLE PARTICLES (floating + twinkling)
+          /// 3. SPARKLE PARTICLES
           ...List.generate(28, (index) {
             final double s = Random().nextDouble() * 5 + 2;
             return Positioned(
@@ -162,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen>
             );
           }),
 
-          /// 4. SPINNING SPARKLE STARS AROUND THE LOGO ZONE (extra "wow")
+          /// 4. SPINNING SPARKLE STARS
           ...List.generate(6, (i) {
             final angle = (pi * 2 / 6) * i;
             const radius = 150.0;
@@ -183,188 +177,188 @@ class _SplashScreenState extends State<SplashScreen>
             );
           }),
 
-          /// 5. THE LOGO STAGE — every letter enters from a different side
+          /// 5. THE LOGO STAGE
           Center(
             child: Padding(
-              padding: EdgeInsets.only(top: size.height * 0.02),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  /// --- THE 'E' + GRADUATION CAP STACK ---
-                  Stack(
-                    clipBehavior: Clip.none,
-                    alignment: Alignment.center,
-                    children: [
-                      // The big E — crashes down from way above with a bounce
-                      Text(
-                        "E",
+              // 🔥 FIX: Added horizontal padding to give it breathing room on narrow screens
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: size.height * 0.02),
+              // 🔥 THE MASTER FIX: FittedBox prevents any overflow and automatically scales down on iOS!
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    /// --- THE 'E' + GRADUATION CAP STACK ---
+                    Stack(
+                      clipBehavior: Clip.none,
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          "E",
+                          style: TextStyle(
+                            fontSize: 88,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -2,
+                            fontStyle: FontStyle.italic,
+                            color: navy,
+                            shadows: [
+                              Shadow(color: blue.withValues(alpha: 0.35), blurRadius: 25),
+                            ],
+                          ),
+                        )
+                            .animate()
+                            .fadeIn(duration: 400.ms)
+                            .slideY(
+                                begin: -3.5,
+                                end: 0,
+                                duration: 900.ms,
+                                curve: Curves.bounceOut)
+                            .then(delay: 100.ms)
+                            .shake(duration: 350.ms, hz: 5, rotation: 0.03),
+
+                        Positioned(
+                          top: -34,
+                          child: Icon(Icons.school_rounded, size: 40, color: gold)
+                              .animate()
+                              .fadeIn(delay: 1250.ms, duration: 250.ms)
+                              .slideY(
+                                  begin: -2.5,
+                                  end: 0,
+                                  delay: 1250.ms,
+                                  duration: 550.ms,
+                                  curve: Curves.bounceOut)
+                              .rotate(
+                                  delay: 1250.ms,
+                                  begin: -0.3,
+                                  end: -0.08,
+                                  duration: 550.ms,
+                                  curve: Curves.easeOutBack)
+                              .then()
+                              .shimmer(
+                                  delay: 300.ms,
+                                  duration: 1200.ms,
+                                  color: Colors.white.withValues(alpha: 0.8)),
+                        ),
+                      ],
+                    ),
+
+                    /// --- "duFlow" ---
+                    ...("duFlow".split('')).asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final letter = entry.value;
+                      final dirs = [
+                        const Offset(0, -2.2),
+                        const Offset(0, 2.2),
+                        const Offset(-2.5, 0),
+                        const Offset(2.5, 0),
+                        const Offset(0, -2.2),
+                        const Offset(0, 2.2),
+                      ];
+                      final dir = dirs[i % dirs.length];
+                      return Text(
+                        letter,
                         style: TextStyle(
-                          fontSize: 88,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: -2,
+                          fontSize: size.width * 0.155, 
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1,
                           fontStyle: FontStyle.italic,
                           color: navy,
-                          shadows: [
-                            Shadow(color: blue.withValues(alpha: 0.35), blurRadius: 25),
-                          ],
                         ),
                       )
                           .animate()
-                          .fadeIn(duration: 400.ms)
-                          .slideY(
-                              begin: -3.5,
-                              end: 0,
-                              duration: 900.ms,
-                              curve: Curves.bounceOut)
-                          .then(delay: 100.ms)
-                          .shake(duration: 350.ms, hz: 5, rotation: 0.03),
+                          .fadeIn(delay: (1600 + i * 120).ms, duration: 350.ms)
+                          .slide(
+                              begin: dir,
+                              end: Offset.zero,
+                              delay: (1600 + i * 120).ms,
+                              duration: 450.ms,
+                              curve: Curves.easeOutBack)
+                          .then()
+                          .shake(duration: 200.ms, hz: 4, rotation: 0.015);
+                    }),
 
-                      // Graduation cap — drops from above, lands on the E
-                      Positioned(
-                        top: -34,
-                        child: Icon(Icons.school_rounded, size: 40, color: gold)
-                            .animate()
-                            .fadeIn(delay: 1250.ms, duration: 250.ms)
-                            .slideY(
-                                begin: -2.5,
-                                end: 0,
-                                delay: 1250.ms,
-                                duration: 550.ms,
-                                curve: Curves.bounceOut)
-                            .rotate(
-                                delay: 1250.ms,
-                                begin: -0.3,
-                                end: -0.08,
-                                duration: 550.ms,
-                                curve: Curves.easeOutBack)
-                            .then()
-                            .shimmer(
-                                delay: 300.ms,
-                                duration: 1200.ms,
-                                color: Colors.white.withValues(alpha: 0.8)),
-                      ),
-                    ],
-                  ),
-
-                  /// --- "duFlow" — each letter flies in from a random direction
-                  ...("duFlow".split('')).asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final letter = entry.value;
-                    // alternate entrance directions for chaos-but-controlled effect
-                    final dirs = [
-                      const Offset(0, -2.2), // from top
-                      const Offset(0, 2.2), // from bottom
-                      const Offset(-2.5, 0), // from left
-                      const Offset(2.5, 0), // from right
-                      const Offset(0, -2.2),
-                      const Offset(0, 2.2),
-                    ];
-                    final dir = dirs[i % dirs.length];
-                    return Text(
-                      letter,
-                      // 🔥 FIX: Hata diya 'const' kyunki 'size.width' runtime property hai
-                      style: TextStyle(
-                        fontSize: size.width * 0.155, 
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
-                        fontStyle: FontStyle.italic,
-                        color: navy,
+                    /// --- "AI" ---
+                    AnimatedBuilder(
+                      animation: shimmerController,
+                      builder: (context, child) {
+                        return ShaderMask(
+                          shaderCallback: (bounds) {
+                            final t = shimmerController.value;
+                            return LinearGradient(
+                              colors: const [blue, purple, gold, blue],
+                              stops: const [0.0, 0.35, 0.65, 1.0],
+                              begin: Alignment(-1 + 2 * t, 0),
+                              end: Alignment(1 + 2 * t, 0),
+                            ).createShader(bounds);
+                          },
+                          child: child,
+                        );
+                      },
+                      child: Text(
+                        "AI",
+                        style: TextStyle(
+                          fontSize: size.width * 0.165,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -1,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white, 
+                        ),
                       ),
                     )
                         .animate()
-                        .fadeIn(delay: (1600 + i * 120).ms, duration: 350.ms)
-                        .slide(
-                            begin: dir,
-                            end: Offset.zero,
-                            delay: (1600 + i * 120).ms,
+                        .fadeIn(delay: 2450.ms, duration: 300.ms)
+                        .scale(
+                            begin: const Offset(0.2, 0.2),
+                            end: const Offset(1.25, 1.25),
+                            delay: 2450.ms,
                             duration: 450.ms,
                             curve: Curves.easeOutBack)
                         .then()
-                        .shake(duration: 200.ms, hz: 4, rotation: 0.015);
-                  }),
-
-                  /// --- "AI" — distinct shimmering gradient treatment
-                  AnimatedBuilder(
-                    animation: shimmerController,
-                    builder: (context, child) {
-                      return ShaderMask(
-                        shaderCallback: (bounds) {
-                          final t = shimmerController.value;
-                          return LinearGradient(
-                            colors: const [blue, purple, gold, blue],
-                            stops: const [0.0, 0.35, 0.65, 1.0],
-                            begin: Alignment(-1 + 2 * t, 0),
-                            end: Alignment(1 + 2 * t, 0),
-                          ).createShader(bounds);
-                        },
-                        child: child,
-                      );
-                    },
-                    // 🔥 FIX: Yaha se 'const' hata diya Text widget se
-                    child: Text(
-                      "AI",
-                      style: TextStyle(
-                        fontSize: size.width * 0.165,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.white, // masked by shader
-                      ),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(delay: 2450.ms, duration: 300.ms)
-                      .scale(
-                          begin: const Offset(0.2, 0.2),
-                          end: const Offset(1.25, 1.25),
-                          delay: 2450.ms,
-                          duration: 450.ms,
-                          curve: Curves.easeOutBack)
-                      .then()
-                      .scale(
-                          begin: const Offset(1.25, 1.25),
-                          end: const Offset(1, 1),
-                          duration: 200.ms)
-                      .then()
-                      .custom(
-                        duration: 1000.ms,
-                        builder: (context, value, child) => Container(
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                  color: purple.withValues(alpha: 0.5 * value),
-                                  blurRadius: 45 * value),
-                            ],
+                        .scale(
+                            begin: const Offset(1.25, 1.25),
+                            end: const Offset(1, 1),
+                            duration: 200.ms)
+                        .then()
+                        .custom(
+                          duration: 1000.ms,
+                          builder: (context, value, child) => Container(
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                    color: purple.withValues(alpha: 0.5 * value),
+                                    blurRadius: 45 * value),
+                              ],
+                            ),
+                            child: child,
                           ),
-                          child: child,
                         ),
-                      ),
 
-                  // --- V2.0 BADGE
-                  Container(
-                    margin: const EdgeInsets.only(left: 8, top: 22),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: gold,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.5), blurRadius: 12)],
-                    ),
-                    child: const Text(
-                      "v2.0",
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          fontStyle: FontStyle.italic),
-                    ),
-                  ).animate().fadeIn(delay: 3100.ms).scale(curve: Curves.elasticOut),
-                ],
+                    // --- V2.0 BADGE
+                    Container(
+                      margin: const EdgeInsets.only(left: 8, top: 22),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: gold,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [BoxShadow(color: gold.withValues(alpha: 0.5), blurRadius: 12)],
+                      ),
+                      child: const Text(
+                        "v2.0",
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            fontStyle: FontStyle.italic),
+                      ),
+                    ).animate().fadeIn(delay: 3100.ms).scale(curve: Curves.elasticOut),
+                  ],
+                ),
               ),
             ),
           ),
 
-          /// 6. LIGHT SWEEP ACROSS FULL LOGO ONCE EVERYTHING HAS LANDED
+          /// 6. LIGHT SWEEP
           Positioned.fill(
             child: Align(
               alignment: const Alignment(0, -0.06),
