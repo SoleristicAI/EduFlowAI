@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'dart:io' show Platform; // 🔥 NAYA IMPORT: OS detect karne ke liye
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -333,11 +334,12 @@ class _NoticeFeedState extends ConsumerState<NoticeFeed> {
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
+    // 🔥 OS CHECK KAR RAHE HAIN (TAAKI iOS PE FONT BADA DIKHE) 🔥
+    final bool isIOS = Platform.isIOS;
+
     // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
     final Color bgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
-    // final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
-    // final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA);
     final Color textPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF0F172A);
     final Color textSecondary = isDarkMode ? const Color(0xFF94A3B8) : Colors.grey.shade600;
@@ -506,9 +508,31 @@ class _NoticeFeedState extends ConsumerState<NoticeFeed> {
                                       ],
                                     ),
                                     const SizedBox(height: 20),
-                                    Text(n['title']?.toString().toUpperCase() ?? 'UNTITLED', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: textPrimary, height: 1.1)),
+                                    
+                                    // 🔥 THE FIX: iOS pe title ka font bada rahega, Android pe exactly 15 rahega
+                                    Text(
+                                      n['title']?.toString().toUpperCase() ?? 'UNTITLED', 
+                                      style: TextStyle(
+                                        fontSize: isIOS ? 18 : 15, 
+                                        fontWeight: FontWeight.w900, 
+                                        fontStyle: FontStyle.italic, 
+                                        color: textPrimary, 
+                                        height: 1.1
+                                      )
+                                    ),
                                     const SizedBox(height: 12),
-                                    Text(n['content'] ?? '', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, fontStyle: FontStyle.italic, color: textSecondary, height: 1.5)),
+
+                                    // 🔥 THE FIX: iOS pe content ka font bada rahega, Android pe exactly 10 rahega
+                                    Text(
+                                      n['content'] ?? '', 
+                                      style: TextStyle(
+                                        fontSize: isIOS ? 13 : 10, 
+                                        fontWeight: FontWeight.w600, 
+                                        fontStyle: FontStyle.italic, 
+                                        color: textSecondary, 
+                                        height: 1.5
+                                      )
+                                    ),
                                     const SizedBox(height: 20),
                                     Divider(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9), thickness: 1), // 🔥 Dynamic Divider
                                     const SizedBox(height: 16),
