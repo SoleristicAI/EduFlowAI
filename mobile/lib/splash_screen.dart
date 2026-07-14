@@ -263,8 +263,9 @@ class _SplashScreenState extends State<SplashScreen>
                     final dir = dirs[i % dirs.length];
                     return Text(
                       letter,
-                      style: const TextStyle(
-                        fontSize: 62,
+                      // 🔥 FIX: Hata diya 'const' kyunki 'size.width' runtime property hai
+                      style: TextStyle(
+                        fontSize: size.width * 0.155, 
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1,
                         fontStyle: FontStyle.italic,
@@ -300,10 +301,11 @@ class _SplashScreenState extends State<SplashScreen>
                         child: child,
                       );
                     },
-                    child: const Text(
+                    // 🔥 FIX: Yaha se 'const' hata diya Text widget se
+                    child: Text(
                       "AI",
                       style: TextStyle(
-                        fontSize: 66,
+                        fontSize: size.width * 0.165,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -1,
                         fontStyle: FontStyle.italic,

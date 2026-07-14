@@ -34,7 +34,8 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
   void initState() {
     super.initState();
     _fetchStats();
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) => _fetchStats(isPolling: true));
+    _pollingTimer = Timer.periodic(
+        const Duration(seconds: 10), (_) => _fetchStats(isPolling: true));
   }
 
   @override
@@ -43,7 +44,8 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
     super.dispose();
   }
 
-  Future<void> _fetchStats({bool isRefresh = false, bool isPolling = false}) async {
+  Future<void> _fetchStats(
+      {bool isRefresh = false, bool isPolling = false}) async {
     if (!isRefresh && !isPolling && mounted) setState(() => isLoading = true);
 
     try {
@@ -83,9 +85,12 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
     final Color cardColor = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
-    final Color cardBorder = isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA);
-    final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
-    final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final Color cardBorder =
+        isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA);
+    final Color textColorPrimary =
+        isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
+    final Color textColorSecondary =
+        isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
     // 🔥 FIX 1: Agar page load ho raha hai, toh pura global CustomLoader (jisme scaffold tha) mat bhej.
     // Uska framework architecture clash khatam karne ke liye hum local native container bhejenge.
@@ -102,17 +107,57 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
     }
 
     final List<Map<String, dynamic>> statCards = [
-      {'label': "Today's collection", 'value': stats['collectedToday'], 'icon': Icons.account_balance_wallet, 'color': const Color(0xFF42A5F5), 'path': '/finance/add-payment'},
-      {'label': "Monthly collection", 'value': stats['collectedMonth'], 'icon': Icons.trending_up, 'color': const Color(0xFF10B981), 'path': '/finance/reports'},
-      {'label': "Students fees", 'value': "Track records", 'icon': Icons.people, 'color': const Color(0xFFF97316), 'path': '/finance/fees-tracker'},
-      {'label': "Fees details", 'value': "Class setup", 'icon': Icons.layers, 'color': const Color(0xFF3B82F6), 'path': '/finance/fee-setup'},
-      {'label': "Payments", 'value': "Configure UPI/QR", 'icon': Icons.security, 'color': const Color(0xFF34D399), 'path': '/finance/gateway'},
-      {'label': "Fees Notice Hub", 'value': "Publish Notices", 'icon': Icons.campaign, 'color': const Color(0xFFF43F5E), 'path': '/finance/fees-notice'},
+      {
+        'label': "Today's collection",
+        'value': stats['collectedToday'],
+        'icon': Icons.account_balance_wallet,
+        'color': const Color(0xFF42A5F5),
+        'path': '/finance/add-payment'
+      },
+      {
+        'label': "Monthly collection",
+        'value': stats['collectedMonth'],
+        'icon': Icons.trending_up,
+        'color': const Color(0xFF10B981),
+        'path': '/finance/reports'
+      },
+      {
+        'label': "Students fees",
+        'value': "Track records",
+        'icon': Icons.people,
+        'color': const Color(0xFFF97316),
+        'path': '/finance/fees-tracker'
+      },
+      {
+        'label': "Fees details",
+        'value': "Class setup",
+        'icon': Icons.layers,
+        'color': const Color(0xFF3B82F6),
+        'path': '/finance/fee-setup'
+      },
+      {
+        'label': "Payments",
+        'value': "Configure UPI/QR",
+        'icon': Icons.security,
+        'color': const Color(0xFF34D399),
+        'path': '/finance/gateway'
+      },
+      {
+        'label': "Fees Notice Hub",
+        'value': "Publish Notices",
+        'icon': Icons.campaign,
+        'color': const Color(0xFFF43F5E),
+        'path': '/finance/fees-notice'
+      },
     ];
 
     final filteredCards = statCards.where((card) {
-      if (widget.searchQuery == null || widget.searchQuery!.isEmpty) return true;
-      return card['label'].toString().toLowerCase().contains(widget.searchQuery!.toLowerCase());
+      if (widget.searchQuery == null || widget.searchQuery!.isEmpty)
+        return true;
+      return card['label']
+          .toString()
+          .toLowerCase()
+          .contains(widget.searchQuery!.toLowerCase());
     }).toList();
 
     List<dynamic> recentPayments = stats['recentPayments'] ?? [];
@@ -191,152 +236,304 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
               child: SingleChildScrollView(
                 // BouncingScrollPhysics ensures pull down refresh triggers smoothly
                 physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  // --- BODY CONTENT ---
-                  Padding(
-                    padding: const EdgeInsets.only(top: 20, left: 20, right: 20),
-                    child: Column(
-                      children: [
-                            // 1. ANALYTICS GRID
-                            GridView.builder(
-                              padding: EdgeInsets.zero,
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true, 
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 0.85),
-                              itemCount: filteredCards.length,
-                              itemBuilder: (context, index) {
-                                final card = filteredCards[index];
-                                final bool isCountVal = card['value'] is num;
+                child: Column(
+                  children: [
+                    // --- BODY CONTENT ---
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(top: 20, left: 20, right: 20),
+                      child: Column(
+                        children: [
+                          // 1. ANALYTICS GRID
+                          GridView.builder(
+                            padding: EdgeInsets.zero,
+                            physics: const NeverScrollableScrollPhysics(),
+                            shrinkWrap: true,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 16,
+                                    mainAxisSpacing: 16,
+                                    childAspectRatio: 0.85),
+                            itemCount: filteredCards.length,
+                            itemBuilder: (context, index) {
+                              final card = filteredCards[index];
+                              final bool isCountVal = card['value'] is num;
 
-                                return GestureDetector(
-                                  onTap: () => context.push(card['path']),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(35), border: Border.all(color: cardBorder), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))]),
-                                    child: Stack(
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Icon(card['icon'], color: card['color'], size: 28),
-                                            const Spacer(),
-                                            Text(isCountVal ? "₹${card['value'].toString()}" : card['value'].toString(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                                            const SizedBox(height: 4),
-                                            Text(card['label'].toString().toUpperCase(), style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 1.5)),
-                                          ],
-                                        ),
-                                        if (card['label'] == 'Payments' && (stats['pendingCount'] ?? 0) > 0)
-                                          Positioned(
-                                            top: 0, right: 0,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: const BoxDecoration(color: Color(0xFFF43F5E), shape: BoxShape.circle),
-                                              child: Text(stats['pendingCount'].toString(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white)),
-                                            ).animate().scale(curve: Curves.easeOutBack),
-                                          )
-                                      ],
-                                    ),
-                                  ).animate().fadeIn(delay: Duration(milliseconds: 50 * index)).slideY(begin: 0.1),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 24),
-
-                            // 2. RECENT PAYMENTS
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(40), border: Border.all(color: cardBorder), boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 5))]),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                              return GestureDetector(
+                                onTap: () => context.push(card['path']),
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                      color: cardColor,
+                                      borderRadius: BorderRadius.circular(35),
+                                      border: Border.all(color: cardBorder),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                            color: Colors.black12,
+                                            blurRadius: 10,
+                                            offset: Offset(0, 4))
+                                      ]),
+                                  child: Stack(
                                     children: [
-                                      const Icon(Icons.history, color: Color(0xFF42A5F5), size: 20),
-                                      const SizedBox(width: 8),
-                                      Text("RECENT TRANSACTIONS", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 2, fontStyle: FontStyle.italic)),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(card['icon'],
+                                              color: card['color'], size: 28),
+                                          const Spacer(),
+                                          Text(
+                                              isCountVal
+                                                  ? "₹${card['value'].toString()}"
+                                                  : card['value'].toString(),
+                                              style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: textColorPrimary,
+                                                  fontStyle: FontStyle.italic)),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                              card['label']
+                                                  .toString()
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: textColorSecondary,
+                                                  letterSpacing: 1.5)),
+                                        ],
+                                      ),
+                                      if (card['label'] == 'Payments' &&
+                                          (stats['pendingCount'] ?? 0) > 0)
+                                        Positioned(
+                                          top: 0,
+                                          right: 0,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(6),
+                                            decoration: const BoxDecoration(
+                                                color: Color(0xFFF43F5E),
+                                                shape: BoxShape.circle),
+                                            child: Text(
+                                                stats['pendingCount']
+                                                    .toString(),
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Colors.white)),
+                                          )
+                                              .animate()
+                                              .scale(curve: Curves.easeOutBack),
+                                        )
                                     ],
                                   ),
-                                  const SizedBox(height: 20),
+                                )
+                                    .animate()
+                                    .fadeIn(
+                                        delay:
+                                            Duration(milliseconds: 50 * index))
+                                    .slideY(begin: 0.1),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 24),
 
-                                  if (recentPayments.isEmpty)
-                                    Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 30),
+                          // 2. RECENT PAYMENTS
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                                color: cardColor,
+                                borderRadius: BorderRadius.circular(40),
+                                border: Border.all(color: cardBorder),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Colors.black12,
+                                      blurRadius: 15,
+                                      offset: Offset(0, 5))
+                                ]),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.history,
+                                        color: Color(0xFF42A5F5), size: 20),
+                                    const SizedBox(width: 8),
+                                    Text("RECENT TRANSACTIONS",
+                                        style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                            color: textColorSecondary,
+                                            letterSpacing: 2,
+                                            fontStyle: FontStyle.italic)),
+                                  ],
+                                ),
+                                const SizedBox(height: 20),
+                                if (recentPayments.isEmpty)
+                                  Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 30),
+                                      child: Column(
+                                        children: [
+                                          Icon(Icons.currency_rupee,
+                                              size: 40,
+                                              color: textColorSecondary
+                                                  .withOpacity(0.3)),
+                                          const SizedBox(height: 12),
+                                          Text("NO RECENT INFLOW",
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.w900,
+                                                  color: textColorSecondary,
+                                                  letterSpacing: 1.5)),
+                                        ],
+                                      ),
+                                    ),
+                                  )
+                                else ...[
+                                  ...(showAllSlips
+                                          ? recentPayments
+                                          : recentPayments.take(3))
+                                      .map((p) {
+                                    return GestureDetector(
+                                      onTap: () => context
+                                          .push('/finance/receipt/${p['_id']}'),
+                                      child: Container(
+                                        margin:
+                                            const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                            color: isDarkMode
+                                                ? const Color(0xFF0F172A)
+                                                : const Color(0xFFF8FAFC),
+                                            borderRadius:
+                                                BorderRadius.circular(25),
+                                            border:
+                                                Border.all(color: cardBorder)),
                                         child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Icon(Icons.currency_rupee, size: 40, color: textColorSecondary.withOpacity(0.3)),
-                                            const SizedBox(height: 12),
-                                            Text("NO RECENT INFLOW", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 1.5)),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                    child: Text(
+                                                        p['studentName']
+                                                            .toString()
+                                                            .toUpperCase(),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                            fontSize: 13,
+                                                            fontWeight:
+                                                                FontWeight.w900,
+                                                            color:
+                                                                textColorPrimary,
+                                                            fontStyle: FontStyle
+                                                                .italic))),
+                                                Container(
+                                                  margin: const EdgeInsets.only(
+                                                      left: 8),
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 8,
+                                                      vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                      color: const Color(
+                                                              0xFF42A5F5)
+                                                          .withOpacity(0.1),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10)),
+                                                  child: Text(
+                                                      (p['paymentMode'] ??
+                                                              'CASH')
+                                                          .toString()
+                                                          .toUpperCase(),
+                                                      style: const TextStyle(
+                                                          fontSize: 8,
+                                                          fontWeight:
+                                                              FontWeight.w900,
+                                                          color:
+                                                              Color(0xFF42A5F5),
+                                                          letterSpacing: 1)),
+                                                )
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                                "${p['grade']} • ${p['date']} ${p['time'] ?? ''}",
+                                                style: TextStyle(
+                                                    fontSize: 9,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: textColorSecondary,
+                                                    letterSpacing: 1)),
+                                            const SizedBox(
+                                                height:
+                                                    8), // Amount ke upar thoda spacing diya hai
+                                            Text("₹${p['amount']}",
+                                                style: const TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Color(0xFF42A5F5),
+                                                    fontStyle:
+                                                        FontStyle.italic)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  if (recentPayments.length > 3)
+                                    GestureDetector(
+                                      onTap: () => setState(
+                                          () => showAllSlips = !showAllSlips),
+                                      child: Container(
+                                        width: double.infinity,
+                                        margin: const EdgeInsets.only(top: 12),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 16),
+                                        decoration: BoxDecoration(
+                                            color: const Color(0xFF42A5F5)
+                                                .withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(20)),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                                showAllSlips
+                                                    ? "SHOW LESS"
+                                                    : "SHOW MORE",
+                                                style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w900,
+                                                    color: Color(0xFF42A5F5),
+                                                    letterSpacing: 2)),
+                                            const SizedBox(width: 4),
+                                            Icon(
+                                                showAllSlips
+                                                    ? Icons.keyboard_arrow_up
+                                                    : Icons.keyboard_arrow_down,
+                                                size: 14,
+                                                color: const Color(0xFF42A5F5)),
                                           ],
                                         ),
                                       ),
                                     )
-                                  else ...[
-                                    ...(showAllSlips ? recentPayments : recentPayments.take(3)).map((p) {
-                                      return GestureDetector(
-                                        onTap: () => context.push('/finance/receipt/${p['_id']}'),
-                                        child: Container(
-                                          margin: const EdgeInsets.only(bottom: 12),
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(25), border: Border.all(color: cardBorder)),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      children: [
-                                                        Expanded(child: Text(p['studentName'].toString().toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic))),
-                                                        Container(
-                                                          margin: const EdgeInsets.only(left: 8),
-                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                                          decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
-                                                          child: Text((p['paymentMode'] ?? 'CASH').toString().toUpperCase(), style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1)),
-                                                        )
-                                                      ],
-                                                    ),
-                                                    const SizedBox(height: 4),
-                                                    Text("${p['grade']} • ${p['date']} ${p['time'] ?? ''}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 1)),
-                                                  ],
-                                                ),
-                                              ),
-                                              Text("₹${p['amount']}", style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), fontStyle: FontStyle.italic)),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
-                                    
-                                    if (recentPayments.length > 3)
-                                      GestureDetector(
-                                        onTap: () => setState(() => showAllSlips = !showAllSlips),
-                                        child: Container(
-                                          width: double.infinity,
-                                          margin: const EdgeInsets.only(top: 12),
-                                          padding: const EdgeInsets.symmetric(vertical: 16),
-                                          decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Text(showAllSlips ? "SHOW LESS" : "SHOW MORE", style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 2)),
-                                              const SizedBox(width: 4),
-                                              Icon(showAllSlips ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, size: 14, color: const Color(0xFF42A5F5)),
-                                            ],
-                                          ),
-                                        ),
-                                      )
-                                  ]
-                                ],
-                              ),
-                            ).animate().slideY(begin: 0.1),
-                          ],
-                        ),
+                                ]
+                              ],
+                            ),
+                          ).animate().slideY(begin: 0.1),
+                        ],
                       ),
-                    const SizedBox(height: 80), // 🔥 LOCK 120px EXTRA BOTTOM SPACE FOR NAVIGATION BAR 🔥
+                    ),
+                    const SizedBox(
+                        height:
+                            80), // 🔥 LOCK 120px EXTRA BOTTOM SPACE FOR NAVIGATION BAR 🔥
                   ],
                 ),
               ),
@@ -345,50 +542,92 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
             // --- FLOATING INCOMING PAYMENT ALERT ---
             if (newPaymentAlert != null)
               Positioned(
-                top: 20, left: 20, right: 20,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: cardColor,
-                    borderRadius: BorderRadius.circular(35),
-                    border: Border.all(color: const Color(0xFF42A5F5), width: 2),
-                    boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20, offset: Offset(0, 10))]
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: const BoxDecoration(color: Color(0xFF42A5F5), shape: BoxShape.circle),
-                        child: const Icon(Icons.flash_on, color: Colors.white, size: 20),
-                      ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1,1), end: const Offset(1.1,1.1)),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("INCOMING PAYMENT", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1.5)),
-                            Text(newPaymentAlert!['studentName'].toString().toUpperCase(), maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                            Text("${newPaymentAlert!['grade']} • Received Now", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textColorSecondary)),
-                          ],
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text("₹${newPaymentAlert!['amount']}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                          const Row(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(35),
+                        border: Border.all(
+                            color: const Color(0xFF42A5F5), width: 2),
+                        boxShadow: const [
+                          BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 20,
+                              offset: Offset(0, 10))
+                        ]),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: const BoxDecoration(
+                              color: Color(0xFF42A5F5), shape: BoxShape.circle),
+                          child: const Icon(Icons.flash_on,
+                              color: Colors.white, size: 20),
+                        ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(
+                            begin: const Offset(1, 1),
+                            end: const Offset(1.1, 1.1)),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.check_circle, size: 10, color: Color(0xFF10B981)),
-                              SizedBox(width: 4),
-                              Text("VERIFIED", style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Color(0xFF10B981), letterSpacing: 1)),
+                              const Text("INCOMING PAYMENT",
+                                  style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xFF42A5F5),
+                                      letterSpacing: 1.5)),
+                              Text(
+                                  newPaymentAlert!['studentName']
+                                      .toString()
+                                      .toUpperCase(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w900,
+                                      color: textColorPrimary,
+                                      fontStyle: FontStyle.italic)),
+                              Text(
+                                  "${newPaymentAlert!['grade']} • Received Now",
+                                  style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      color: textColorSecondary)),
                             ],
-                          )
-                        ],
-                      )
-                    ],
-                  ),
-                ).animate().slideY(begin: -1.0, duration: 400.ms, curve: Curves.easeOutBack)
-              )
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text("₹${newPaymentAlert!['amount']}",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: textColorPrimary,
+                                    fontStyle: FontStyle.italic)),
+                            const Row(
+                              children: [
+                                Icon(Icons.check_circle,
+                                    size: 10, color: Color(0xFF10B981)),
+                                SizedBox(width: 4),
+                                Text("VERIFIED",
+                                    style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF10B981),
+                                        letterSpacing: 1)),
+                              ],
+                            )
+                          ],
+                        )
+                      ],
+                    ),
+                  ).animate().slideY(
+                      begin: -1.0, duration: 400.ms, curve: Curves.easeOutBack))
           ],
         ),
       ),

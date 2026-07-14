@@ -1,6 +1,6 @@
 class AppConfig {
   // 🔥 TERA CURRENT IP (Hotspot ya WiFi badle toh bas ise change karna)
-  static const String currentIp = "10.163.134.38";
+  static const String currentIp = "192.168.20.122";
   
   // ---------------------------------------------------------
   // 🟢 DEVELOPMENT ENVIRONMENT 
