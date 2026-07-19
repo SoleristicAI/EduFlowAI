@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, UserCircle, Mail, Phone, MapPin, Fingerprint, Camera, User, Users, Calendar, ShieldCheck, Heart, Hash, UserCheck , Check} from 'lucide-react';
+import { ArrowLeft, UserCircle, Mail, Phone, MapPin, Fingerprint, Camera, User, Users, Calendar, ShieldCheck, Heart, Hash, UserCheck, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 
@@ -9,7 +9,8 @@ const MyAccount = ({ user }) => {
     const [schoolData, setSchoolData] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
-    const BASE_URL = "http://localhost:5000";
+    // Vercel par automatically tera live URL uthayega, localhost par local!
+    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
     const [preview, setPreview] = useState(
         user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`) : null
     );
@@ -60,7 +61,8 @@ const MyAccount = ({ user }) => {
 
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            setPreview(`${BASE_URL}${data.avatar}`);
+            // Check karega ki Cloudinary ka link hai ya local disk ka
+            setPreview(data.avatar.startsWith('http') ? data.avatar : `${BASE_URL}${data.avatar}`);
             setToast({ show: true, message: "Profile Photo Updated! 🧬", type: 'success' });
             setTimeout(() => window.location.reload(), 2000);
         } catch (err) {
@@ -328,15 +330,14 @@ const MyAccount = ({ user }) => {
 
             {/* Neural Toast */}
             {toast.show && (
-    <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-[2rem] font-black italic text-[13px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] animate-bounce flex items-center gap-3 border ${
-        toast.type === 'success' 
-        ? 'bg-emerald-500 text-white border-emerald-400' 
-        : 'bg-rose-500 text-white border-rose-400'
-    }`}>
-        {toast.type === 'success' ? <Check size={18} /> : <ShieldCheck size={18} />} 
-        {toast.message}
-    </div>
-)}
+                <div className={`fixed top-10 left-1/2 -translate-x-1/2 z-[9999] px-8 py-4 rounded-[2rem] font-black italic text-[13px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] animate-bounce flex items-center gap-3 border ${toast.type === 'success'
+                    ? 'bg-emerald-500 text-white border-emerald-400'
+                    : 'bg-rose-500 text-white border-rose-400'
+                    }`}>
+                    {toast.type === 'success' ? <Check size={18} /> : <ShieldCheck size={18} />}
+                    {toast.message}
+                </div>
+            )}
         </div>
     );
 };

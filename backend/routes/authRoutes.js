@@ -1,5 +1,5 @@
 const express = require('express');
-const { registerUser, authUser, changePassword,sendResetOTP, resetPassword} = require('../controllers/authController');
+const { registerUser, authUser, changePassword, sendResetOTP, resetPassword } = require('../controllers/authController');
 const router = express.Router();
 const User = require('../models/User'); 
 const { protect } = require('../middleware/authMiddleware'); 
@@ -9,33 +9,56 @@ const csv = require('csvtojson');
 const crypto = require('crypto');
 const fs = require('fs');
 
-const storage = multer.diskStorage({
+// 🔥 1. CLOUDINARY SETUP 🔥
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+
+cloudinary.config({
+  cloud_name: 'raupi6es',
+  api_key: '178392556982554',
+  api_secret: 'Gj9McbEYgGUJ3lTEH26QXVv7II8'
+});
+
+// 🔥 2. IMAGE UPLOADER (Goes to Cloudinary) 🔥
+const cloudStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'eduflow_avatars', // Cloudinary ke andar folder ka naam
+    allowedFormats: ['jpeg', 'png', 'jpg', 'webp'],
+  },
+});
+
+const uploadCloudinary = multer({ 
+    storage: cloudStorage,
+    limits: { fileSize: 5000000 } // 5MB Limit
+});
+
+// 🔥 3. CSV UPLOADER (Goes to Local Disk temporarily, then gets deleted) 🔥
+const localStorageSetup = multer.diskStorage({
     destination: (req, file, cb) => {
-        const folder = file.mimetype.includes('csv') ? 'uploads/' : 'uploads/avatars/';
-        
-        // 🔥 FIX 1: Auto-create directory if it doesn't exist to prevent 500 Crash
+        const folder = 'uploads/bulk_csv/';
         if (!fs.existsSync(folder)) {
             fs.mkdirSync(folder, { recursive: true });
         }
         cb(null, folder);
     },
     filename: (req, file, cb) => {
-        cb(null, `${req.user?._id || 'bulk'}-${Date.now()}${path.extname(file.originalname)}`);
+        cb(null, `bulk-${Date.now()}${path.extname(file.originalname)}`);
     }
 });
 
-const upload = multer({ 
-    storage,
-    limits: { fileSize: 5000000 }, // 5MB limit
+const uploadLocal = multer({ 
+    storage: localStorageSetup,
     fileFilter: (req, file, cb) => {
-        // 🔥 FIX 2: Accept ALL image types globally, avoiding regex crashes
-        if (file.mimetype.startsWith('image/') || file.mimetype.includes('csv') || file.mimetype === 'application/vnd.ms-excel') {
-            return cb(null, true);
+        if (file.mimetype.includes('csv') || file.mimetype === 'application/vnd.ms-excel' || file.originalname.endsWith('.csv')) {
+            cb(null, true);
         } else {
-            return cb(new Error('Only Images or CSV files are allowed!'));
+            cb(new Error('Only CSV files are allowed for bulk upload!'));
         }
     }
 });
+
+// --- ROUTES ---
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
@@ -43,8 +66,9 @@ router.put('/change-password', protect, changePassword);
 router.post('/send-otp', sendResetOTP);
 router.post('/reset-password', resetPassword);
 
+// 🔥 UPDATE PROFILE ROUTE (Uses uploadCloudinary) 🔥
 router.put('/update-profile', protect, (req, res, next) => {
-    upload.single('avatar')(req, res, function (err) {
+    uploadCloudinary.single('avatar')(req, res, function (err) {
         if (err) {
             return res.status(400).json({ message: err.message });
         }
@@ -53,14 +77,15 @@ router.put('/update-profile', protect, (req, res, next) => {
 }, async (req, res) => {
     try {
         let updateFields = {};
+        
         if (req.file) {
-            updateFields.avatar = `/uploads/avatars/${req.file.filename}`;
+            // 🔥 MAJOR FIX: Cloudinary seedha secure HTTPS url deta hai req.file.path mein!
+            updateFields.avatar = req.file.path; 
         }
         if (req.body.phone) {
             updateFields.phone = req.body.phone;
         }
 
-        // 🔥 FIX 4: Used findByIdAndUpdate to bypass schoolId checks (crucial for Admin/Superadmin)
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id, 
             { $set: updateFields }, 
@@ -73,7 +98,7 @@ router.put('/update-profile', protect, (req, res, next) => {
                 name: updatedUser.name,
                 email: updatedUser.email,
                 role: updatedUser.role,
-                avatar: updatedUser.avatar,
+                avatar: updatedUser.avatar, // Live Cloudinary Link
                 phone: updatedUser.phone,
                 schoolId: updatedUser.schoolId, 
                 token: req.headers.authorization?.split(' ')[1]
@@ -91,7 +116,7 @@ router.get('/student-stats', protect, async (req, res) => {
     try {
         const count = await User.countDocuments({ 
             role: 'student',
-            schoolId: req.user.schoolId // FIXED: My school only
+            schoolId: req.user.schoolId
         });
         res.json({ totalStudents: count });
     } catch (error) {
@@ -99,20 +124,20 @@ router.get('/student-stats', protect, async (req, res) => {
     }
 });
 
-// @desc    Bulk Register Students via CSV
-router.post('/bulk-register-students', protect, upload.single('file'), async (req, res) => {
+// @desc    Bulk Register Students via CSV (Uses uploadLocal)
+router.post('/bulk-register-students', protect, uploadLocal.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'Neural File Missing! 🛡️' });
 
         const schoolId = req.user.schoolId;
-        const schoolCode = schoolId.toString().slice(-4).toLowerCase(); // 🔥 School Domain Code
+        const schoolCode = schoolId.toString().slice(-4).toLowerCase(); 
         const jsonArray = await csv().fromFile(req.file.path);
         const User = require('../models/User');
 
         let successCount = 0;
         let errors = [];
         let gradeCounters = {};
-        let generatedCredentials = []; // PDF Data
+        let generatedCredentials = []; 
 
         for (const data of jsonArray) {
             try {
@@ -134,11 +159,7 @@ router.post('/bulk-register-students', protect, upload.single('file'), async (re
                 const generatedID = `STU${gradeCode}${currentSerial.toString().padStart(3, '0')}`;
 
                 const firstName = data.name.trim().split(" ")[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                
-                // 🔥 CLEAN EMAIL ID: rahulstu10c001@sch1b2c.in
                 const autoEmail = `${firstName}${generatedID.toLowerCase()}@sch${schoolCode}.in`;
-                
-                // 🔥 AI RANDOM PASSWORD (8 Characters)
                 const autoPassword = crypto.randomBytes(4).toString('hex'); 
                 
                 let isoDob = "1990-01-01";
@@ -180,7 +201,6 @@ router.post('/bulk-register-students', protect, upload.single('file'), async (re
                     }
                 });
 
-                // PDF Data Store
                 generatedCredentials.push({
                     name: data.name.trim(),
                     grade: data.grade,
@@ -194,9 +214,10 @@ router.post('/bulk-register-students', protect, upload.single('file'), async (re
                 errors.push(`${data.name}: ${err.message}`);
             }
         }
+        
+        // Delete the temporary CSV file
         fs.unlinkSync(req.file.path);
 
-        // SORT STUDENTS FOR PDF
         generatedCredentials.sort((a, b) => {
             const getWeight = (g) => {
                 let gl = g.toLowerCase();
@@ -224,13 +245,13 @@ router.post('/bulk-register-students', protect, upload.single('file'), async (re
 });
 
 
-// @desc    Bulk Register Teachers via CSV
-router.post('/bulk-register-teachers', protect, upload.single('file'), async (req, res) => {
+// @desc    Bulk Register Teachers via CSV (Uses uploadLocal)
+router.post('/bulk-register-teachers', protect, uploadLocal.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'Neural Faculty File Missing! 🛡️' });
 
         const schoolId = req.user.schoolId;
-        const schoolCode = schoolId.toString().slice(-4).toLowerCase(); // 🔥 School Domain Code
+        const schoolCode = schoolId.toString().slice(-4).toLowerCase(); 
         const jsonArray = await csv().fromFile(req.file.path);
         const User = require('../models/User');
 
@@ -257,11 +278,7 @@ router.post('/bulk-register-teachers', protect, upload.single('file'), async (re
                 const generatedID = `EMP${nextSerial.toString().padStart(3, '0')}`;
                 
                 const firstName = tName.split(" ")[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-                
-                // 🔥 CLEAN EMAIL ID: amitemp003@sch1b2c.in
                 const autoEmail = `${firstName}${generatedID.toLowerCase()}@sch${schoolCode}.in`;
-                
-                // 🔥 AI RANDOM PASSWORD (8 Characters Alphanumeric)
                 const autoPassword = crypto.randomBytes(4).toString('hex');
 
                 let isoDob = "1990-01-01"; 
@@ -303,7 +320,6 @@ router.post('/bulk-register-teachers', protect, upload.single('file'), async (re
                     }
                 });
 
-                // PDF Data
                 generatedCredentials.push({
                     name: tName,
                     role: tRole.toUpperCase(),
@@ -318,6 +334,8 @@ router.post('/bulk-register-teachers', protect, upload.single('file'), async (re
                 errors.push(`${data.name}: ${err.message}`);
             }
         }
+        
+        // Delete the temporary CSV file
         fs.unlinkSync(req.file.path);
         
         res.status(201).json({
