@@ -176,7 +176,7 @@ shadow-[0_8px_30px_rgba(0,0,0,0.04)]
                 Pricing
               </button>
 
-              {/* <button
+              <button
                 onClick={() => scrollToSection("faq")}
                 className={`
     px-4 py-2 rounded-xl
@@ -195,7 +195,7 @@ shadow-[0_8px_30px_rgba(0,0,0,0.04)]
 `}
               >
                 FAQ
-              </button> */}
+              </button>
             </div>
             <button
               onClick={() => navigate("/login")}
@@ -212,7 +212,7 @@ hover:scale-105
 hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 "
             >
-              Lobhdve
+              Login
             </button>
           </div>
         </nav>
