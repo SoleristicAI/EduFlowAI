@@ -5,6 +5,8 @@ import API from '../../api';
 import Toast from '../../components/Toast';
 import { AnimatePresence, motion } from 'framer-motion';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const TeacherUploadResult = ({ user }) => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);

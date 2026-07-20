@@ -7,6 +7,8 @@ import Toast from '../../components/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2pdf from 'html2pdf.js';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const TeacherDatesheet = () => {
     const navigate = useNavigate();
     const [datesheets, setDatesheets] = useState([]);
@@ -57,7 +59,7 @@ const TeacherDatesheet = () => {
     const handleDownload = () => {
         if (selectedDatesheet.isManual) {
             const link = document.createElement('a');
-            link.href = selectedDatesheet.fileUrl;
+            link.href = selectedDatesheet.fileUrl.startsWith('http') ? selectedDatesheet.fileUrl : `${BASE_URL}${selectedDatesheet.fileUrl}`;
             link.download = `${selectedDatesheet.title}_Datesheet.pdf`;
             document.body.appendChild(link);
             link.click();
@@ -254,11 +256,11 @@ const TeacherDatesheet = () => {
 
                             <div className="flex justify-between items-end mt-16 pb-4">
                                 <div className="text-left w-48 flex flex-col justify-end">
-                                    {selectedDatesheet.signatures?.incharge && <img src={selectedDatesheet.signatures.incharge} alt="Incharge" className="h-16 mb-3 object-contain object-left" />}
+                                    {selectedDatesheet.signatures?.incharge && <img src={selectedDatesheet.signatures.incharge.startsWith('http') ? selectedDatesheet.signatures.incharge : `${BASE_URL}${selectedDatesheet.signatures.incharge}`} alt="Incharge" className="h-16 mb-3 object-contain object-left" />}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full"><p className="font-black text-[#1e293b] uppercase text-sm">Examination Incharge</p></div>
                                 </div>
                                 <div className="text-right w-48 flex flex-col justify-end">
-                                    {selectedDatesheet.signatures?.principal && <img src={selectedDatesheet.signatures.principal} alt="Principal" className="h-16 mb-3 object-contain object-right" />}
+                                    {selectedDatesheet.signatures?.principal && <img src={selectedDatesheet.signatures.principal.startsWith('http') ? selectedDatesheet.signatures.principal : `${BASE_URL}${selectedDatesheet.signatures.principal}`} alt="Principal" className="h-16 mb-3 object-contain object-right" />}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full"><p className="font-black text-[#1e293b] uppercase text-sm">Principal</p></div>
                                 </div>
                             </div>

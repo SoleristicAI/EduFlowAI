@@ -5,6 +5,8 @@ import API from '../api';
 import Loader from '../components/Loader';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const AdminAttendance = () => {
     const navigate = useNavigate();
     const [grades, setGrades] = useState([]);
@@ -101,9 +103,17 @@ const AdminAttendance = () => {
                                 className="bg-white p-5 rounded-[2.5rem] border border-slate-100 flex items-center justify-between group shadow-lg ring-1 ring-slate-50 hover:border-blue-200 transition-all active:scale-95 cursor-pointer"
                             >
                                 <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 bg-blue-50 text-[#42A5F5] border border-blue-100 rounded-2xl flex items-center justify-center font-black text-[16px] shadow-sm group-hover:bg-[#42A5F5] group-hover:text-white transition-all duration-300">
-                                        {stu.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                    </div>
+                                    {stu.avatar ? (
+                                        <img
+                                            src={stu.avatar.startsWith('http') ? stu.avatar : `${BASE_URL}${stu.avatar}`}
+                                            alt={stu.name}
+                                            className="w-14 h-14 rounded-2xl object-cover shadow-sm border border-slate-100"
+                                        />
+                                    ) : (
+                                        <div className="w-14 h-14 bg-blue-50 text-[#42A5F5] border border-blue-100 rounded-2xl flex items-center justify-center font-black text-[16px] shadow-sm group-hover:bg-[#42A5F5] group-hover:text-white transition-all duration-300">
+                                            {stu.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+                                        </div>
+                                    )}
                                     <div>
                                         <h4 className="font-black text-slate-800 text-[19px] uppercase tracking-tighter italic">{stu.name}</h4>
                                         <p className="text-[15px] font-black text-slate-400 uppercase tracking-widest italic">{stu.enrollmentNo}</p>
@@ -116,7 +126,7 @@ const AdminAttendance = () => {
                         ))
                     ) : (
                         <div className="text-center py-24 opacity-30 italic font-black text-[15px] uppercase tracking-[0.3em] text-slate-900">
-                            Initialize class selection 
+                            Initialize class selection
                         </div>
                     )
                 )}

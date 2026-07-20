@@ -27,6 +27,14 @@ const StudentLedger = () => {
 
     if (loading) return <Loader />;
 
+    if (!audit) return (
+        <div className="min-h-screen flex flex-col items-center justify-center bg-[#F8FAFC]">
+            <AlertCircle size={50} className="text-rose-400 mb-4 animate-bounce" />
+            <p className="text-[15px] font-black uppercase tracking-[0.2em] text-slate-500 italic">Ledger Data Not Found</p>
+            <button onClick={() => navigate(-1)} className="mt-6 px-6 py-3 bg-[#42A5F5] text-white rounded-full font-bold italic tracking-wider active:scale-95">Go Back</button>
+        </div>
+    );
+
     // StudentLedger.jsx mein ye variables update kar
     const finalRemaining = (audit?.monthlyOutstanding ?? 0) + (audit?.oneTimeOutstanding ?? 0);
     const isFeesDone = finalRemaining <= 0;
@@ -51,9 +59,9 @@ const StudentLedger = () => {
             <div className={`p-8 rounded-[3rem] border shadow-sm mb-8 relative overflow-hidden ${isFeesDone ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
                 <div className="flex justify-between items-start relative z-10 text-left">
                     <div>
-                        <h2 className="text-2xl font-black italic tracking-tight text-slate-800 capitalize mb-1">{audit.student.name}</h2>
+                        <h2 className="text-2xl font-black italic tracking-tight text-slate-800 capitalize mb-1">{audit?.student?.name || 'Unknown Student'}</h2>
                         <p className="text-[14px] font-bold text-slate-400 uppercase tracking-widest">
-                            Adm No: {audit.student.admissionNo || 'N/A'} Class: {audit.student.grade}
+                            Adm No: {audit?.student?.admissionNo || 'N/A'} Class: {audit?.student?.grade || 'N/A'}
                         </p>
                     </div>
                     <div className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-sm ${isFeesDone ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white animate-pulse'}`}>

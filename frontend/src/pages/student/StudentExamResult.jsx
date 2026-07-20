@@ -7,6 +7,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const StudentExamResult = () => {
     const navigate = useNavigate();
 
@@ -44,9 +46,9 @@ const StudentExamResult = () => {
 
         try {
             const userStr = localStorage.getItem("user");
-            
+
             // Agar user hi nahi hai toh aage mat badho
-            if (!userStr) return; 
+            if (!userStr) return;
 
             const user = JSON.parse(userStr);
 
@@ -64,7 +66,7 @@ const StudentExamResult = () => {
             // SMART RESULTS CACHE SYSTEM (Fix for cross-account leak)
             // ===============================
             // Cache ko specific user ki ID ke sath lock kar diya
-            const cacheKey = `studentExamResults_${user._id}`; 
+            const cacheKey = `studentExamResults_${user._id}`;
             const cachedResults = localStorage.getItem(cacheKey);
 
             if (cachedResults) {
@@ -178,41 +180,41 @@ const StudentExamResult = () => {
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
 
-    {/* Background Glow */}
-    <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-    {/* Top Row */}
-    <div className="relative z-10 flex justify-between items-center">
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
 
-        {/* Back Button */}
-        <button
-            onClick={() => {
-                if (viewMode === "reportCard") setViewMode("select");
-                else navigate(-1);
-            }}
-            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
-        >
-            <ArrowLeft size={24} />
-        </button>
+                    {/* Back Button */}
+                    <button
+                        onClick={() => {
+                            if (viewMode === "reportCard") setViewMode("select");
+                            else navigate(-1);
+                        }}
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
 
-        {/* Right Icon */}
-        <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
-            <BarChart3 size={24} />
-        </div>
-    </div>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <BarChart3 size={24} />
+                    </div>
+                </div>
 
-    {/* Heading + Subtitle */}
-    <div className="relative z-10 text-center mt-4">
-        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
-            Exam Results
-        </h1>
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Exam Results
+                    </h1>
 
-        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
-            Student Performance Report
-        </p>
-    </div>
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Student Performance Report
+                    </p>
+                </div>
 
-</div>
+            </div>
 
             <div className="px-5 -mt-10 relative z-20 max-w-4xl mx-auto">
 
@@ -411,9 +413,10 @@ const StudentExamResult = () => {
                                             }}
                                         >
                                             <img
-                                                src={schoolLogo}
+                                                src={schoolLogo.startsWith('http') ? schoolLogo : `${BASE_URL}${schoolLogo}`}
                                                 alt="School Logo"
                                                 className="w-full h-full object-cover"
+                                                crossOrigin="anonymous"
                                             />
                                         </div>
                                     )}

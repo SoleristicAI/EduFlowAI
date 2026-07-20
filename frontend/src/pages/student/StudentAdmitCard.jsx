@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, UserCheck, FileDown, CheckCircle, Download, Check, ClipboardCheck,BadgeCheck } from 'lucide-react';
+import { ArrowLeft, UserCheck, FileDown, CheckCircle, Download, Check, ClipboardCheck, BadgeCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
@@ -12,7 +12,9 @@ const StudentAdmitCard = ({ user }) => {
     const [loading, setLoading] = useState(true);
 
     // BACKEND URL FOR PHOTO FETCHING
-    const BASE_URL = "http://localhost:5000";
+    // BACKEND URL FOR PHOTO FETCHING
+    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+    // (Apna asli render link daal dena)
     const studentPhoto = user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`) : null;
     const [admitCards, setAdmitCards] = useState([]);
     const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
@@ -116,38 +118,38 @@ const StudentAdmitCard = ({ user }) => {
             {/* Header */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden print:hidden">
 
-    {/* Background Glow */}
-    <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+                {/* Background Glow */}
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
 
-    {/* Top Row */}
-    <div className="relative z-10 flex justify-between items-center">
+                {/* Top Row */}
+                <div className="relative z-10 flex justify-between items-center">
 
-        {/* Back Button */}
-        <button
-            onClick={handleBack}
-            className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
-        >
-            <ArrowLeft size={24} />
-        </button>
+                    {/* Back Button */}
+                    <button
+                        onClick={handleBack}
+                        className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white active:scale-90 transition-all shadow-sm"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
 
-        {/* Right Icon */}
-        <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
-            <BadgeCheck size={24} />
-        </div>
-    </div>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white/20 rounded-2xl border border-white/30 text-white shadow-sm">
+                        <BadgeCheck size={24} />
+                    </div>
+                </div>
 
-    {/* Heading + Subtitle */}
-    <div className="relative z-10 text-center mt-4">
-        <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
-            Admit Card
-        </h1>
+                {/* Heading + Subtitle */}
+                <div className="relative z-10 text-center mt-4">
+                    <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
+                        Admit Card
+                    </h1>
 
-        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
-            Examination Pass
-        </p>
-    </div>
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Examination Pass
+                    </p>
+                </div>
 
-</div>
+            </div>
 
             <div className="px-5 -mt-10 relative z-20 space-y-6 max-w-lg mx-auto print:hidden">
                 <AnimatePresence mode="wait">
@@ -350,7 +352,7 @@ const StudentAdmitCard = ({ user }) => {
                             <div className="flex justify-between items-center border-b-[3px] border-[#2B7A9F] pb-4 px-4 pt-2">
                                 <div className="w-20 h-20 flex items-center justify-center rounded-full overflow-hidden border-2 border-[#e2e8f0]">
                                     {selectedAdmitCard.schoolLogo ? (
-                                        <img src={selectedAdmitCard.schoolLogo} alt="Logo" className="w-full h-full object-cover" />
+                                        <img src={selectedAdmitCard.schoolLogo.startsWith('http') ? selectedAdmitCard.schoolLogo : `${BASE_URL}${selectedAdmitCard.schoolLogo}`} alt="Logo" className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-[#f1f5f9] flex items-center justify-center text-[10px] font-bold text-[#94a3b8]">LOGO</div>
                                     )}
@@ -491,7 +493,7 @@ const StudentAdmitCard = ({ user }) => {
                                     <div className="border-t-2 border-[#000000] pt-1 w-32 md:w-48 uppercase">Candidate Signature</div>
                                 </div>
                                 <div className="text-center font-extrabold text-[12px] text-[#000000] relative">
-                                    {selectedAdmitCard.datesheetId?.signatures?.incharge && <img src={selectedAdmitCard.datesheetId.signatures.incharge} alt="sign" className="h-10 mx-auto absolute bottom-8 left-1/2 -translate-x-1/2" />}
+                                    {selectedAdmitCard.datesheetId?.signatures?.incharge && <img src={selectedAdmitCard.datesheetId.signatures.incharge.startsWith('http') ? selectedAdmitCard.datesheetId.signatures.incharge : `${BASE_URL}${selectedAdmitCard.datesheetId.signatures.incharge}`} alt="sign" className="h-10 mx-auto absolute bottom-8 left-1/2 -translate-x-1/2" />}
                                     <div className="border-t-2 border-[#000000] pt-1 w-32 md:w-48 uppercase">Controller of Exams</div>
                                 </div>
                             </div>

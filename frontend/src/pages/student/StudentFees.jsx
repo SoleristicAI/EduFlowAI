@@ -7,6 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import Loader from '../../components/Loader';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const StudentFees = () => {
     const [summary, setSummary] = useState(null);
     const [showPendingModal, setShowPendingModal] = useState(false); // Modal control ke liye
@@ -122,7 +124,11 @@ const StudentFees = () => {
                             <div className="p-8 space-y-6">
                                 <h3 className="text-[18px] font-black text-amber-600 flex items-center gap-2 capitalize"><Clock size={20} /> Verification pending</h3>
                                 <div className="aspect-[3/4] w-full bg-slate-100 rounded-3xl overflow-hidden border border-[#DDE3EA]">
-                                    <img src={`http://localhost:5000${summary.pendingSignal.screenshot}`} className="w-full h-full object-contain" alt="Evidence" />
+                                    <img
+                                        src={summary.pendingSignal.screenshot.startsWith('http') ? summary.pendingSignal.screenshot : `${BASE_URL}${summary.pendingSignal.screenshot}`}
+                                        className="w-full h-full object-contain"
+                                        alt="Evidence"
+                                    />
                                 </div>
                                 <div className="bg-slate-50 p-5 rounded-2xl space-y-2 border border-[#DDE3EA]">
                                     <div className="flex justify-between text-[13px] font-bold capitalize"><span className="opacity-50">Amount sent:</span><span className="text-[#42A5F5]">₹{summary.pendingSignal.amount.toLocaleString()}</span></div>
