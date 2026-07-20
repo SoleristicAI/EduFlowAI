@@ -3,6 +3,9 @@ import { ArrowLeft, Upload, X, CheckCircle, CheckCircle2, FileText, Calendar, Ta
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const formatLocalDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -177,41 +180,41 @@ const TeacherAssignments = ({ user }) => {
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 text-[15px] overflow-x-hidden overscroll-none fixed inset-0 overflow-y-auto">
             {/* Header */}
             <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
-    <div className="flex justify-between items-center relative z-10">
+                <div className="flex justify-between items-center relative z-10">
 
-        {/* Back Button */}
-        <button
-            onClick={() => navigate(-1)}
-            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
-        >
-            <ArrowLeft size={24} />
-        </button>
+                    {/* Back Button */}
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
 
-        {/* Right Side Empty Space for Balance */}
-        <div className="w-12"></div>
-    </div>
+                    {/* Right Side Empty Space for Balance */}
+                    <div className="w-12"></div>
+                </div>
 
-    {/* Center Title + Subtitle */}
-    <div className="text-center mt-4 relative z-10">
-        <h1 className="text-4xl font-black italic tracking-tight text-white uppercase">
-            Class Assignments
-        </h1>
+                {/* Center Title + Subtitle */}
+                <div className="text-center mt-4 relative z-10">
+                    <h1 className="text-4xl font-black italic tracking-tight text-white uppercase">
+                        Class Assignments
+                    </h1>
 
-        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
-            Homework & Tasks
-        </p>
-    </div>
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                        Homework & Tasks
+                    </p>
+                </div>
 
-    {/* Action Button below subtitle, right aligned */}
-    <div className="flex justify-end mt-4 relative z-10">
-        <button
-            onClick={() => setView(view === 'create' ? 'history' : 'create')}
-            className="bg-white text-[#42A5F5] px-5 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-lg flex items-center gap-2 active:scale-90 transition-all"
-        >
-            {view === 'create' ? "View History" : "Create New"}
-        </button>
-    </div>
-</div>
+                {/* Action Button below subtitle, right aligned */}
+                <div className="flex justify-end mt-4 relative z-10">
+                    <button
+                        onClick={() => setView(view === 'create' ? 'history' : 'create')}
+                        className="bg-white text-[#42A5F5] px-5 py-3 rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-lg flex items-center gap-2 active:scale-90 transition-all"
+                    >
+                        {view === 'create' ? "View History" : "Create New"}
+                    </button>
+                </div>
+            </div>
 
             <div className="px-6 -mt-10 relative z-10 space-y-6">
                 {view === 'create' ? (
@@ -611,7 +614,7 @@ const SubmissionCard = ({ sub, handleGrade, setToast }) => {
                         Solution File
                     </label>
                     <a
-                        href={`http://localhost:5000${sub.fileUrl}`}
+                        href={sub.fileUrl.startsWith('http') ? sub.fileUrl : `${BASE_URL}${sub.fileUrl}`}
                         target="_blank"            // Sabse important: Naye tab mein khulega
                         rel="noopener noreferrer"  // Security ke liye zaroori
                         className="flex items-center justify-center gap-2 py-4 bg-white rounded-2xl text-blue-500 shadow-sm border border-blue-50 font-black text-xs uppercase active:scale-95 transition-all"

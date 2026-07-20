@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const TeacherStudentList = ({ user }) => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState("");
@@ -107,9 +109,17 @@ const TeacherStudentList = ({ user }) => {
 
                         {/* Student Info Top */}
                         <div className="flex items-center gap-5 mb-6 border-b border-slate-50 pb-5">
-                            <div className="w-16 h-16 bg-slate-50 text-[#42A5F5] border border-slate-100 rounded-[1.8rem] flex items-center justify-center font-black text-[22px] shadow-inner group-hover:bg-[#42A5F5] group-hover:text-white transition-all">
-                                {s.name?.charAt(0)}
-                            </div>
+                            {s.avatar ? (
+                                <img
+                                    src={s.avatar.startsWith('http') ? s.avatar : `${BASE_URL}${s.avatar}`}
+                                    alt={s.name}
+                                    className="w-16 h-16 rounded-[1.8rem] object-cover shadow-sm border border-slate-100"
+                                />
+                            ) : (
+                                <div className="w-16 h-16 bg-slate-50 text-[#42A5F5] border border-slate-100 rounded-[1.8rem] flex items-center justify-center font-black text-[22px] shadow-inner group-hover:bg-[#42A5F5] group-hover:text-white transition-all">
+                                    {s.name?.charAt(0)}
+                                </div>
+                            )}
                             <div className="flex-1">
                                 <h3 className="font-black text-slate-800 text-[21px] capitalize italic tracking-tight group-hover:text-[#42A5F5] transition-colors leading-tight">{s.name}</h3>
                                 <div className="flex flex-col gap-1 mt-2">

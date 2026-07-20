@@ -5,7 +5,6 @@ import API from '../api';
 import Loader from '../components/Loader';
 import Toast from '../components/Toast';
 
-
 const Support = () => {
     const navigate = useNavigate();
     const [msg, setMsg] = useState(''); // Alert ki jagah ye use hoga
