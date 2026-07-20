@@ -3,6 +3,8 @@ import { ShieldAlert, Clock, CheckCircle2, User, School, ExternalLink, ArrowLeft
 import API from '../api';
 import { useNavigate } from 'react-router-dom';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 const SuperAdminTechnical = () => {
     const navigate = useNavigate();
     const [issues, setIssues] = useState([]);
@@ -14,10 +16,10 @@ const SuperAdminTechnical = () => {
         try {
             const { data } = await API.get('/technical/all-reports');
             setIssues(data);
-        } catch (err) { 
-            console.error(err); 
-        } finally { 
-            setLoading(false); 
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -29,8 +31,8 @@ const SuperAdminTechnical = () => {
             setToast({ show: true, msg: `Issue marked as ${newStatus}!` });
             setTimeout(() => setToast({ show: false, msg: '' }), 3000);
             loadIssues();
-        } catch (err) { 
-            alert("Update failed"); 
+        } catch (err) {
+            alert("Update failed");
         }
     };
 
@@ -56,7 +58,7 @@ const SuperAdminTechnical = () => {
             <div className="grid gap-8 max-w-6xl mx-auto">
                 {issues.length > 0 ? issues.map((issue) => (
                     <div key={issue._id} className="bg-white border border-slate-200 rounded-[3rem] p-8 shadow-sm relative overflow-hidden group hover:shadow-md transition-all">
-                        
+
                         {/* Status & Actions Header */}
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                             <div className="space-y-2">
@@ -65,16 +67,16 @@ const SuperAdminTechnical = () => {
                                 </span>
                                 <h3 className="text-2xl font-black text-slate-700 uppercase tracking-tighter">{issue.issueType}</h3>
                             </div>
-                            
+
                             <div className="flex gap-3">
-                                <button 
-                                    onClick={() => updateStatus(issue._id, 'Received')} 
+                                <button
+                                    onClick={() => updateStatus(issue._id, 'Received')}
                                     className="bg-slate-50 hover:bg-slate-100 px-6 py-3 rounded-2xl border border-slate-200 text-xs font-black uppercase text-slate-500 transition-all"
                                 >
                                     Mark Received
                                 </button>
-                                <button 
-                                    onClick={() => updateStatus(issue._id, 'Resolved')} 
+                                <button
+                                    onClick={() => updateStatus(issue._id, 'Resolved')}
                                     className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl text-xs font-black uppercase shadow-lg shadow-indigo-100 transition-all"
                                 >
                                     Mark Resolved
@@ -102,7 +104,7 @@ const SuperAdminTechnical = () => {
                                             School Name: <span className="text-slate-700 font-black italic">{issue.schoolId?.schoolName}</span>
                                         </p>
                                     </div>
-                                    
+
                                     <div className="mt-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-inner">
                                         <p className="text-base font-bold text-slate-600 italic leading-relaxed">
                                             "{issue.description || 'No description provided.'}"
@@ -116,12 +118,12 @@ const SuperAdminTechnical = () => {
                                 {issue.screenshot ? (
                                     <div
                                         className="relative group cursor-zoom-in rounded-[2rem] overflow-hidden border-2 border-slate-100 h-64"
-                                        onClick={() => setZoomImg(`http://localhost:5000${issue.screenshot}`)}
+                                        onClick={() => setZoomImg(issue.screenshot.startsWith('http') ? issue.screenshot : `${BASE_URL}${issue.screenshot}`)}
                                     >
-                                        <img 
-                                            src={`http://localhost:5000${issue.screenshot}`} 
-                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
-                                            alt="Evidence" 
+                                        <img
+                                            src={issue.screenshot.startsWith('http') ? issue.screenshot : `${BASE_URL}${issue.screenshot}`}
+                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                            alt="Evidence"
                                         />
                                         <div className="absolute inset-0 bg-indigo-600/20 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                             <div className="bg-white p-4 rounded-full shadow-2xl text-indigo-600 animate-bounce">

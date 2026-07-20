@@ -54,7 +54,7 @@ const SuperAdminOnboard = () => {
             </div>
 
             <form onSubmit={handleOnboard} className="px-6 -mt-12 space-y-8 max-w-3xl mx-auto relative z-20">
-                
+
                 {/* Logo Upload Section */}
                 <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100 space-y-4">
                     <div className="flex items-center gap-3 mb-2">
@@ -67,7 +67,17 @@ const SuperAdminOnboard = () => {
                         <input type="file" accept="image/*" id="logoUpload" className="absolute inset-0 opacity-0 cursor-pointer" onChange={(e) => setLogoFile(e.target.files[0])} />
                         <div className="flex flex-col items-center gap-3">
                             {logoFile ? (
-                                <span className="text-lg font-bold text-indigo-600">{logoFile.name} Ready!</span>
+                                <div className="flex flex-col items-center animate-fadeIn">
+                                    {/* 🔥 LIVE PREVIEW DIKHEGA YAHAN 🔥 */}
+                                    <img
+                                        src={URL.createObjectURL(logoFile)}
+                                        alt="Logo Preview"
+                                        className="w-24 h-24 object-contain rounded-2xl shadow-sm border border-slate-200 mb-3 bg-white p-1"
+                                    />
+                                    <span className="text-[14px] font-black italic text-indigo-600 uppercase tracking-widest">
+                                        {logoFile.name} Ready!
+                                    </span>
+                                </div>
                             ) : (
                                 <>
                                     <div className="bg-white p-4 rounded-full shadow-md text-slate-400 group-hover:text-indigo-600 transition-all">
@@ -127,27 +137,27 @@ const SuperAdminOnboard = () => {
                             onChange={(e) => setFormData({ ...formData, adminInfo: { ...formData.adminInfo, email: e.target.value } })} required />
                     </div>
                     <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
-    
-    <Lock size={20} className="text-slate-300 mr-4" />
 
-    <input
-        type={showPassword ? "text" : "password"}
-        placeholder="Access password"
-        className="bg-transparent font-bold text-lg text-slate-700 outline-none w-full"
-        onChange={(e) => setFormData({ ...formData, tempPassword: e.target.value })}
-        required
-    />
+                        <Lock size={20} className="text-slate-300 mr-4" />
 
-    {/* 👁 Toggle Button */}
-    <button
-        type="button"
-        onClick={() => setShowPassword(!showPassword)}
-        className="ml-3 text-slate-400 hover:text-indigo-500 transition"
-    >
-        {showPassword ? "🙈" : "👁️"}
-    </button>
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Access password"
+                            className="bg-transparent font-bold text-lg text-slate-700 outline-none w-full"
+                            onChange={(e) => setFormData({ ...formData, tempPassword: e.target.value })}
+                            required
+                        />
 
-</div>
+                        {/* 👁 Toggle Button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="ml-3 text-slate-400 hover:text-indigo-500 transition"
+                        >
+                            {showPassword ? "🙈" : "👁️"}
+                        </button>
+
+                    </div>
                 </div>
 
                 {/* Subscription Details */}
