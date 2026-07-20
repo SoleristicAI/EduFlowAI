@@ -25,23 +25,6 @@ const StudentLeaveHistory = () => {
         fetchHistory();
     }, []);
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            try {
-                const { data } = await API.get('/leaves/my-history');
-                setHistory(data);
-            } catch (err) {
-                console.error("History fetch failed");
-            }
-        };
-
-        fetchHistory();
-
-        const interval = setInterval(fetchHistory, 3000); // every 3 sec
-
-        return () => clearInterval(interval);
-    }, []);
-
     const formatDate = (date) => {
         return new Date(date).toLocaleDateString("en-GB", {
             day: "numeric",
