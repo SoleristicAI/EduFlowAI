@@ -10,6 +10,8 @@ import API from '../api';
 import Loader from '../components/Loader';
 import { AnimatePresence, motion } from 'framer-motion';
 
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+
 // ==========================================
 // CUSTOM UI COMPONENTS (CIRCULAR CHARTS)
 // ==========================================
@@ -171,9 +173,17 @@ const StudentDetail = () => {
                 </button>
 
                 <div className="relative inline-block mt-4">
-                    <div className="w-32 h-32 rounded-[3rem] bg-white border-4 border-blue-100 flex items-center justify-center text-5xl font-black text-[#42A5F5] shadow-2xl">
-                        {profile.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </div>
+                    {profile.avatar ? (
+    <img 
+        src={profile.avatar.startsWith('http') ? profile.avatar : `${BASE_URL}${profile.avatar}`} 
+        alt={profile.name} 
+        className="w-32 h-32 rounded-[3rem] border-4 border-blue-100 object-cover shadow-2xl"
+    />
+) : (
+    <div className="w-32 h-32 rounded-[3rem] bg-white border-4 border-blue-100 flex items-center justify-center text-5xl font-black text-[#42A5F5] shadow-2xl">
+        {profile.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+    </div>
+)}
                 </div>
 
                 <h2 className="mt-6 text-4xl font-black tracking-tighter italic px-10 text-white">
