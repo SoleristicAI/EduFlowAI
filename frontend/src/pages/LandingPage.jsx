@@ -212,7 +212,7 @@ hover:scale-105
 hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 "
             >
-              Logiuu7gb
+              Lou7ggu7gb
             </button>
           </div>
         </nav>
