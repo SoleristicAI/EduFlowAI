@@ -238,7 +238,7 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
               transition={{ duration: 0.8 }}
               className="text-5xl md:text-7xl font-black mt-8 leading-tight"
             >
-              The AI Operating System
+              The Ai Operating System
               <br />
 
               <span className="bg-gradient-to-r from-[#4A90E2] via-[#3B82F6] to-[#2563EB] bg-clip-text text-transparent">
