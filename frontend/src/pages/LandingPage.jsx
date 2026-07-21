@@ -8,6 +8,7 @@ import {
   CheckCircle, ChevronDown, Star, BarChart3,
   CreditCard, MessageSquare, Calendar, Shield
 } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const stats = [
   { value: 80, suffix: "%", label: "Less Administrative Work" },
@@ -18,6 +19,7 @@ const stats = [
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [activeSection, setActiveSection] = useState("");
 
@@ -85,142 +87,162 @@ export default function LandingPage() {
       </div>
 
       <div className="relative z-10">
-        <nav className="
+        <nav
+  className="
 fixed top-0 w-full z-50
 bg-white/70
 backdrop-blur-xl
 border-b border-white/30
 shadow-[0_8px_30px_rgba(0,0,0,0.04)]
-">
-          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <img
-                src="/logo.png.jpeg"
-                alt="EduFlowAI"
-                className="w-12 h-12 rounded-full object-cover border-2 border-blue-100 shadow-lg"
-              />
+"
+>
+  <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
-              <h1 className="
-    font-black text-2xl
-    bg-gradient-to-r
-    from-[#4A90E2]
-    via-[#3B82F6]
-    to-[#2563EB]
-    bg-clip-text
-    text-transparent
-  ">
-                EduFlowAI
-              </h1>
-            </div>
-            <div className="hidden md:flex items-center gap-3">
-              <button
-                onClick={() => scrollToSection("Home")}
-                className={`
-    px-4 py-2 rounded-xl
-    backdrop-blur-md
-    font-medium
-    transition-all duration-300
-    hover:bg-blue-50
-    hover:border-[#4A90E2]
-    hover:text-[#4A90E2]
-    hover:-translate-y-1
-    hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-    ${activeSection === "platform"
-                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-                    : "bg-white/70 border border-blue-100 text-slate-700"
-                  }
-`}
-              >
-                Home
-              </button>
+    {/* Logo */}
+    <div className="flex items-center gap-3">
+      <img
+        src="/logo.png.jpeg"
+        alt="EduFlowAI"
+        className="w-12 h-12 rounded-full object-cover border-2 border-blue-100 shadow-lg"
+      />
 
-              <button
-                onClick={() => scrollToSection("platform")}
-                className={`
-    px-4 py-2 rounded-xl
-    backdrop-blur-md
-    font-medium
-    transition-all duration-300
-    hover:bg-blue-50
-    hover:border-[#4A90E2]
-    hover:text-[#4A90E2]
-    hover:-translate-y-1
-    hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-    ${activeSection === "ai"
-                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-                    : "bg-white/70 border border-blue-100 text-slate-700"
-                  }
-`}
-              >
-                Platform
-              </button>
+      <h1
+        className="
+font-black text-2xl
+bg-gradient-to-r
+from-[#4A90E2]
+via-[#3B82F6]
+to-[#2563EB]
+bg-clip-text
+text-transparent
+"
+      >
+        EduFlowAI
+      </h1>
+    </div>
 
-              <button
-                onClick={() => scrollToSection("ai")}
-                className={`
-    px-4 py-2 rounded-xl
-    backdrop-blur-md
-    font-medium
-    transition-all duration-300
-    hover:bg-blue-50
-    hover:border-[#4A90E2]
-    hover:text-[#4A90E2]
-    hover:-translate-y-1
-    hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-    ${activeSection === "ai"
-                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-                    : "bg-white/70 border border-blue-100 text-slate-700"
-                  }
-`}
-              >
-                AI
-              </button>
+    {/* Desktop Menu */}
+    <div className="hidden md:flex items-center gap-3">
 
-              <button
-                onClick={() => scrollToSection("pricing")}
-                className={`
-    px-4 py-2 rounded-xl
-    backdrop-blur-md
-    font-medium
-    transition-all duration-300
-    hover:bg-blue-50
-    hover:border-[#4A90E2]
-    hover:text-[#4A90E2]
-    hover:-translate-y-1
-    hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-    ${activeSection === "pricing"
-                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-                    : "bg-white/70 border border-blue-100 text-slate-700"
-                  }
+      <button
+        onClick={() => scrollToSection("Home")}
+        className={`
+px-4 py-2 rounded-xl
+backdrop-blur-md
+font-medium
+transition-all duration-300
+hover:bg-blue-50
+hover:border-[#4A90E2]
+hover:text-[#4A90E2]
+hover:-translate-y-1
+hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
+${
+  activeSection === "Home"
+    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+    : "bg-white/70 border border-blue-100 text-slate-700"
+}
 `}
-              >
-                Pricing
-              </button>
+      >
+        Home
+      </button>
 
-              <button
-                onClick={() => scrollToSection("faq")}
-                className={`
-    px-4 py-2 rounded-xl
-    backdrop-blur-md
-    font-medium
-    transition-all duration-300
-    hover:bg-blue-50
-    hover:border-[#4A90E2]
-    hover:text-[#4A90E2]
-    hover:-translate-y-1
-    hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-    ${activeSection === "faq"
-                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-                    : "bg-white/70 border border-blue-100 text-slate-700"
-                  }
+      <button
+        onClick={() => scrollToSection("platform")}
+        className={`
+px-4 py-2 rounded-xl
+backdrop-blur-md
+font-medium
+transition-all duration-300
+hover:bg-blue-50
+hover:border-[#4A90E2]
+hover:text-[#4A90E2]
+hover:-translate-y-1
+hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
+${
+  activeSection === "platform"
+    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+    : "bg-white/70 border border-blue-100 text-slate-700"
+}
 `}
-              >
-                FAQ
-              </button>
-            </div>
-            <button
-              onClick={() => navigate("/login")}
-              className="
+      >
+        Platform
+      </button>
+
+      <button
+        onClick={() => scrollToSection("ai")}
+        className={`
+px-4 py-2 rounded-xl
+backdrop-blur-md
+font-medium
+transition-all duration-300
+hover:bg-blue-50
+hover:border-[#4A90E2]
+hover:text-[#4A90E2]
+hover:-translate-y-1
+hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
+${
+  activeSection === "ai"
+    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+    : "bg-white/70 border border-blue-100 text-slate-700"
+}
+`}
+      >
+        AI
+      </button>
+
+      <button
+        onClick={() => scrollToSection("pricing")}
+        className={`
+px-4 py-2 rounded-xl
+backdrop-blur-md
+font-medium
+transition-all duration-300
+hover:bg-blue-50
+hover:border-[#4A90E2]
+hover:text-[#4A90E2]
+hover:-translate-y-1
+hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
+${
+  activeSection === "pricing"
+    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+    : "bg-white/70 border border-blue-100 text-slate-700"
+}
+`}
+      >
+        Pricing
+      </button>
+
+      <button
+        onClick={() => scrollToSection("faq")}
+        className={`
+px-4 py-2 rounded-xl
+backdrop-blur-md
+font-medium
+transition-all duration-300
+hover:bg-blue-50
+hover:border-[#4A90E2]
+hover:text-[#4A90E2]
+hover:-translate-y-1
+hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
+${
+  activeSection === "faq"
+    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+    : "bg-white/70 border border-blue-100 text-slate-700"
+}
+`}
+      >
+        FAQ
+      </button>
+    </div>
+
+    {/* Right Side */}
+    <div className="flex items-center gap-3">
+
+      {/* Desktop Login */}
+      <button
+        onClick={() => navigate("/login")}
+        className="
+hidden md:block
 bg-gradient-to-r
 from-[#4A90E2]
 to-[#2563EB]
@@ -232,11 +254,99 @@ transition-all duration-300
 hover:scale-105
 hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 "
-            >
-              Login
-            </button>
-          </div>
-        </nav>
+      >
+        Login
+      </button>
+
+      {/* Mobile Hamburger */}
+      <button
+        className="md:hidden p-2 rounded-lg hover:bg-blue-50"
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+      >
+        {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+      </button>
+    </div>
+
+  </div>
+
+  {/* Mobile Menu */}
+  {mobileMenuOpen && (
+    <div className="md:hidden bg-white border-t border-blue-100 shadow-xl">
+      <div className="flex flex-col p-5 gap-3">
+
+        <button
+          onClick={() => {
+            scrollToSection("Home");
+            setMobileMenuOpen(false);
+          }}
+          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+        >
+          Home
+        </button>
+
+        <button
+          onClick={() => {
+            scrollToSection("platform");
+            setMobileMenuOpen(false);
+          }}
+          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+        >
+          Platform
+        </button>
+
+        <button
+          onClick={() => {
+            scrollToSection("ai");
+            setMobileMenuOpen(false);
+          }}
+          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+        >
+          AI
+        </button>
+
+        <button
+          onClick={() => {
+            scrollToSection("pricing");
+            setMobileMenuOpen(false);
+          }}
+          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+        >
+          Pricing
+        </button>
+
+        <button
+          onClick={() => {
+            scrollToSection("faq");
+            setMobileMenuOpen(false);
+          }}
+          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+        >
+          FAQ
+        </button>
+
+        <button
+          onClick={() => {
+            navigate("/login");
+            setMobileMenuOpen(false);
+          }}
+          className="
+mt-2
+bg-gradient-to-r
+from-[#4A90E2]
+to-[#2563EB]
+text-white
+py-3
+rounded-xl
+font-semibold
+"
+        >
+          Login
+        </button>
+
+      </div>
+    </div>
+  )}
+</nav>
 
         <section id="Home" className="bg-transparent pt-40 pb-24 px-6">
           <div className="max-w-6xl mx-auto text-center">
