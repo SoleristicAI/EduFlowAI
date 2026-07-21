@@ -6,7 +6,8 @@ import Countup from "react-countup";
 import {
   ArrowRight, Bot, Users, GraduationCap, School,
   CheckCircle, ChevronDown, Star, BarChart3,
-  CreditCard, MessageSquare, Calendar, Shield
+  CreditCard, MessageSquare, Calendar, Shield,
+  Book
 } from "lucide-react";
 import { Menu, X } from "lucide-react";
 
@@ -147,7 +148,7 @@ ${
       </button>
 
       <button
-        onClick={() => scrollToSection("platform")}
+        onClick={() => scrollToSection("services")}
         className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
@@ -165,7 +166,7 @@ ${
 }
 `}
       >
-        Platform
+        Services
       </button>
 
       <button
@@ -414,13 +415,13 @@ font-semibold
           </div>
         </section>
 
-        <div className="mt-10 flex flex-wrap justify-center gap-6 text-slate-500 text-sm">
+        {/* <div className="mt-10 flex flex-wrap justify-center gap-6 text-slate-500 text-sm">
           <span>✓ Secure Cloud Platform</span>
           <span>✓ 24/7 AI Support</span>
           <span>✓ School & College Ready</span>
-        </div>
+        </div> */}
 
-        <div className="mt-20 relative">
+        {/* <div className="mt-20 relative">
           <motion.img
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -439,7 +440,7 @@ font-semibold
       transition-all
     "
           />
-        </div>
+        </div> */}
 
         <div
           className="
@@ -590,7 +591,7 @@ font-semibold
           </div>
         </section>
 
-        <section id="platform" className="bg-white/70 backdrop-blur-sm py-24 px-6">
+        <section id="services" className="bg-white/70 backdrop-blur-sm py-24 px-6">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-center text-5xl font-black mb-14">
               Everything Your Institution Needs
@@ -598,12 +599,27 @@ font-semibold
 
             <div className="grid md:grid-cols-3 gap-8">
               {[
-                ["Attendance", CheckCircle],
-                ["Fee Management", CreditCard],
-                ["Communication", MessageSquare],
-                ["Admissions", Users],
-                ["Academic Reporting", BarChart3],
-                ["Scheduling", Calendar],
+                ["Attendance Management System", CheckCircle],
+                ["Timetable Management", Calendar],
+                ["Fee Management System", CreditCard],
+                ["Homework Management System", CheckCircle],
+                ["Notices & Events", MessageSquare],
+                ["Assignment Management System", CheckCircle],
+                ["ERP Notification System", MessageSquare],
+                ["Performance & Result Analysis", BarChart3],
+                ["Mentorship System", Users],
+                ["Holidays Planner", Calendar],
+                ["Leave Management System", CheckCircle],
+                ["Live Classroom Integration", School],
+                ["Transport Management System", CheckCircle],
+                ["Library Management System", Book],
+                ["Online Teacher Feedback", MessageSquare],
+                ["Examination Management System", BarChart3],
+                
+                // ["Communication", MessageSquare],
+                // ["Admissions", Users],
+                // ["Academic Reporting", BarChart3],
+                // ["Scheduling", Calendar],
               ].map(([title, Icon], i) => (
                 <div
                   key={i}
