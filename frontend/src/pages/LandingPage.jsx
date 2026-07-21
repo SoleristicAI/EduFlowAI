@@ -717,8 +717,8 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 
     <div className="mt-14 text-center text-slate-600 max-w-3xl mx-auto">
       <p className="text-lg font-medium">
-        ✔ No long-term contracts &nbsp; • &nbsp;
-        ✔ Free onboarding &nbsp; • &nbsp;
+        ✔ long-term contracts available &nbsp; • &nbsp;
+        ✔ onboarding support &nbsp; • &nbsp;
         ✔ Free product demo
       </p>
 
