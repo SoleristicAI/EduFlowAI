@@ -229,7 +229,7 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
   shadow-lg
 "
             >
-              AI-Powered Education Operating System
+              AI-Powered Education Operating System By SoleristicAI
             </div>
 
             <motion.h1
@@ -248,7 +248,7 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 
             <p className="max-w-4xl mx-auto mt-8 text-xl md:text-2xl text-slate-600 leading-relaxed">
               Admissions, Attendance, Fees, Academics,
-              Communication & AI Assistants —
+              Communication, Performance & AI Assistants —
               all from one platform.
             </p>
 
@@ -579,63 +579,156 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
         </section>
 
         <section id="pricing" className="bg-white/70 backdrop-blur-sm py-24 px-6">
-          <div className="max-w-6xl mx-auto">
-            <h2 className="text-center text-5xl font-black mb-14">Pricing</h2>
+  <div className="max-w-7xl mx-auto">
+    <h2 className="text-center text-5xl font-black mb-4">
+      Simple & Transparent Pricing
+    </h2>
 
-            <div className="grid md:grid-cols-3 gap-8">
-              {["Starter", "Growth", "Enterprise"].map((plan, i) => (
-                <div
-                  key={i}
-                  className={`rounded-3xl border p-8 bg-white transition-all duration-300
-  ${i === 1
-                      ? "border-[#4A90E2] scale-105 shadow-[0_20px_50px_rgba(74,144,226,0.25)]"
-                      : "border-slate-200 hover:-translate-y-2 hover:shadow-xl"
-                    }`}
-                >
-                  {i === 1 && (
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-[#4A90E2] rounded-full text-xs font-bold mb-4">
-                      MOST POPULAR
-                    </span>
-                  )}
-                  <h3 className="text-2xl font-bold">{plan}</h3>
+    <p className="text-center text-slate-600 text-lg mb-14 max-w-3xl mx-auto">
+      Pay only for the students you manage. Scale your subscription as your
+      school grows.
+    </p>
 
-                  <div className="text-5xl font-black my-6">
-                    {i === 2 ? "Custom" : `₹${(i + 1) * 4999}`}
-                  </div>
+    <div className="grid lg:grid-cols-3 gap-8">
 
-                  <div className="text-slate-500 mb-4">
-                    Per Month
-                  </div>
+      {/* Starter */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
 
-                  <ul className="space-y-3 mb-8 text-slate-600">
-                    <li>✓ Attendance Management</li>
-                    <li>✓ Fee Management</li>
-                    <li>✓ Parent Communication</li>
-                    <li>✓ Academic Reports</li>
+        <h3 className="text-3xl font-bold">Starter</h3>
 
-                    {i >= 1 && (
-                      <>
-                        {/* <li>✓ AI Assistant</li> */}
-                        <li>✓ Advanced Analytics</li>
-                      </>
-                    )}
+        <p className="text-slate-500 mt-2">
+          Perfect for small schools & tuition centres.
+        </p>
 
-                    {i === 2 && (
-                      <>
-                        <li>✓ Custom Integrations</li>
-                        <li>✓ Dedicated Support</li>
-                      </>
-                    )}
-                  </ul>
+        <div className="mt-6">
+          <span className="text-5xl font-black">₹50</span>
+          <span className="text-slate-500 text-lg"> / student / month</span>
+        </div>
 
-                  <button className="w-full bg-[#4A90E2] text-white py-3 rounded-xl">
-                    Get Started
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <p className="mt-2 text-sm text-slate-500">
+          Minimum Billing: ₹2,500/month
+        </p>
+
+        <p className="text-sm text-slate-500">
+          One-Time Setup Fee: ₹9,999
+        </p>
+
+        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+          Book Free Demo
+        </button>
+
+        <ul className="mt-8 space-y-3 text-slate-600">
+          <li>✓ Up to 300 Students</li>
+          <li>✓ Student Management</li>
+          <li>✓ Teacher Management</li>
+          <li>✓ Attendance Management</li>
+          <li>✓ Homework Management</li>
+          <li>✓ Timetable</li>
+          <li>✓ Parent, Student & Teacher Portal</li>
+          <li>✓ Android & iOS App</li>
+          <li>✓ Web Dashboard</li>
+          <li>✓ Email Support</li>
+        </ul>
+      </div>
+
+      {/* Professional */}
+      <div className="rounded-3xl border border-[#4A90E2] bg-white p-8 scale-105 shadow-[0_20px_50px_rgba(74,144,226,0.25)]">
+
+        <span className="inline-block px-3 py-1 bg-blue-100 text-[#4A90E2] rounded-full text-xs font-bold mb-4">
+          MOST POPULAR
+        </span>
+
+        <h3 className="text-3xl font-bold">Professional</h3>
+
+        <p className="text-slate-500 mt-2">
+          Best for growing schools needing complete automation.
+        </p>
+
+        <div className="mt-6">
+          <span className="text-5xl font-black">₹45</span>
+          <span className="text-slate-500 text-lg"> / student / month</span>
+        </div>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Minimum Billing: ₹10,000/month
+        </p>
+
+        <p className="text-sm text-slate-500">
+          One-Time Setup Fee: ₹24,999
+        </p>
+
+        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+          Book Free Demo
+        </button>
+
+        <ul className="mt-8 space-y-3 text-slate-600">
+          <li>✓ Everything in Starter</li>
+          <li>✓ Up to 1,500 Students</li>
+          <li>✓ Fee Management</li>
+          <li>✓ Exam & Result Management</li>
+          <li>✓ WhatsApp Notifications</li>
+          <li>✓ Push Notifications</li>
+          <li>✓ Staff Management</li>
+          <li>✓ Advanced Analytics</li>
+          <li>✓ School Branding</li>
+          <li>✓ Priority Support</li>
+        </ul>
+      </div>
+
+      {/* Enterprise */}
+      <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+
+        <h3 className="text-3xl font-bold">Enterprise</h3>
+
+        <p className="text-slate-500 mt-2">
+          Tailored for large schools & educational groups.
+        </p>
+
+        <div className="mt-6">
+          <span className="text-5xl font-black">Custom</span>
+        </div>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Custom pricing based on your institution's requirements.
+        </p>
+
+        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+          Contact Sales
+        </button>
+
+        <ul className="mt-8 space-y-3 text-slate-600">
+          <li>✓ Unlimited Students</li>
+          <li>✓ Everything in Professional</li>
+          <li>✓ Multi-Branch Management</li>
+          <li>✓ Dedicated Account Manager</li>
+          <li>✓ Custom Modules</li>
+          <li>✓ API Access</li>
+          <li>✓ Third-Party Integrations</li>
+          <li>✓ White-Label Solution</li>
+          <li>✓ Advanced Security (SSO)</li>
+          <li>✓ Staff Training & Onboarding</li>
+          <li>✓ 24×7 Priority Support</li>
+        </ul>
+      </div>
+
+    </div>
+
+    {/* Bottom Note */}
+
+    <div className="mt-14 text-center text-slate-600 max-w-3xl mx-auto">
+      <p className="text-lg font-medium">
+        ✔ No long-term contracts &nbsp; • &nbsp;
+        ✔ Free onboarding &nbsp; • &nbsp;
+        ✔ Free product demo
+      </p>
+
+      <p className="mt-4">
+        <strong>Billing Example:</strong> A school with <strong>500 students</strong> pays{" "}
+        <strong>₹22,500/month</strong> on the Professional plan (₹45 per student).
+      </p>
+    </div>
+  </div>
+</section>
 
         <section id="faq" className="bg-white/70 backdrop-blur-sm py-24 px-6">
           <div className="max-w-4xl mx-auto">
