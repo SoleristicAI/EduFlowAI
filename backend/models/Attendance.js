@@ -5,6 +5,7 @@ const attendanceSchema = new mongoose.Schema({
     teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     grade: { type: String, required: true },
     date: { type: String, required: true }, 
+    session: { type: String, required: true },
     records: [{
         studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         name: { type: String },

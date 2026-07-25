@@ -489,6 +489,23 @@ router.get('/my-mentor', protect, async (req, res) => {
     }
 });
 
+
+// 🔥 NAYI API: Har role (Student/Teacher) ko asli session batane ke liye 🔥
+router.get('/general/session-info', protect, async (req, res) => {
+    try {
+        const school = await require('../models/School').findById(req.user.schoolId).select('activeSession');
+        const active = school?.activeSession || '2026-2027';
+        
+        const historySessions = await User.distinct('academicHistory.session', { schoolId: req.user.schoolId });
+        const allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
+        
+        res.json({ activeSession: active, allAvailableSessions });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch session info" });
+    }
+});
+
+
 // ==========================================================
 // --- DAY 264: SESSION CONFIGURATION & LOCKING SYSTEM ---
 // ==========================================================
@@ -497,10 +514,19 @@ router.get('/admin/session-config', protect, adminOnly, async (req, res) => {
         const grades = await User.find({ schoolId: req.user.schoolId, role: 'student' }).distinct('grade');
         const school = await require('../models/School').findById(req.user.schoolId).select('activeSession upgradedClasses');
         
+        const active = school?.activeSession || '2026-2027';
+        
+        // 🔥 REAL MAGIC: Sirf is school ki asli history database se nikal rahe hain 🔥
+        const historySessions = await User.distinct('academicHistory.session', { schoolId: req.user.schoolId });
+        
+        // Current session aur purani history ko mila kar ek clean array bana diya
+        const allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
+        
         res.json({
             grades: grades.sort(),
-            activeSession: school?.activeSession || '2025-2026',
-            upgradedClasses: school?.upgradedClasses || []
+            activeSession: active,
+            upgradedClasses: school?.upgradedClasses || [],
+            allAvailableSessions // NAYA: Frontend ko real session list bhej di
         });
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch session config." });

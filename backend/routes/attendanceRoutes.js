@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const School = require('../models/School');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
 const LeaveRequest = require('../models/LeaveRequest');
@@ -62,7 +63,13 @@ router.get('/my-students', protect, teacherOnly, async (req, res) => {
 router.post('/mark', protect, teacherOnly, async (req, res) => {
     const { grade, date, records } = req.body;
     try {
-        let attendance = await Attendance.findOne({ grade, date, schoolId: req.user.schoolId });
+        // 🔥 MAGIC: Get Current Session automatically 🔥
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const currentSession = school ? school.activeSession : '2025-2026';
+
+        let attendance = await Attendance.findOne({ 
+            grade, date, schoolId: req.user.schoolId, session: currentSession 
+        });
 
         if (attendance) {
             attendance.records = records;
@@ -72,9 +79,8 @@ router.post('/mark', protect, teacherOnly, async (req, res) => {
             attendance = await Attendance.create({
                 schoolId: req.user.schoolId, 
                 teacher: req.user._id,
-                grade,
-                date,
-                records
+                grade, date, records,
+                session: currentSession // Save with session tag
             });
         }
         res.status(201).json({ message: 'Attendance Synchronized! ✅', attendance });
@@ -87,7 +93,14 @@ router.post('/mark', protect, teacherOnly, async (req, res) => {
 router.get('/view', protect, async (req, res) => {
     const { grade, date } = req.query;
     try {
-        const data = await Attendance.findOne({ grade, date, schoolId: req.user.schoolId }).lean();
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const currentSession = school ? school.activeSession : '2025-2026';
+        
+        // Teacher sirf Current Session ki attendance dekh sakta hai
+        const data = await Attendance.findOne({ 
+            grade, date, schoolId: req.user.schoolId, 
+            $or: [{ session: currentSession }, { session: { $exists: false } }] 
+        }).lean();
         
         if (data) {
             const targetDateObj = new Date(date);
@@ -135,11 +148,17 @@ router.get('/student-stats', protect, async (req, res) => {
     try {
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
-        const { month } = req.query; 
+        const { month, session } = req.query; // Session parameter
+
+        // 🔥 LEGACY DATA FIX 🔥
+        const sessionFilter = session === '2026-2027' 
+            ? { $or: [{ session: session }, { session: { $exists: false } }] }
+            : { session: session };
 
         const allRecords = await Attendance.find({
             'records.studentId': studentId,
-            schoolId: schoolId
+            schoolId: schoolId,
+            ...(session && sessionFilter) // Updated Filter
         }).sort({ date: -1 });
 
         let presentDays = 0;
@@ -179,11 +198,24 @@ router.get('/student-stats', protect, async (req, res) => {
     }
 });
 
+// 👇 Yahan session filter miss ho gaya tha 👇
 router.get('/admin-report/:grade', protect, adminOnly, async (req, res) => {
     try {
         const { grade } = req.params;
-        const students = await User.find({ role: 'student', grade, schoolId: req.user.schoolId }).select('name enrollmentNo');
-        const attendanceData = await Attendance.find({ grade, schoolId: req.user.schoolId });
+        const { session } = req.query; // 🔥 1. URL se session nikal liya
+
+        const students = await User.find({ role: 'student', grade, schoolId: req.user.schoolId, status: { $nin: ['Alumni', 'Left'] } }).select('name enrollmentNo');
+        
+        // 🔥 LEGACY DATA FIX 🔥
+        const sessionFilter = session === '2026-2027' 
+            ? { $or: [{ session: session }, { session: { $exists: false } }] }
+            : { session: session };
+
+        const attendanceData = await Attendance.find({ 
+            grade, 
+            schoolId: req.user.schoolId,
+            ...(session && sessionFilter)
+        });
 
         const report = students.map(student => {
             let present = 0;
@@ -219,24 +251,53 @@ router.get('/admin-report/:grade', protect, adminOnly, async (req, res) => {
 router.get('/student-report/:studentId', protect, adminOnly, async (req, res) => {
     try {
         const { studentId } = req.params;
+        const { session } = req.query; // URL se session nikal liya
+
         const student = await User.findOne({ _id: studentId, schoolId: req.user.schoolId }).select('-password');
         if (!student) return res.status(404).json({ message: "Student Not Found" });
 
-        const attendanceData = await Attendance.find({ schoolId: req.user.schoolId, grade: student.grade });
+        // 🔥 LEGACY DATA FIX 🔥
+        const sessionFilter = session === '2026-2027' 
+            ? { $or: [{ session: session }, { session: { $exists: false } }] }
+            : { session: session };
 
-        let totalDays = 0;
+        const attendanceData = await Attendance.find({ 
+            schoolId: req.user.schoolId, 
+            grade: student.grade,
+            ...(session && sessionFilter)
+        });
+
+        // 👇 YAHAN SE LEAVE LOGIC SHURU HOTA HAI 👇
         let presentDays = 0;
+        let absentDays = 0; 
+        let leaveDays = 0;
 
         attendanceData.forEach(day => {
             const record = day.records.find(r => r.studentId.toString() === studentId);
             if (record) {
-                totalDays++;
                 if (record.status === 'Present') presentDays++;
+                else if (record.status === 'Absent') absentDays++;
+                else if (record.status === 'On Leave') leaveDays++;
             }
         });
 
-        const percentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : 0;
-        res.json({ profile: student, stats: { totalDays, presentDays, absentDays: totalDays - presentDays, percentage } });
+        // Total days = Sab kuch mila ke (Present + Absent + Leave)
+        const totalDays = presentDays + absentDays + leaveDays;
+
+        // Percentage sirf (Present / (Present + Absent)) se niklegi (Same as student app)
+        const effectiveWorkingDays = presentDays + absentDays;
+        const percentage = effectiveWorkingDays === 0 ? 0 : ((presentDays / effectiveWorkingDays) * 100).toFixed(1);
+
+        res.json({ 
+            profile: student, 
+            stats: { 
+                totalDays, 
+                presentDays, 
+                absentDays, // Ab absentDays = (totalDays - presentDays) NAHI HAIN. Actual Absent days count ho rahe hain.
+                leaveDays, 
+                percentage 
+            } 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Error fetching report' });
     }

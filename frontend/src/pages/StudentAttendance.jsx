@@ -1,9 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Award, Calendar, AlertCircle, CheckCircle, XCircle, Cpu, ChevronLeft, ChevronRight, BarChart3, Lock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Award, Calendar, AlertCircle, CheckCircle, XCircle, Cpu, ChevronLeft,ChevronDown, ChevronRight, BarChart3, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 import API from '../api';
 import Loader from '../components/Loader';
+
+// 🔥 PREMIUM GLASS DROPDOWN COMPONENT 🔥
+const GlassDropdown = ({ options, value, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+        };
+        if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={dropdownRef} className="relative z-[100]">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="bg-white/20 p-2.5 px-4 rounded-2xl border border-white/30 text-white font-black text-sm flex items-center gap-2 backdrop-blur-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
+            >
+                {value || "Select"}
+                <ChevronDown size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-36 bg-white border border-slate-100 shadow-2xl rounded-2xl overflow-hidden z-[100]"
+                    >
+                        {options.map((opt) => (
+                            <div
+                                key={opt}
+                                onClick={() => { onChange(opt); setIsOpen(false); }}
+                                className={`p-3 px-4 text-sm font-black cursor-pointer transition-colors ${
+                                    value === opt ? 'bg-[#42A5F5] text-white' : 'hover:bg-slate-50 text-slate-700'
+                                }`}
+                            >
+                                {opt}
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
 
 const StudentAttendance = () => {
     const navigate = useNavigate();
@@ -11,19 +60,30 @@ const StudentAttendance = () => {
     const [loading, setLoading] = useState(true);
     const [currentMonth, setCurrentMonth] = useState(new Date().toISOString().slice(0, 7));
     const [selectedDateLog, setSelectedDateLog] = useState(null);
+    const [activeSession, setActiveSession] = useState('');
+    const [availableSessions, setAvailableSessions] = useState([]);
 
-    useEffect(() => {
+   useEffect(() => {
         const fetchStats = async () => {
             try {
                 setLoading(true);
-                // Backend ko current month bhej rahe hain
-                const { data } = await API.get(`/attendance/student-stats?month=${currentMonth}`);
+                // 1. Database se asli saal (session) poocho
+                const sessionRes = await API.get('/users/general/session-info');
+                const realSession = sessionRes.data.activeSession;
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                
+                // Agar session select nahi hai, toh DB wala set karo
+                const sessionToFetch = activeSession || realSession;
+                if (!activeSession) setActiveSession(realSession);
+
+                // 2. Ab asli saal ki attendance maango
+                const { data } = await API.get(`/attendance/student-stats?month=${currentMonth}&session=${sessionToFetch}`);
                 setStats(data);
             } catch (err) { console.error("History Sync Failed", err); }
             finally { setLoading(false); }
         };
         fetchStats();
-    }, [currentMonth]); // Jab month badlega, data refresh hoga
+    }, [currentMonth, activeSession]); // activeSession change hone par bhi refresh hoga // Jab month badlega, data refresh hoga
 
     const changeMonth = (offset) => {
         const date = new Date(currentMonth + "-01");
@@ -81,10 +141,13 @@ const StudentAttendance = () => {
                 >
                     <ArrowLeft size={24} />
                 </button>
-
-                {/* Right Icon */}
-                <div className="absolute top-8 right-6 z-50 bg-white/20 p-2.5 rounded-2xl border border-white/20 text-white">
-                    <Cpu size={24} />
+               {/* 👇 PREMIUM SESSION FILTER 👇 */}
+                <div className="absolute top-8 right-6 z-50">
+                    <GlassDropdown 
+                        options={availableSessions} 
+                        value={activeSession} 
+                        onChange={setActiveSession} 
+                    />
                 </div>
 
                 {/* Attendance Circle */}

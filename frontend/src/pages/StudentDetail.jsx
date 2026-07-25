@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect , useRef} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ArrowLeft, User, Phone, MapPin, Mail, Shield,
     Clock, XCircle, CheckCircle, TrendingUp, Target,
-    Zap, BrainCircuit, Star, AlertCircle, Activity,
+    Zap, BrainCircuit, Star, AlertCircle, Activity, ChevronDown ,
     BookOpen, AlertOctagon
 } from 'lucide-react';
 import API from '../api';
@@ -88,6 +88,55 @@ const MiniProgressRing = ({ percentage, subject }) => {
     );
 };
 
+// 🔥 PREMIUM GLASS DROPDOWN COMPONENT 🔥
+const GlassDropdown = ({ options, value, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+        };
+        if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={dropdownRef} className="relative z-[100]">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="bg-white/20 p-2.5 px-4 rounded-2xl border border-white/30 text-white font-black text-sm flex items-center gap-2 backdrop-blur-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
+            >
+                {value || "Select"}
+                <ChevronDown size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-36 bg-white border border-slate-100 shadow-2xl rounded-2xl overflow-hidden z-[100]"
+                    >
+                        {options.map((opt) => (
+                            <div
+                                key={opt}
+                                onClick={() => { onChange(opt); setIsOpen(false); }}
+                                className={`p-3 px-4 text-sm font-black cursor-pointer transition-colors ${
+                                    value === opt ? 'bg-[#42A5F5] text-white' : 'hover:bg-slate-50 text-slate-700'
+                                }`}
+                            >
+                                {opt}
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
 const StudentDetail = () => {
     const { studentId } = useParams();
     const navigate = useNavigate();
@@ -96,19 +145,34 @@ const StudentDetail = () => {
     const [performance, setPerformance] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    const [selectedSession, setSelectedSession] = useState('');
+    const [availableSessions, setAvailableSessions] = useState([]);
+
     useEffect(() => {
         const fetchDeepStats = async () => {
             try {
-                // Fetch Attendance & Profile
-                const attRes = await API.get(`/attendance/student-report/${studentId}`);
+                setLoading(true);
+
+                // 1. Fetch Real Locked Session from Database
+                const configRes = await API.get('/users/admin/session-config');
+                const realActiveSession = configRes.data.activeSession || '2026-2027';
+                
+                // 🔥 THE FIX: Loop Hata Diya! Backend ne jo asli session bheje hain, bas wahi dikhenge 🔥
+                setAvailableSessions(configRes.data.allAvailableSessions || [realActiveSession]);
+                
+                // Agar abhi tak session select nahi kiya hai, toh DB wala current session set karo
+                const sessionToFetch = selectedSession || realActiveSession;
+                if (!selectedSession) setSelectedSession(realActiveSession);
+
+                // 3. Data laao
+                const attRes = await API.get(`/attendance/student-report/${studentId}?session=${sessionToFetch}`);
                 setData(attRes.data);
 
-                // Fetch Performance parallelly
                 try {
                     const perfRes = await API.get(`/exam-results/student-performance/${studentId}`);
                     processPerformanceData(perfRes.data);
                 } catch (perfErr) {
-                    console.log("Performance not available yet or error.", perfErr);
+                    console.log("Performance error.", perfErr);
                 }
 
             } catch (err) {
@@ -118,7 +182,7 @@ const StudentDetail = () => {
             }
         };
         fetchDeepStats();
-    }, [studentId]);
+    }, [studentId, selectedSession]);
 
     // Crunching logic for Performance
     const processPerformanceData = (rawData) => {
@@ -172,18 +236,28 @@ const StudentDetail = () => {
                     <ArrowLeft size={24} />
                 </button>
 
+                {/* 👇 SMART DYNAMIC SESSION FILTER 👇 */}
+               {/* 👇 PREMIUM ADMIN SESSION FILTER 👇 */}
+                <div className="absolute top-12 right-6 z-50">
+                    <GlassDropdown 
+                        options={availableSessions} 
+                        value={selectedSession} 
+                        onChange={setSelectedSession} 
+                    />
+                </div>
+
                 <div className="relative inline-block mt-4">
                     {profile.avatar ? (
-    <img 
-        src={profile.avatar.startsWith('http') ? profile.avatar : `${BASE_URL}${profile.avatar}`} 
-        alt={profile.name} 
-        className="w-32 h-32 rounded-[3rem] border-4 border-blue-100 object-cover shadow-2xl"
-    />
-) : (
-    <div className="w-32 h-32 rounded-[3rem] bg-white border-4 border-blue-100 flex items-center justify-center text-5xl font-black text-[#42A5F5] shadow-2xl">
-        {profile.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
-    </div>
-)}
+                        <img
+                            src={profile.avatar.startsWith('http') ? profile.avatar : `${BASE_URL}${profile.avatar}`}
+                            alt={profile.name}
+                            className="w-32 h-32 rounded-[3rem] border-4 border-blue-100 object-cover shadow-2xl"
+                        />
+                    ) : (
+                        <div className="w-32 h-32 rounded-[3rem] bg-white border-4 border-blue-100 flex items-center justify-center text-5xl font-black text-[#42A5F5] shadow-2xl">
+                            {profile.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+                        </div>
+                    )}
                 </div>
 
                 <h2 className="mt-6 text-4xl font-black tracking-tighter italic px-10 text-white">
