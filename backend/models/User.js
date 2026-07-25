@@ -42,12 +42,27 @@ const userSchema = new mongoose.Schema({
     grade: String, 
     assignedClass: { type: String, default: null }, // Day 85: Single class assigned to a teacher
     subjects: [String],
+    // --- DAY 264: ACADEMIC HISTORY FOR SESSION UPGRADE ---
+    status: { 
+        type: String, 
+        enum: ['Active', 'Alumni', 'Left'], 
+        default: 'Active' 
+    },
+    academicHistory: [{
+        session: String,       // e.g., "2025-2026"
+        gradePassed: String,   // e.g., "9th"
+        promotedTo: String,    // e.g., "10th"
+        isRepeater: Boolean    // If true, student failed and repeated
+    }],
     resetOTP: String,
     otpExpires: Date
 }, { timestamps: true });
 
-userSchema.pre('save', async function(next) {
-    if (!this.isModified('password')) return next();
+// 🔥 BUG FIX: Modern Mongoose Async Hook (No 'next' function error) 🔥
+userSchema.pre('save', async function() {
+    if (!this.isModified('password')) {
+        return; // Agar password change nahi hua, toh aage badho bina next() ke
+    }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
 });

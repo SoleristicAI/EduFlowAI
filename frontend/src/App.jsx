@@ -94,6 +94,8 @@ import PaymentMethods from './pages/student/PaymentMethods'; // Day 110: New Pay
 
 import LandingPage from './pages/LandingPage';
 
+import SessionPromotion from './pages/admin/SessionPromotion';
+
 // DAY 76: Theme Integration
 import { useTheme } from './context/ThemeContext';
 // --- NEURAL VISUAL MATRIX COMPONENT ---
@@ -464,6 +466,7 @@ function App() {
           <Route path="/teacher/results" element={<TeacherUploadResult user={user} />} />
           <Route path="/admin/academic-calendar" element={<AdminAcademicCalendar />} />
           <Route path="/admin/feedback" element={<AdminFeedback />} />
+          <Route path="/admin/session-upgrade" element={<SessionPromotion />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />

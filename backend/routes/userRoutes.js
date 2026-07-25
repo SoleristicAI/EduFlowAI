@@ -63,21 +63,38 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        // FIXED: Find latest student in THIS school AND in THIS specific GRADE
-        const lastStudent = await User.findOne({
+        // 🔥 THE GAP-FILLER ALGORITHM 🔥
+        // 1. Class ke saare ACTIVE bacchon ke roll number nikalo
+        const activeStudents = await User.find({
             schoolId: req.user.schoolId,
             role: 'student',
-            grade: grade
-        }).sort({ createdAt: -1 });
+            grade: grade,
+            status: { $nin: ['Alumni', 'Left'] }
+        }).select('enrollmentNo');
 
-        let nextEnrollNo;
-        if (lastStudent && lastStudent.enrollmentNo && lastStudent.enrollmentNo.startsWith('STU')) {
-            const lastNo = parseInt(lastStudent.enrollmentNo.replace('STU', ''));
-            const nextNo = lastNo + 1;
-            nextEnrollNo = `STU${nextNo.toString().padStart(3, '0')}`;
-        } else {
-            nextEnrollNo = 'STU001';
+        // 2. Unme se sirf number extract karke ascending order me sort karo
+        const usedNumbers = activeStudents
+            .map(s => {
+                if (s.enrollmentNo) {
+                    const match = s.enrollmentNo.match(/\d+$/);
+                    return match ? parseInt(match[0], 10) : null;
+                }
+                return null;
+            })
+            .filter(n => n !== null)
+            .sort((a, b) => a - b);
+
+        // 3. 1 se shuru karke pehla khali number dhoondo
+        let nextNo = 1;
+        for (let num of usedNumbers) {
+            if (num === nextNo) {
+                nextNo++; // Agar number used hai, toh aage badho
+            }
         }
+        
+        // 4. Clean format banake assign kar do
+        const classCode = grade ? grade.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() : "GEN";
+        const nextEnrollNo = `STU${classCode}${nextNo.toString().padStart(3, '0')}`;
 
         const student = await User.create({
             schoolId: req.user.schoolId,
@@ -108,7 +125,8 @@ router.get('/students/:grade', protect, async (req, res) => {
         const students = await User.find({
             role: 'student',
             grade: req.params.grade,
-            schoolId: req.user.schoolId
+            schoolId: req.user.schoolId,
+            status: { $nin: ['Alumni', 'Left'] }
         }).select('name email enrollmentNo grade fatherName motherName dob gender religion admissionNo phone address avatar'); 
       
 
@@ -131,37 +149,47 @@ router.get('/teachers', protect, adminOnly, async (req, res) => {
     }
 });
 
-// Admin Update User Sequence (DAY 78)
-// Admin Update User (DAY 85: Added AssignedClass Conflict Check)
+// Admin Update User (Fixed 500 Error & Immutable ID Bug)
 router.put('/update/:id', protect, adminOnly, async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        // 🔥 HACK: Remove immutable fields before Object.assign so Mongoose doesn't crash 🔥
+        if (req.body._id) delete req.body._id;
+        if (req.body.schoolId) delete req.body.schoolId;
+        if (req.body.createdAt) delete req.body.createdAt;
+        if (req.body.updatedAt) delete req.body.updatedAt;
+
         // --- CONFLICT CHECK FOR TEACHER ASSIGNMENT ---
         if (user.role === 'teacher' && req.body.assignedClass) {
+            // String mein convert karke trim aur uppercase karenge taaki crash na ho
+            const assignedClassStr = String(req.body.assignedClass).trim().toUpperCase();
+            
             const classTaken = await User.findOne({
                 role: 'teacher',
-                assignedClass: req.body.assignedClass.toUpperCase(),
+                assignedClass: assignedClassStr,
                 schoolId: req.user.schoolId,
                 _id: { $ne: req.params.id } // Khud ko chhod kar
             });
+            
             if (classTaken) {
                 return res.status(400).json({
-                    message: `CONFLICT: Class ${req.body.assignedClass} is already assigned to EMP: ${classTaken.employeeId}!`
+                    message: `CONFLICT: Class ${assignedClassStr} is already assigned to EMP: ${classTaken.employeeId}!`
                 });
             }
+            
+            // Backend update ke liye body ko clean karo
+            req.body.assignedClass = assignedClassStr; 
         }
 
-        // Update fields
+        // Update fields safely
         Object.assign(user, req.body);
-        if (user.role === 'teacher' && user.assignedClass) {
-            user.assignedClass = user.assignedClass.toUpperCase();
-        }
-
+        
         await user.save();
         res.json({ message: 'User updated successfully', user });
     } catch (error) {
+        console.error("Update User DB Error:", error);
         res.status(500).json({ message: 'Update failed: ' + error.message });
     }
 });
@@ -460,5 +488,122 @@ router.get('/my-mentor', protect, async (req, res) => {
         res.status(500).json({ message: "Neural Link Error: Mentor data lost." });
     }
 });
+
+// ==========================================================
+// --- DAY 264: SESSION CONFIGURATION & LOCKING SYSTEM ---
+// ==========================================================
+router.get('/admin/session-config', protect, adminOnly, async (req, res) => {
+    try {
+        const grades = await User.find({ schoolId: req.user.schoolId, role: 'student' }).distinct('grade');
+        const school = await require('../models/School').findById(req.user.schoolId).select('activeSession upgradedClasses');
+        
+        res.json({
+            grades: grades.sort(),
+            activeSession: school?.activeSession || '2025-2026',
+            upgradedClasses: school?.upgradedClasses || []
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch session config." });
+    }
+});
+
+router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
+    try {
+        const { nextSession } = req.body;
+        const school = await require('../models/School').findById(req.user.schoolId);
+        
+        school.activeSession = nextSession; // Naya saal shuru!
+        school.upgradedClasses = []; // Purane locks clear kardo naye saal ke liye
+        
+        await school.save();
+        res.json({ message: `Session Locked! 🔒 Successfully switched to ${nextSession} ✅` });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to finalize session." });
+    }
+});
+
+// ==========================================================
+// --- DAY 264: THE MASS PROMOTION ENGINE (WITH SMART ENROLLMENT ID & CLASS LOCK) ---
+// ==========================================================
+router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
+    try {
+        const { currentSession, currentGrade, studentUpdates } = req.body;
+
+        if (!studentUpdates || studentUpdates.length === 0) {
+            return res.status(400).json({ message: "No students selected for promotion." });
+        }
+
+        for (let update of studentUpdates) {
+            const student = await User.findById(update.studentId);
+            if (!student) continue;
+
+            if (!student.academicHistory) student.academicHistory = [];
+
+            const oldGrade = student.grade;
+
+            // 1. Archive Current Data
+            student.academicHistory.push({
+                session: currentSession, 
+                gradePassed: oldGrade,
+                promotedTo: update.action === 'PROMOTE' ? update.newGrade : oldGrade,
+                isRepeater: update.action === 'REPEAT'
+            });
+
+            // 2. Process Status & Smart ID Generation
+            if (update.action === 'ALUMNI') {
+                student.status = 'Alumni';
+            } 
+            else if (update.action === 'PROMOTE') {
+                student.grade = update.newGrade;
+                
+                const cleanGrade = update.newGrade.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+                
+                // Gap Filler Algorithm
+                const activeStudentsInNewClass = await User.find({
+                    schoolId: student.schoolId,
+                    role: 'student',
+                    grade: update.newGrade,
+                    status: { $nin: ['Alumni', 'Left'] }
+                }).select('enrollmentNo');
+
+                const usedNumbers = activeStudentsInNewClass
+                    .map(s => {
+                        if (s.enrollmentNo) {
+                            const match = s.enrollmentNo.match(/\d+$/);
+                            return match ? parseInt(match[0], 10) : null;
+                        }
+                        return null;
+                    })
+                    .filter(n => n !== null)
+                    .sort((a, b) => a - b);
+
+                let nextNo = 1;
+                for (let num of usedNumbers) {
+                    if (num === nextNo) nextNo++;
+                }
+                
+                student.enrollmentNo = `STU${cleanGrade}${nextNo.toString().padStart(3, '0')}`;
+            } 
+
+            await student.save();
+        }
+
+        // 🔥 LOCK THE CLASS AFTER PROMOTION 🔥
+        if (currentGrade) {
+            const school = await require('../models/School').findById(req.user.schoolId);
+            if (!school.upgradedClasses.includes(currentGrade)) {
+                school.upgradedClasses.push(currentGrade);
+                await school.save();
+            }
+        }
+
+        res.json({ message: `Success: ${currentGrade} locked! Students promoted safely.` });
+    } catch (error) {
+        console.error("Promotion Engine Error:", error);
+        res.status(500).json({ message: "Critical Server Error: " + error.message });
+    }
+});
+
+module.exports = router;
 
 module.exports = router;

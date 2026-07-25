@@ -185,6 +185,7 @@ const AdminHome = ({ searchQuery }) => {
         { id: 'academic-calendar', title: 'Academic Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', color: 'bg-rose-50 text-rose-500 border-rose-100' },
         { id: 'feedback-engine', title: 'Feedback Engine', icon: <MessageSquare size={24} />, desc: 'Request teacher evaluations', color: 'bg-teal-50 text-teal-500 border-teal-100' },
         { id: 'manage-users', title: 'Manage student and teacher', icon: <Users size={24} />, desc: 'Edit or Delete personnel', color: 'bg-blue-50 text-[#42A5F5] border-blue-100' },
+        { id: 'session-upgrade', title: 'Session upgrade', icon: <Zap size={24} />, desc: 'Promote students to next class', color: 'bg-emerald-50 text-emerald-500 border-emerald-100' },
     ];
 
     return (
@@ -309,6 +310,7 @@ const AdminHome = ({ searchQuery }) => {
                             if (m.id === 'admit-card') navigate('/admin/admit-card');
                             if (m.id === 'academic-calendar') navigate('/admin/academic-calendar');
                             if (m.id === 'feedback-engine') navigate('/admin/feedback');
+                            if (m.id === 'session-upgrade') navigate('/admin/session-upgrade');
                         }} className="bg-white p-6 rounded-[2.5rem] border border-slate-50 flex items-center justify-between active:scale-[0.98] transition-all cursor-pointer group shadow-sm hover:shadow-md hover:border-blue-100">
                             <div className="flex items-center gap-5">
                                 <div className={`${m.color} p-4 rounded-2xl border transition-all`}>{m.icon}</div>

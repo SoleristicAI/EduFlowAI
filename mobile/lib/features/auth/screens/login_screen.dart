@@ -9,91 +9,610 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import 'forgot_password_modal.dart';
 
-// ============================================================
-// Generic placeholder legal copy — swap in your real policy text
-// whenever you have it; this just keeps the sheets from being empty.
-// ============================================================
 const String _privacyPolicyContent = '''
-Last updated: July 2026
+Effective Date: 23 July 2026
 
-1. Introduction
-EduFlowAI ("we", "our", "us") provides a school management and learning platform for students, teachers, and administrators. This Privacy Policy explains what information we collect, how we use it, and the choices you have.
+Welcome to EduFlowAI, a cloud-based Education Management System (EMS) developed and operated by SoleristicAI (“Company”, “we”, “our”, or “us”).
 
-2. Information We Collect
-We collect account information such as your name, email address, and role (student, teacher, finance, or admin). We also collect basic usage data — pages visited, features used, and device/browser information — to help us keep the app reliable and secure.
+EduFlowAI provides digital management solutions for educational institutions, including schools, colleges, universities, coaching institutes, training centers, and other educational organizations.
 
-3. How We Use Your Information
-Your information is used to operate your account, provide the features you request, communicate important updates, and improve the platform over time. We do not sell your personal information.
+This Privacy Policy explains how we collect, use, store, disclose, and protect information when educational institutions, administrators, faculty members, staff, students, parents, guardians, and other authorized users access EduFlowAI through our website, web application, and mobile applications.
 
-4. Data Sharing
-We only share information with school staff who need it to do their jobs (e.g. a teacher viewing their own class), and with service providers who help us run the platform under strict confidentiality obligations.
+By accessing or using EduFlowAI, you acknowledge that you have read and understood this Privacy Policy.
 
-5. Data Security
-We use industry-standard safeguards, including encrypted connections and access controls, to protect your data from unauthorized access, alteration, or loss.
+⸻
 
-6. Children's Privacy
-Where students under 18 use EduFlowAI, accounts are created and managed by the school, and we collect only the information necessary for educational purposes. Parents and schools may contact us to review or request deletion of a student's data.
+1. Information We Collect
 
-7. Your Rights
-You may request access to, correction of, or deletion of your personal information at any time by contacting your school administrator or reaching out to us directly.
+We may collect and process the following categories of information.
 
-8. Changes to This Policy
-We may update this policy from time to time. We'll let you know about significant changes within the app.
+A. Educational Institution Information
+* Institution name
+* Institution address
+* Contact details
+* Administrator information
+* Subscription information
+* Billing information
+* Institution branding assets
 
-9. Contact Us
-Questions about this policy can be sent to your school's EduFlowAI administrator.
+⸻
+
+B. Student Information
+Depending on the institution’s requirements, we may collect:
+* Student name
+* Admission or registration number
+* Roll number
+* Date of birth
+* Gender
+* Class, section, course or semester
+* Attendance records
+* Academic records
+* Examination results
+* Fee records
+* Transport information
+* Hostel information
+* Library records
+* Identity documents uploaded by the institution (where applicable)
+* Parent or guardian information
+
+⸻
+
+C. Parent / Guardian Information
+Where applicable, we may collect:
+* Name
+* Mobile number
+* Email address
+* Relationship with student
+* Address
+* Communication preferences
+
+⸻
+
+D. Faculty & Staff Information
+We may collect:
+* Employee ID
+* Name
+* Contact information
+* Department
+* Designation
+* Attendance
+* Payroll-related references (if enabled)
+* Roles and permissions
+* Login activity
+
+⸻
+
+E. User Account Information
+We collect:
+* Username
+* Email address
+* Mobile number
+* Encrypted password
+* Login history
+* Authentication information
+Passwords are stored using industry-standard encryption and are never stored in plain text.
+
+⸻
+
+F. Device & Technical Information
+We may automatically collect:
+* IP address
+* Browser type
+* Operating system
+* Device information
+* App version
+* Crash reports
+* Log files
+* Usage analytics
+* Session information
+
+⸻
+
+2. How We Use Information
+
+We use collected information to:
+* Provide EduFlowAI services
+* Manage educational institution operations
+* Manage admissions
+* Track attendance
+* Manage academic records
+* Process examination results
+* Manage fee collection
+* Generate reports
+* Send notifications
+* Enable communication between institutions and users
+* Improve product functionality
+* Maintain platform security
+* Detect fraud or misuse
+* Provide customer support
+* Comply with applicable laws
+
+⸻
+
+3. Legal Basis for Processing
+
+Where applicable, we process information:
+* With the authorization of the educational institution
+* To perform contractual obligations
+* To comply with legal obligations
+* To protect legitimate business interests
+* Based on user consent where required by law
+
+⸻
+
+4. Data Security
+
+Protecting user information is a priority.
+We implement reasonable administrative, technical, and organizational safeguards including:
+* Secure authentication
+* Encrypted passwords
+* HTTPS encryption
+* Secure cloud infrastructure
+* Role-based access control
+* Regular system updates
+* Backup procedures
+* Activity monitoring
+* Security logging
+Despite our efforts, no electronic system can guarantee absolute security.
+
+⸻
+
+5. Data Sharing
+
+We do not sell personal information.
+Information may be shared only:
+* With the respective educational institution
+* With authorized users designated by the institution
+* With trusted third-party service providers supporting EduFlowAI
+* With payment processors (where applicable)
+* With cloud infrastructure providers
+* When required by law, regulation, court order, or government authority
+* To protect the rights, safety, or property of SoleristicAI or its users
+
+⸻
+
+6. Third-Party Services
+
+EduFlowAI may integrate with third-party services including:
+* Cloud hosting providers
+* Email delivery providers
+* SMS providers
+* WhatsApp Business APIs
+* Push notification services
+* Payment gateways
+* Analytics providers
+* Customer support tools
+Each third-party service operates under its own privacy practices.
+
+⸻
+
+7. Cookies & Similar Technologies
+
+Our website and applications may use cookies and similar technologies to:
+* Maintain secure sessions
+* Improve user experience
+* Remember preferences
+* Analyze platform usage
+* Improve performance
+Users may disable cookies through browser settings, although certain features may not function properly.
+
+⸻
+
+8. Data Retention
+
+We retain information only for as long as necessary to:
+* Provide services
+* Fulfill contractual obligations
+* Comply with applicable laws
+* Resolve disputes
+* Enforce legal agreements
+Educational institutions may request deletion of their information after account termination, subject to legal, contractual, and regulatory obligations.
+
+⸻
+
+9. Data Ownership
+
+All educational records and institutional information stored within EduFlowAI remain the property of the respective educational institution.
+SoleristicAI does not claim ownership of any institutional, student, faculty, staff, or administrative data uploaded by customers.
+We process such information solely to provide and improve EduFlowAI services.
+
+⸻
+
+10. User Rights
+
+Depending on applicable law, users may have the right to:
+* Access personal information
+* Correct inaccurate information
+* Request deletion
+* Request restriction of processing
+* Request data portability
+* Withdraw consent where applicable
+* Lodge complaints with relevant authorities
+Requests should generally be submitted through the respective educational institution or by contacting us.
+
+⸻
+
+11. Children’s Privacy
+
+EduFlowAI is intended for use by educational institutions, including schools, colleges, universities, coaching institutes, training centers, and similar organizations.
+Where EduFlowAI processes information relating to minors, such processing is carried out under the authority of the respective educational institution and, where required by applicable law, with appropriate parental or guardian consent.
+For adult students enrolled in colleges or universities, personal information is processed in accordance with this Privacy Policy and applicable laws.
+
+⸻
+
+12. Account Security
+
+Users are responsible for maintaining the confidentiality of their account credentials.
+Users should not share passwords with others.
+Any suspected unauthorized access should be reported immediately.
+
+⸻
+
+13. International Data Transfers
+
+Where data is transferred or processed outside the user’s country, SoleristicAI will implement appropriate safeguards consistent with applicable data protection laws.
+
+⸻
+
+14. Service Availability
+
+We strive to provide reliable and uninterrupted services.
+However, scheduled maintenance, software updates, technical issues, internet outages, or circumstances beyond our reasonable control may occasionally affect service availability.
+SoleristicAI shall not be liable for temporary interruptions reasonably necessary for maintenance or security.
+
+⸻
+
+15. Changes to this Privacy Policy
+
+We may update this Privacy Policy from time to time.
+The latest version will always be available on our website and applications.
+Continued use of EduFlowAI after updates constitutes acceptance of the revised Privacy Policy.
+
+⸻
+
+16. Contact Us
+
+If you have questions regarding this Privacy Policy or our privacy practices, please contact us.
+SoleristicAI
+Product: EduFlowAI
+Email: soleristicai@gmail.com 
+Website: https://eduflowai.uk
+
+⸻
+
+Disclaimer
+This Privacy Policy is intended as a general business privacy policy. It is not legal advice. Before onboarding enterprise customers or expanding internationally, consider having your legal documents reviewed by a qualified lawyer to ensure compliance with applicable laws such as India’s Digital Personal Data Protection Act (DPDP Act), GDPR (if serving EU users), or other relevant regulations.
 ''';
 
 const String _termsContent = '''
-Last updated: July 2026
+Effective Date: 23 July 2026
 
-1. Acceptance of Terms
-By creating an account or using EduFlowAI, you agree to these Terms of Service. If you don't agree, please don't use the platform.
+Welcome to EduFlowAI, a cloud-based Education Management System (EMS) developed and operated by SoleristicAI (“Company”, “we”, “our”, or “us”).
+EduFlowAI provides digital management solutions for educational institutions, including schools, colleges, universities, coaching institutes, training centers, and other educational organizations.
+These Terms & Conditions (“Terms”) govern your access to and use of EduFlowAI through our website, web application, and mobile applications.
+By accessing or using EduFlowAI, you acknowledge that you have read, understood, and agree to be bound by these Terms.
+If you do not agree to these Terms, you must not use EduFlowAI.
 
-2. Use of the Platform
-EduFlowAI is provided for school-related educational and administrative purposes only. Access is granted through your school and tied to your assigned role.
+⸻
 
-3. Account Responsibilities
-You're responsible for keeping your login credentials confidential and for all activity under your account. Notify your school administrator immediately if you suspect unauthorized access.
+1. Definitions
 
-4. Acceptable Use
-You agree not to misuse the platform — this includes not attempting to access accounts or data that aren't yours, not disrupting the service, and not uploading harmful or unlawful content.
+For the purposes of these Terms:
+Company means SoleristicAI.
+EduFlowAI means the Education Management System developed and operated by SoleristicAI.
+Institution means any school, college, university, coaching institute, academy, training center, or other educational organization using EduFlowAI.
+User means any authorized administrator, principal, faculty member, teacher, staff member, student, parent, guardian, or any other person granted access by an Institution.
+Services means all software, websites, mobile applications, APIs, dashboards, AI features, communication tools, and related services provided through EduFlowAI.
 
-5. Intellectual Property
-All content, branding, and software associated with EduFlowAI remain the property of EduFlowAI and its licensors. You retain ownership of the content you personally submit.
+⸻
 
-6. Termination
-Your school or EduFlowAI may suspend or terminate access if these terms are violated, or when you're no longer affiliated with the school.
+2. Eligibility
 
-7. Limitation of Liability
-EduFlowAI is provided "as is." We work hard to keep it reliable, but we aren't liable for indirect or incidental damages arising from use of the platform.
+EduFlowAI may only be used by:
+* Registered educational institutions
+* Authorized users approved by an Institution
+* Individuals legally permitted to enter into binding agreements
+Users must provide accurate and complete information while creating or using accounts.
 
-8. Changes to These Terms
-We may revise these terms occasionally. Continued use of the platform after changes means you accept the updated terms.
+⸻
 
-9. Contact Us
-Questions about these terms can be directed to your school's EduFlowAI administrator.
+3. Services
+
+EduFlowAI may include, but is not limited to:
+* Student Information Management
+* Admissions Management
+* Attendance Management
+* Fee Management
+* Timetable Management
+* Homework & Assignments
+* Examination & Results
+* Parent Communication
+* Notifications
+* Staff Management
+* Library Management
+* Transport Management
+* AI-powered features
+* Reports & Analytics
+* Mobile Applications
+* Web Dashboard
+* Future software modules introduced by SoleristicAI
+We reserve the right to add, modify, suspend, or discontinue any feature without prior notice.
+
+⸻
+
+4. User Accounts
+
+Each Institution is responsible for managing its own users.
+Users agree to:
+* Keep login credentials confidential
+* Use strong passwords
+* Not share accounts
+* Notify the Institution or SoleristicAI immediately if unauthorized access is suspected
+The Company shall not be responsible for losses resulting from compromised credentials caused by user negligence.
+
+⸻
+
+5. Subscription & Payment
+
+Certain features require a paid subscription.
+Institutions agree to:
+* Pay setup fees where applicable
+* Pay recurring subscription fees on time
+* Maintain valid billing information
+* Comply with agreed pricing plans
+Failure to make payments may result in suspension or termination of services.
+
+⸻
+
+6. Pricing Changes
+
+SoleristicAI reserves the right to modify pricing, subscription plans, and service offerings.
+Price changes shall not affect existing subscriptions until the next renewal period unless otherwise agreed.
+
+⸻
+
+7. Free Trials
+
+If offered, free trials:
+* Are available for a limited duration
+* May have limited functionality
+* May be discontinued at any time
+* Do not guarantee future availability
+The Company reserves the right to end any free trial without prior notice.
+
+⸻
+
+8. Refund Policy
+
+Unless otherwise agreed in writing:
+* Setup fees are non-refundable once onboarding or implementation has commenced.
+* Subscription fees are generally non-refundable.
+* Refunds, if approved, shall be at the sole discretion of SoleristicAI and in accordance with applicable law.
+
+⸻
+
+9. Data Ownership
+
+All educational data uploaded into EduFlowAI remains the exclusive property of the respective Institution.
+This includes:
+* Student records
+* Faculty records
+* Attendance
+* Academic records
+* Fee records
+* Documents
+* Institution branding
+* Administrative information
+SoleristicAI does not claim ownership of Institution data.
+We process such data solely for providing, maintaining, securing, and improving EduFlowAI.
+
+⸻
+
+10. Data Backup & Recovery
+
+We perform reasonable backups of system data.
+However:
+* Institutions are encouraged to maintain independent backups of critical records.
+* SoleristicAI does not guarantee recovery from every possible data loss event.
+* Disaster recovery timelines may vary depending on technical circumstances.
+
+⸻
+
+11. Acceptable Use
+
+Users agree not to:
+* Violate applicable laws
+* Upload illegal or harmful content
+* Attempt unauthorized access
+* Reverse engineer the software
+* Copy or reproduce EduFlowAI
+* Interfere with platform security
+* Introduce malware or malicious code
+* Abuse system resources
+* Impersonate another user
+* Use EduFlowAI for unlawful purposes
+Violation may result in immediate suspension or termination.
+
+⸻
+
+12. Intellectual Property
+
+EduFlowAI and all associated intellectual property remain the exclusive property of SoleristicAI.
+This includes:
+* Source code
+* APIs
+* Software architecture
+* Databases
+* User interface
+* Branding
+* Logos
+* Trademarks
+* AI systems
+* Documentation
+* Designs
+* Mobile applications
+* Website content
+Nothing in these Terms transfers ownership of any intellectual property to users or Institutions.
+
+⸻
+
+13. Artificial Intelligence Features
+
+Certain EduFlowAI features may use artificial intelligence.
+AI-generated outputs:
+* Are provided to assist users.
+* May contain inaccuracies.
+* Should be reviewed before making important academic or administrative decisions.
+Users remain responsible for all decisions made using AI-generated content.
+
+⸻
+
+14. Third-Party Services
+
+EduFlowAI may integrate with:
+* WhatsApp Business
+* Payment gateways
+* SMS providers
+* Email services
+* Cloud hosting providers
+* Analytics platforms
+* Authentication providers
+* Notification services
+These services operate under their own terms and privacy policies.
+SoleristicAI is not responsible for third-party outages or failures.
+
+⸻
+
+15. Availability
+
+We strive to provide reliable service.
+However, interruptions may occur due to:
+* Scheduled maintenance
+* Security updates
+* Internet failures
+* Infrastructure issues
+* Third-party outages
+* Events beyond our reasonable control
+We do not guarantee uninterrupted or error-free availability.
+
+⸻
+
+16. Privacy
+
+Your use of EduFlowAI is governed by our Privacy Policy.
+By using EduFlowAI, you consent to the collection and processing of information as described in the Privacy Policy.
+
+⸻
+
+17. Limitation of Liability
+
+To the fullest extent permitted by applicable law, SoleristicAI shall not be liable for:
+* Loss of data resulting from user actions
+* Internet interruptions
+* Institution administrative errors
+* Third-party service failures
+* Indirect, incidental, or consequential damages
+* Loss of revenue
+* Loss of profits
+* Loss of business opportunities
+Our total liability shall not exceed the subscription fees actually paid by the Institution during the preceding twelve (12) months.
+
+⸻
+
+18. Indemnification
+
+The Institution agrees to indemnify and hold harmless SoleristicAI, its founders, directors, employees, contractors, affiliates, and partners from any claims, liabilities, damages, losses, costs, or expenses arising from:
+* Misuse of EduFlowAI
+* Violation of these Terms
+* Violation of applicable laws
+* Unauthorized activities by Institution users
+* Intellectual property infringement caused by Institution content
+
+⸻
+
+19. Suspension & Termination
+
+We may suspend or terminate access if:
+* Subscription fees remain unpaid
+* These Terms are violated
+* Fraudulent activity is detected
+* Security risks are identified
+* Required by law
+Upon termination:
+* Platform access may be disabled.
+* Institutions may request export of eligible data within the applicable retention period.
+* Data may subsequently be deleted in accordance with our Privacy Policy and legal obligations.
+
+⸻
+
+20. Changes to Services & Terms
+
+SoleristicAI may update:
+* Features
+* Pricing
+* Policies
+* Terms
+* Platform functionality
+Updated Terms become effective upon publication.
+Continued use of EduFlowAI constitutes acceptance of the revised Terms.
+
+⸻
+
+21. Governing Law & Dispute Resolution
+
+These Terms shall be governed by the laws of the Republic of India.
+The Parties shall first attempt to resolve disputes through good-faith negotiations.
+If a dispute cannot be resolved amicably, it shall be referred to arbitration in accordance with the Arbitration and Conciliation Act, 1996.
+The seat of arbitration shall be Haryana, India.
+Subject to applicable law, the courts located in Haryana, India, shall have exclusive jurisdiction.
+
+⸻
+
+22. Force Majeure
+
+SoleristicAI shall not be liable for delays or failures resulting from circumstances beyond its reasonable control, including but not limited to:
+* Natural disasters
+* Fire
+* Flood
+* Earthquake
+* Pandemic
+* War
+* Government actions
+* Internet failures
+* Cyberattacks
+* Power outages
+
+⸻
+
+23. Severability
+
+If any provision of these Terms is found to be invalid or unenforceable, the remaining provisions shall continue in full force and effect.
+
+⸻
+
+24. Entire Agreement
+
+These Terms, together with our Privacy Policy and any applicable service agreements executed between SoleristicAI and an Institution, constitute the entire agreement governing the use of EduFlowAI and supersede all prior understandings relating to the Services.
+
+⸻
+
+25. Contact Information
+
+For questions regarding these Terms & Conditions, please contact:
+SoleristicAI
+Product: EduFlowAI
+Email: soleristicai@gmail.com 
+Website: https://eduflowai.uk
+
+⸻
+
+Last Updated: 23 July 2026
+
+⸻
+
+This version is suitable for publishing on your website and apps. For paying institutions, I also recommend maintaining a separate Master Service Agreement (MSA) or School Service Agreement, which covers implementation, onboarding, payment schedules, service levels (SLA), support commitments, and commercial terms beyond these general Terms & Conditions.
 ''';
 
-/// ============================================================
-/// EDUFLOW AI — PREMIUM CINEMATIC LOGIN SCREEN
-/// ============================================================
-/// Sab kuch original logic (authProvider, role routing, forgot
-/// password modal) bilkul same rakha hai. Is version mein:
-///   • Fixed top-left BRAND HEADER — hamesha stable, keyboard se
-///     bhi nahi hilta (chhote kids wale characters hata diye hain)
-///   • Fixed bottom footer — "Privacy Policy" / "Terms of Service"
-///     jinpe tap karne se actual content wala sheet khulta hai
-///   • KEYBOARD FIX — jab keyboard khulta hai, background/header/
-///     footer bilkul stable rehte hain; sirf form card upar scroll
-///     hoke us field ko keyboard ke thik upar la deta hai jaha type
-///     ho raha hai
-///   • LOGIN button dabate hi keyboard turant band ho jata hai
-///   • Card ke peeche continuously chalta hua animated background
-///     (floating glow orbs + drifting particles)
-///   • Staggered cinematic entrance, focus-glow fields, scanning
-///     highlight line, premium button micro-interactions, shake on
-///     wrong credentials — sab pehle wala intact hai
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -635,45 +1154,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                     ),
                   ),
                 ),
-
-                // --- (NEW) FIXED TOP-LEFT BRAND HEADER — never moves, ---
-                // --- not even when the keyboard opens.               ---
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(colors: [accent, Color(0xFF2F6DF6)]),
-                            ),
-                            child: const Icon(Icons.memory, color: Colors.white, size: 17),
-                          ),
-                          const SizedBox(width: 9),
-                          const Text(
-                            "EduFlowAI",
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w900,
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFF1E293B),
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ).animate().fadeIn(duration: 500.ms),
-
                 // --- (NEW) FIXED BOTTOM FOOTER — Privacy Policy / Terms ---
                 Positioned(
                   left: 0,
@@ -708,7 +1188,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                             GestureDetector(
                               onTap: () => _showLegalSheet("Terms of Service", _termsContent),
                               child: const Text(
-                                "TERMS OF SERVICE",
+                                "TERMS & CONDITIONS",
                                 style: TextStyle(
                                   color: Color(0xFF94A3B8),
                                   fontWeight: FontWeight.w800,

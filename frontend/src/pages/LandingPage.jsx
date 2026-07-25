@@ -970,29 +970,6 @@ font-semibold
               AI-Powered Education Operating System
             </p>
 
-            <div className="flex justify-center gap-8 mt-6 text-slate-600 font-medium">
-              <a
-                href="#"
-                className="hover:text-[#4A90E2] transition-colors duration-300"
-              >
-                Privacy
-              </a>
-
-              <a
-                href="#"
-                className="hover:text-[#4A90E2] transition-colors duration-300"
-              >
-                Terms
-              </a>
-
-              <a
-                href="#"
-                className="hover:text-[#4A90E2] transition-colors duration-300"
-              >
-                Contact
-              </a>
-            </div>
-
             <p className="text-slate-400 text-sm mt-6">
               © 2026 EduFlowAI. All rights reserved.
             </p>

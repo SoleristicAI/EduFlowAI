@@ -25,7 +25,8 @@ const schoolSchema = new mongoose.Schema({
         },
         hasPaidAdvance: { type: Boolean, default: false }
     },
-    sessionYear: { type: String, default: '2026-27' },
+    activeSession: { type: String, default: '2026-2027' },
+    upgradedClasses: { type: [String], default: [] },
     // --- DAY 95: PENALTY CONFIGURATION ---
     // School.js mein penaltySettings wala part update karo
     penaltySettings: {

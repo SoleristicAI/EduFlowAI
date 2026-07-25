@@ -96,7 +96,8 @@ const registerUser = async (req, res) => {
             const lastStudent = await User.findOne({
                 role: 'student',
                 schoolId: currentSchoolId,
-                grade: grade
+                grade: grade,
+                status: 'Active'
             }).sort({ createdAt: -1 });
 
             let lastNum = 0;
@@ -162,6 +163,11 @@ const authUser = async (req, res) => {
     const user = await User.findOne({ email }).populate('schoolId');
 
     if (user && (await require('bcryptjs').compare(password, user.password))) {
+        if (user.status === 'Alumni' || user.status === 'Left') {
+            return res.status(403).json({ 
+                message: "Account Archived 🎓: Alumni or Ex-Students cannot access the portal." 
+            });
+        }
         res.json({
             _id: user._id,
             name: user.name,
