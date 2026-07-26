@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect,useRef } from 'react';
 import {
     ArrowLeft, TrendingUp, Target, Zap,
     BrainCircuit, Star, AlertCircle,
-    Activity, Sparkles, BookOpen, AlertOctagon, UserCircle
+    Activity, Sparkles, BookOpen, AlertOctagon, UserCircle,ChevronDown
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
@@ -88,7 +88,54 @@ const MiniProgressRing = ({ percentage, subject }) => {
     );
 };
 
+// 🔥 PREMIUM GLASS DROPDOWN COMPONENT 🔥
+const GlassDropdown = ({ options, value, onChange }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+        };
+        if (isOpen) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [isOpen]);
+
+    return (
+        <div ref={dropdownRef} className="relative z-[100]">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="bg-white/20 p-2.5 px-4 rounded-2xl border border-white/30 text-white font-black text-sm flex items-center gap-2 backdrop-blur-md shadow-xl hover:bg-white/30 active:scale-95 transition-all"
+            >
+                {value || "Select"}
+                <ChevronDown size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 mt-2 w-36 bg-white border border-slate-100 shadow-2xl rounded-2xl overflow-hidden z-[100]"
+                    >
+                        {options.map((opt) => (
+                            <div
+                                key={opt}
+                                onClick={() => { onChange(opt); setIsOpen(false); }}
+                                className={`p-3 px-4 text-sm font-black cursor-pointer transition-colors ${
+                                    value === opt ? 'bg-[#42A5F5] text-white' : 'hover:bg-slate-50 text-slate-700'
+                                }`}
+                            >
+                                {opt}
+                            </div>
+                        ))}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
 // ==========================================
 // 2. MAIN DASHBOARD COMPONENT
 // ==========================================
@@ -100,12 +147,14 @@ const StudentPerformance = () => {
     const [analytics, setAnalytics] = useState(null);
     const [studentProfile, setStudentProfile] = useState(null);
 
+    const [activeSession, setActiveSession] = useState('');
+    const [availableSessions, setAvailableSessions] = useState([]);
+
     useEffect(() => {
-        // Retrieve student profile from local storage
         const userStr = localStorage.getItem('user');
         if (userStr) setStudentProfile(JSON.parse(userStr));
         fetchAndCalculatePerformance();
-    }, []);
+    }, [activeSession]);
 
     const triggerToast = (message, type = "success") => {
         setShowToast({ show: true, message, type });
@@ -114,7 +163,18 @@ const StudentPerformance = () => {
 
     const fetchAndCalculatePerformance = async () => {
         try {
-            const response = await API.get('/exam-results/my-performance');
+            setLoading(true);
+
+            // 1. Database se session list fetch karo
+            const sessionRes = await API.get('/users/general/session-info');
+            const realSession = sessionRes.data.activeSession;
+            setAvailableSessions(sessionRes.data.allAvailableSessions);
+            
+            const sessionToFetch = activeSession || realSession;
+            if (!activeSession) setActiveSession(realSession);
+
+            // 2. Performance lao NAYE Session ke sath
+            const response = await API.get(`/exam-results/my-performance?session=${sessionToFetch}`);
             const rawData = response.data;
 
             if (!rawData || rawData.length === 0) {
@@ -190,19 +250,31 @@ const StudentPerformance = () => {
                         </div>
                     </div>
 
-                    {/* Student Identity Badge */}
-                    <div className="flex justify-center mb-8">
+                    {/* Student Identity Badge & Session Filter */}
+                    <div className="flex flex-col items-center justify-center mb-8 gap-4">
+                        
+                        {/* 1. Name & Class Badge */}
                         <div className="bg-white/20 backdrop-blur-md border border-white/30 px-6 py-3 rounded-full flex items-center gap-3 shadow-md">
                             <UserCircle size={20} className="text-white" />
                             <span className="text-white font-black text-sm uppercase tracking-widest">{studentProfile?.name || 'Student'}</span>
                             <span className="w-1.5 h-1.5 rounded-full bg-white opacity-50"></span>
                             <span className="text-white font-black text-sm uppercase tracking-widest">Class {studentProfile?.grade || 'N/A'}</span>
                         </div>
+
+                        {/* 2. Session Dropdown (Moved Here, Clean & Centered) */}
+                        <div className="relative z-50 shadow-2xl rounded-2xl">
+                            <GlassDropdown 
+                                options={availableSessions} 
+                                value={activeSession} 
+                                onChange={setActiveSession} 
+                            />
+                        </div>
+                        
                     </div>
 
                     {/* HERO METRICS GRID (Only show if data exists) */}
                     {analytics ? (
-                        <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 bg-white p-8 md:p-10 rounded-[3.5rem] shadow-2xl border border-[#E2E8F0] mt-8 w-full max-w-4xl mx-auto relative -bottom-16">
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-12 md:gap-24 bg-white p-8 md:p-10 rounded-[3.5rem] shadow-2xl border border-[#E2E8F0] mt-1 w-full max-w-4xl mx-auto relative -bottom-6">
                             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="relative">
                                 <MainRadialGauge percentage={analytics.overallPercentage} />
                             </motion.div>

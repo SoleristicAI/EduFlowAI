@@ -148,6 +148,19 @@ const StudentDetail = () => {
     const [selectedSession, setSelectedSession] = useState('');
     const [availableSessions, setAvailableSessions] = useState([]);
 
+    const [showLeavePopup, setShowLeavePopup] = useState(false);
+    const leavePopupRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (leavePopupRef.current && !leavePopupRef.current.contains(event.target)) {
+                setShowLeavePopup(false);
+            }
+        };
+        if (showLeavePopup) document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showLeavePopup]);
+
     useEffect(() => {
         const fetchDeepStats = async () => {
             try {
@@ -169,7 +182,7 @@ const StudentDetail = () => {
                 setData(attRes.data);
 
                 try {
-                    const perfRes = await API.get(`/exam-results/student-performance/${studentId}`);
+                    const perfRes = await API.get(`/exam-results/student-performance/${studentId}?session=${sessionToFetch}`);
                     processPerformanceData(perfRes.data);
                 } catch (perfErr) {
                     console.log("Performance error.", perfErr);
@@ -272,17 +285,70 @@ const StudentDetail = () => {
             <div className="px-5 -mt-16 space-y-6 relative z-20">
 
                 {/* 1. Stats Matrix (Attendance) */}
-                <div className="grid grid-cols-3 gap-4">
-                    {[
-                        { label: 'Attendance', value: `${stats.percentage}%`, color: 'text-[#42A5F5]' },
-                        { label: 'Present', value: stats.presentDays, color: 'text-emerald-500' },
-                        { label: 'Absent', value: stats.absentDays, color: 'text-rose-500' }
-                    ].map((s, i) => (
-                        <div key={i} className="bg-white p-5 rounded-[2rem] border border-slate-100 text-center shadow-xl ring-1 ring-slate-50">
-                            <p className={`text-2xl md:text-3xl font-black leading-none mb-2 ${s.color}`}>{s.value}</p>
-                            <p className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-400">{s.label}</p>
+               {/* 1. Stats Matrix (Attendance) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100 text-center shadow-xl ring-1 ring-slate-50">
+                        <p className={`text-2xl md:text-3xl font-black leading-none mb-2 text-[#42A5F5]`}>{stats.percentage}%</p>
+                        <p className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-400">Attendance</p>
+                    </div>
+                    
+                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100 text-center shadow-xl ring-1 ring-slate-50">
+                        <p className={`text-2xl md:text-3xl font-black leading-none mb-2 text-emerald-500`}>{stats.presentDays}</p>
+                        <p className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-400">Present</p>
+                    </div>
+                    
+                    <div className="bg-white p-5 rounded-[2rem] border border-slate-100 text-center shadow-xl ring-1 ring-slate-50">
+                        <p className={`text-2xl md:text-3xl font-black leading-none mb-2 text-rose-500`}>{stats.absentDays}</p>
+                        <p className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-400">Absent</p>
+                    </div>
+
+                    {/* 🔥 THE NEW LEAVES CARD WITH POPUP FEATURE 🔥 */}
+                    <div className="relative" ref={leavePopupRef}>
+                        <div 
+                            onClick={() => setShowLeavePopup(!showLeavePopup)}
+                            className={`bg-white p-5 rounded-[2rem] border ${showLeavePopup ? 'border-amber-400' : 'border-slate-100'} text-center shadow-xl ring-1 ring-slate-50 cursor-pointer transition-all hover:-translate-y-1`}
+                        >
+                            <p className={`text-2xl md:text-3xl font-black leading-none mb-2 text-amber-500`}>{stats.leaveDays || 0}</p>
+                            <div className="flex items-center justify-center gap-1">
+                                <p className="text-[10px] md:text-[12px] font-black uppercase tracking-widest text-slate-400">Leaves</p>
+                                <ChevronDown size={14} className={`text-slate-400 transition-transform ${showLeavePopup ? 'rotate-180' : ''}`} />
+                            </div>
                         </div>
-                    ))}
+
+                        {/* 📅 LEAVE DATES POPUP (Glassmorphism) */}
+                        <AnimatePresence>
+                            {showLeavePopup && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                    className="absolute right-0 top-[110%] w-56 z-50 bg-white/90 backdrop-blur-xl border border-amber-100 shadow-2xl rounded-3xl overflow-hidden p-4"
+                                >
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-3 text-center border-b border-amber-100 pb-2">
+                                        Approved Leave Dates
+                                    </h4>
+                                    
+                                    <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-2">
+                                        {!stats.leaveDatesList || stats.leaveDatesList.length === 0 ? (
+                                            <p className="text-xs text-slate-400 text-center italic py-4">No leaves taken.</p>
+                                        ) : (
+                                            stats.leaveDatesList.sort().reverse().map((dateStr, idx) => {
+                                                const d = new Date(dateStr);
+                                                return (
+                                                    <div key={idx} className="flex items-center gap-3 p-2 bg-amber-50 rounded-xl border border-amber-100/50">
+                                                        <Clock size={14} className="text-amber-400" />
+                                                        <span className="text-sm font-bold text-slate-700">
+                                                            {d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
                 {/* 2. Details Box */}

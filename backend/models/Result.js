@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const resultSchema = new mongoose.Schema({
     schoolId: { type: String, required: true },
     initiatorId: { type: String, required: true }, // Class Teacher EMP ID
+    session: { type: String, required: true },
     examTitle: { type: String, required: true }, 
     grade: { type: String, required: true }, // Base grade e.g., '9'
     maxMarks: { type: Number, required: true },

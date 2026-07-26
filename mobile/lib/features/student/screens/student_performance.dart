@@ -86,12 +86,17 @@ class StudentPerformance extends ConsumerStatefulWidget { // 🔥 Changed to Con
   ConsumerState<StudentPerformance> createState() => _StudentPerformanceState();
 }
 
-class _StudentPerformanceState extends ConsumerState<StudentPerformance> { // 🔥 Changed to ConsumerState
+class _StudentPerformanceState extends ConsumerState<StudentPerformance> {
   bool loading = true;
   Map<String, dynamic>? studentProfile;
   Map<String, dynamic>? analytics;
 
   bool _isSubjectGridVisible = false; 
+
+  // 👇 NAYE SMART SESSION VARIABLES 👇
+  String? activeSession;
+  List<String> availableSessions = [];
+  bool _isDropdownOpen = false;
 
   @override
   void initState() {
@@ -110,13 +115,18 @@ class _StudentPerformanceState extends ConsumerState<StudentPerformance> { // �
 
   Future<void> _fetchAndCalculatePerformance() async {
     try {
-      final response = await ApiClient.dio.get('/exam-results/my-performance');
-      final rawData = response.data as List<dynamic>;
+      setState(() => loading = true);
 
-      if (rawData.isEmpty) {
-        if (mounted) setState(() { analytics = null; loading = false; });
-        return;
+      // 1. Session API Call
+      if (activeSession == null) {
+        final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+        activeSession = sessionRes.data['activeSession'];
+        availableSessions = List<String>.from(sessionRes.data['allAvailableSessions']);
       }
+
+      // 2. Fetch Performance with Session Filter
+      final response = await ApiClient.dio.get('/exam-results/my-performance?session=$activeSession');
+      final rawData = response.data as List<dynamic>;
 
       double totalMarksObtained = 0;
       double totalMaxMarks = 0;
@@ -288,23 +298,31 @@ class _StudentPerformanceState extends ConsumerState<StudentPerformance> { // �
                           const SizedBox(height: 30),
                           
                           // Student Identity Badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(30),
-                              border: Border.all(color: Colors.white.withOpacity(0.3)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.account_circle, color: Colors.white, size: 18),
-                                const SizedBox(width: 8),
-                                Text((studentProfile?['name'] ?? 'Student').toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                                Container(margin: const EdgeInsets.symmetric(horizontal: 10), width: 4, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle)),
-                                Text("CLASS ${studentProfile?['grade'] ?? 'N/A'}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
-                              ],
-                            ),
+                          // Student Identity Badge & Session Filter
+                          Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.account_circle, color: Colors.white, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text((studentProfile?['name'] ?? 'Student').toString().toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                    Container(margin: const EdgeInsets.symmetric(horizontal: 10), width: 4, height: 4, decoration: BoxDecoration(color: Colors.white.withOpacity(0.5), shape: BoxShape.circle)),
+                                    Text("CLASS ${studentProfile?['grade'] ?? 'N/A'}", style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+                                  ],
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 12), // Spacing
+                              _buildSessionDropdown(isDarkMode), // 👇 YAHAN THEEK NEECHE CENTER MEIN AAYEGA 👇
+                            ],
                           ),
                         ],
                       ),
@@ -679,6 +697,67 @@ class _StudentPerformanceState extends ConsumerState<StudentPerformance> { // �
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+  // 🔥 THE PREMIUM MOBILE GLASS DROPDOWN (ANIMATED & CLEAN) 🔥
+  Widget _buildSessionDropdown(bool isDarkMode) {
+    if (availableSessions.isEmpty || activeSession == null) return const SizedBox.shrink();
+    
+    return PopupMenuButton<String>(
+      initialValue: activeSession,
+      // 🔥 Ekdum single solid theme color, koi extra box ya border nahi
+      color: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFF42A5F5),
+      elevation: 8,
+      onOpened: () => setState(() => _isDropdownOpen = true),
+      onCanceled: () => setState(() => _isDropdownOpen = false),
+      onSelected: (String newValue) {
+        setState(() {
+          activeSession = newValue;
+          loading = true;
+          _isDropdownOpen = false;
+        });
+        _fetchAndCalculatePerformance(); // 🔥 Naya session select hote hi PERFORMANCE data fetch
+      },
+      itemBuilder: (BuildContext context) {
+        return availableSessions.map((String session) {
+          return PopupMenuItem<String>(
+            value: session,
+            child: Text(
+              session, 
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontStyle: FontStyle.italic,
+                color: activeSession == session ? Colors.white : Colors.white70,
+              )
+            ),
+          );
+        }).toList();
+      },
+      offset: const Offset(0, 50),
+      // 🔥 Clean Rounded Rectangle
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2), // Bahar ka Glass Button
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(activeSession!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: _isDropdownOpen ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+            ),
+          ],
         ),
       ),
     );

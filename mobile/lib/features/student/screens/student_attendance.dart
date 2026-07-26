@@ -24,6 +24,11 @@ class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
   Map<String, dynamic>? selectedDateLog;
   final Map<String, dynamic> _monthlyCache = {};
 
+  // 👇 NAYE SMART SESSION VARIABLES 👇
+  String? activeSession;
+  List<String> availableSessions = [];
+  bool _isDropdownOpen = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,30 +36,37 @@ class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
   }
 
   Future<void> _fetchStats() async {
-    String monthStr = DateFormat('yyyy-MM').format(currentMonth);
-
-    if (_monthlyCache.containsKey(monthStr)) {
-      setState(() {
-        stats = _monthlyCache[monthStr];
-        loading = false;
-      });
-      return;
-    }
-
     try {
-      final response =
-          await ApiClient.dio.get('/attendance/student-stats?month=$monthStr');
+      // 1. Agar session fetch nahi hua hai toh pehle Session laao
+      if (activeSession == null) {
+        final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+        activeSession = sessionRes.data['activeSession'];
+        availableSessions = List<String>.from(sessionRes.data['allAvailableSessions']);
+      }
 
-      final data = response.data;
+      String monthStr = DateFormat('yyyy-MM').format(currentMonth);
+      String cacheKey = "$monthStr-$activeSession"; // Cache ko bhi session-proof kar diya
 
-      _monthlyCache[monthStr] = data;
+      if (_monthlyCache.containsKey(cacheKey)) {
+        setState(() {
+          stats = _monthlyCache[cacheKey];
+          loading = false;
+        });
+        return;
+      }
+
+      // 2. Asli Data Fetch karo Naye Session Filter ke sath
+      final response = await ApiClient.dio.get('/attendance/student-stats?month=$monthStr&session=$activeSession');
+      
+      _monthlyCache[cacheKey] = response.data;
 
       setState(() {
-        stats = data;
+        stats = response.data;
         loading = false;
       });
     } catch (e) {
       print("Attendance Sync Failed: $e");
+      setState(() => loading = false); // Error aane par loader hat jaye
     }
   }
 
@@ -294,6 +306,9 @@ class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
                                   .animate()
                                   .fadeIn(delay: 200.ms)
                                   .slideY(begin: 0.5),
+                              
+                              const SizedBox(height: 12), // Spacing
+                             _buildSessionDropdown(isDarkMode).animate().fadeIn(delay: 300.ms), // 👇 YAHAN ADD KIYA
                             ],
                           ),
                         ],
@@ -730,6 +745,68 @@ class _StudentAttendanceState extends ConsumerState<StudentAttendance> {
                 color: Color(0xFF94A3B8),
                 fontStyle: FontStyle.italic)),
       ],
+    );
+  }
+
+ // 🔥 THE PREMIUM MOBILE GLASS DROPDOWN (ANIMATED & CLEAN) 🔥
+  Widget _buildSessionDropdown(bool isDarkMode) {
+    if (availableSessions.isEmpty || activeSession == null) return const SizedBox.shrink();
+    
+    return PopupMenuButton<String>(
+      initialValue: activeSession,
+      // 🔥 Ekdum single solid theme color, koi extra box ya border nahi
+      color: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFF42A5F5),
+      elevation: 8, // Soft shadow
+      onOpened: () => setState(() => _isDropdownOpen = true),
+      onCanceled: () => setState(() => _isDropdownOpen = false),
+      onSelected: (String newValue) {
+        setState(() {
+          activeSession = newValue;
+          loading = true;
+          _isDropdownOpen = false;
+        });
+        _fetchStats(); // Naya session select hote hi ATTENDANCE data fetch
+      },
+      itemBuilder: (BuildContext context) {
+        return availableSessions.map((String session) {
+          return PopupMenuItem<String>(
+            value: session,
+            child: Text(
+              session, 
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontStyle: FontStyle.italic,
+                color: activeSession == session ? Colors.white : Colors.white70, 
+              )
+            ),
+          );
+        }).toList();
+      },
+      offset: const Offset(0, 50),
+      // 🔥 Galti yahin thi! Maine border hata diya. Ab ye ek clean dabba lagega.
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.2), // Bahar ka Glass Button
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(activeSession!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: _isDropdownOpen ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

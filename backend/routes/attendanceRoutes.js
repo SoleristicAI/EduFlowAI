@@ -271,13 +271,17 @@ router.get('/student-report/:studentId', protect, adminOnly, async (req, res) =>
         let presentDays = 0;
         let absentDays = 0; 
         let leaveDays = 0;
+        let leaveDatesList = [];
 
-        attendanceData.forEach(day => {
+       attendanceData.forEach(day => {
             const record = day.records.find(r => r.studentId.toString() === studentId);
             if (record) {
                 if (record.status === 'Present') presentDays++;
                 else if (record.status === 'Absent') absentDays++;
-                else if (record.status === 'On Leave') leaveDays++;
+                else if (record.status === 'On Leave') {
+                    leaveDays++;
+                    leaveDatesList.push(day.date); // Save the date when student was on leave
+                }
             }
         });
 
@@ -293,9 +297,10 @@ router.get('/student-report/:studentId', protect, adminOnly, async (req, res) =>
             stats: { 
                 totalDays, 
                 presentDays, 
-                absentDays, // Ab absentDays = (totalDays - presentDays) NAHI HAIN. Actual Absent days count ho rahe hain.
-                leaveDays, 
-                percentage 
+                absentDays,
+                leaveDays,
+                percentage,
+                leaveDatesList // Frontend ko bheja taaki dropdown mein dikha sake
             } 
         });
     } catch (error) {

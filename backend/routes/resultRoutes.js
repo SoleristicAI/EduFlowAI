@@ -13,7 +13,10 @@ router.post('/initiate', protect, async (req, res) => {
         const schoolId = req.user.schoolId;
         const initiatorId = req.user.employeeId;
 
-        const existing = await Result.findOne({ schoolId, grade, examTitle });
+        const school = await School.findById(schoolId).select('activeSession');
+        const currentSession = school?.activeSession || '2026-2027';
+
+       const existing = await Result.findOne({ schoolId, grade, examTitle, session: currentSession });
         if (existing) return res.status(400).json({ message: "Request already active!" });
 
         const baseGrade = grade.split('-')[0].trim();
@@ -48,7 +51,8 @@ router.post('/initiate', protect, async (req, res) => {
 
         const newResult = await Result.create({
             schoolId, initiatorId, examTitle, grade, maxMarks,
-            subjects: subjectsData, studentMarks: studentMarksData
+            subjects: subjectsData, studentMarks: studentMarksData,
+            session: currentSession
         });
 
         res.status(201).json({ message: "Initiated!", data: newResult });
@@ -257,11 +261,20 @@ router.get('/my-results', protect, async (req, res) => {
 router.get('/my-performance', protect, async (req, res) => {
     try {
         const studentId = req.user._id;
+        const { session } = req.query;
         
-        // Results wahi fetch karo jo 'published' hain
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const activeSession = school?.activeSession || '2026-2027';
+
+        // 🔥 LEGACY DATA FIX: Agar session purana hai (bina tag wala), toh usey active session mein mila do 🔥
+        const sessionFilter = (!session || session === activeSession)
+            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
+            : { session: session };
+        
         const results = await Result.find({ 
             'studentMarks.studentId': studentId,
-            status: 'published' 
+            status: 'published',
+            ...sessionFilter // Filter yahan laga diya
         });
 
         // Data ko Frontend ke liye map karo
@@ -290,11 +303,20 @@ router.get('/my-performance', protect, async (req, res) => {
 router.get('/student-performance/:studentId', protect, async (req, res) => {
     try {
         const { studentId } = req.params;
+        const { session } = req.query; // Session query fetch
+
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const activeSession = school?.activeSession || '2026-2027';
+
+        // 🔥 LEGACY DATA FIX 🔥
+        const sessionFilter = (!session || session === activeSession)
+            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
+            : { session: session };
         
-        // Find published results for this specific student
         const results = await Result.find({ 
             'studentMarks.studentId': studentId,
-            status: 'published' 
+            status: 'published',
+            ...sessionFilter // Filter yahan laga diya
         });
 
         const formattedData = results.map(resObj => {
