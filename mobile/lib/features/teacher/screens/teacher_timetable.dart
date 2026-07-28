@@ -222,7 +222,7 @@ class _TeacherTimetableState extends ConsumerState<TeacherTimetable> {
                               const SizedBox(height: 24),
 
                               GestureDetector(
-                                onTap: isSaving ? null : () async {
+                                onTap: () async {
                                   if (contentCtrl.text.trim().isEmpty) {
                                     _showToast("Diary content is empty! ✍️", isError: true);
                                     return;
@@ -255,16 +255,20 @@ class _TeacherTimetableState extends ConsumerState<TeacherTimetable> {
                                   padding: const EdgeInsets.symmetric(vertical: 18),
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(
+                                    // ignore: dead_code
                                     color: isSaving ? Colors.grey : const Color(0xFF42A5F5),
                                     borderRadius: BorderRadius.circular(25),
+                                    // ignore: dead_code
                                     boxShadow: isSaving ? [] : [BoxShadow(color: const Color(0xFF42A5F5).withOpacity(0.4), blurRadius: 15, offset: const Offset(0, 5))],
                                   ),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
+                                      // ignore: dead_code
                                       if (isSaving) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                                       else const Icon(Icons.send, color: Colors.white, size: 16),
                                       const SizedBox(width: 8),
+                                      // ignore: dead_code
                                       Text(isSaving ? "SYNCING..." : "SUBMIT DIARY", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 2, fontStyle: FontStyle.italic)),
                                     ],
                                   ),

@@ -208,7 +208,7 @@ class _TeacherLiveClassState extends ConsumerState<TeacherLiveClass> {
                             const SizedBox(width: 12),
                             Expanded(
                               child: GestureDetector(
-                                onTap: isSubmitting ? null : () async {
+                                onTap: () async {
                                   setModalState(() => isSubmitting = true);
                                   try {
                                     await ApiClient.dio.post('/liveclass/request', data: {
@@ -252,6 +252,7 @@ class _TeacherLiveClassState extends ConsumerState<TeacherLiveClass> {
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(color: const Color(0xFF42A5F5), borderRadius: BorderRadius.circular(20)),
+                                  // ignore: dead_code
                                   child: isSubmitting ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text("CONFIRM", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white)),
                                 ),
                               ),
@@ -335,7 +336,7 @@ class _TeacherLiveClassState extends ConsumerState<TeacherLiveClass> {
                                   padding: const EdgeInsets.symmetric(vertical: 16),
                                   alignment: Alignment.center,
                                   decoration: BoxDecoration(color: isApprove ? const Color(0xFF10B981) : const Color(0xFFF43F5E), borderRadius: BorderRadius.circular(20)),
-                                  child:isActing ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text("CONFIRM", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white))
+                                  child:const Text("CONFIRM", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white))
                                 ),
                               ),
                             ),

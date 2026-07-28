@@ -15,6 +15,7 @@ const TeacherAttendance = ({ user }) => {
     const navigate = useNavigate();
     const dateRef = useRef(null);
     const [assignedClass, setAssignedClass] = useState(user?.assignedClass || null);
+    const [sessionStartDate, setSessionStartDate] = useState(null); // 🔥 Boundary State
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [showToast, setShowToast] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -45,6 +46,7 @@ const TeacherAttendance = ({ user }) => {
                 const { data: existing } = await API.get(`/attendance/view?grade=${assignedClass}&date=${selectedDate}`);
 
                 const stdList = resp.students;
+                setSessionStartDate(resp.sessionStartDate);
 
                 if (existing && existing.records && existing.records.length > 0) {
                     const formattedData = stdList.map(s => {
@@ -254,10 +256,13 @@ const TeacherAttendance = ({ user }) => {
                                                         const isSelected = formatted === selectedDate;
                                                         const isFuture = formatted > today;
 
+                                                        const isPastSession = sessionStartDate && formatted < new Date(sessionStartDate).toISOString().split('T')[0];
+                                                        const isDisabled = isFuture || isPastSession;
+
                                                         days.push(
                                                             <button
                                                                 key={day}
-                                                                disabled={isFuture}
+                                                                disabled={isDisabled}
                                                                 onClick={() => {
                                                                     const dYear = viewDate.getFullYear();
                                                                     const dMonth = viewDate.getMonth();
@@ -265,7 +270,7 @@ const TeacherAttendance = ({ user }) => {
                                                                     setSelectedDate(getLocalDate(selectedTempDate));
                                                                     setIsDateOpen(false);
                                                                 }}
-                                                                className={`p-2 rounded-xl text-[13px] font-black ${isSelected ? 'bg-blue-50' : 'text-slate-600'} ${isFuture ? 'opacity-20 cursor-not-allowed' : 'hover:bg-blue-100'}`}
+                                                                className={`p-2 rounded-xl text-[13px] font-black ${isSelected ? 'bg-blue-50' : 'text-slate-600'} ${isDisabled ? 'opacity-20 cursor-not-allowed bg-red-50' : 'hover:bg-blue-100'}`}
                                                             >
                                                                 {day}
                                                             </button>

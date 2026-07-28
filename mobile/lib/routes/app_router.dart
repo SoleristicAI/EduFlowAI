@@ -79,6 +79,7 @@ final appRouter = GoRouter(
 
     // 3. 🔥 MAIN FIX YAHAN HAI 🔥
     if (isLoggedIn) {
+      // ignore: unnecessary_non_null_assertion
       final role = jsonDecode(userStr!)['role'] ?? 'student';
 
       // Agar user Login screen ya Root '/' screen par ja raha hai, toh use uske role ke hisaab se patko

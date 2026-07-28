@@ -7,53 +7,52 @@ const LeaveRequest = require('../models/LeaveRequest');
 const { protect, teacherOnly, adminOnly } = require('../middleware/authMiddleware');
 const { getMyClassList } = require('../controllers/attendanceController');
 
-// 1. Fetch Students for New Attendance (With Smart Leave Detection)
+// 1. Fetch Students for New Attendance (With Smart Leave Detection & Boundary Lock)
 router.get('/my-students', protect, teacherOnly, async (req, res) => {
     try {
-        const { date } = req.query; // Frontend se aayi hui date (e.g., "2026-06-30")
+        const { date } = req.query; 
         const assignedClass = req.user.assignedClass;
         
         if (!assignedClass) {
             return res.status(404).json({ message: 'No class assigned to you!' });
         }
+
+        // 🔥 MAGIC: Fetch Boundary Date for Teacher 🔥
+        const school = await School.findById(req.user.schoolId).select('sessionStartDate');
         
         const students = await User.find({
-            role: 'student',
-            grade: assignedClass,
-            schoolId: req.user.schoolId
+            role: 'student', grade: assignedClass, schoolId: req.user.schoolId
         }).select('name email enrollmentNo grade avatar');
 
         let approvedLeaves = [];
 
-        // Agar frontend ne date bheji hai, toh check karo
         if (date) {
             const targetDateObj = new Date(date);
             targetDateObj.setHours(0,0,0,0);
             
-            // MAGIC FIX: Yahan 'Confirmed' aur 'Approved' dono check kar rahe hain
             const leaves = await LeaveRequest.find({
-                schoolId: req.user.schoolId,
-                status: { $in: ['Approved', 'Confirmed'] } 
+                schoolId: req.user.schoolId, status: { $in: ['Approved', 'Confirmed'] } 
             });
 
             approvedLeaves = leaves.filter(leave => {
                 const from = new Date(leave.fromDate);
-                from.setHours(0,0,0,0); // Start of the day
-                
+                from.setHours(0,0,0,0);
                 const to = leave.toDate ? new Date(leave.toDate) : new Date(from);
-                to.setHours(23,59,59,999); // End of the day
-
+                to.setHours(23,59,59,999);
                 return targetDateObj >= from && targetDateObj <= to;
             }).map(leave => leave.student.toString());
         }
 
-        // Student data mein 'onLeave' ka tag add kar do
         const studentsWithLeave = students.map(st => ({
             ...st.toObject(),
             onLeave: approvedLeaves.includes(st._id.toString())
         }));
 
-        res.json({ students: studentsWithLeave, assignedClass });
+        res.json({ 
+            students: studentsWithLeave, 
+            assignedClass,
+            sessionStartDate: school?.sessionStartDate || null // 👇 FRONTEND KO BHEJ DIYA
+        });
     } catch (error) {
         console.error("My Students Error:", error);
         res.status(500).json({ message: 'Neural Sync Error' });

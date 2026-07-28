@@ -689,7 +689,6 @@ class _TeacherAssignmentsState extends ConsumerState<TeacherAssignments> {
           ).animate().fadeIn()
         else
           ...activeSubmissions.map((sub) {
-            bool isGraded = sub['status'] == 'Graded';
             return Container(
               margin: const EdgeInsets.only(bottom: 24),
               padding: const EdgeInsets.all(24),

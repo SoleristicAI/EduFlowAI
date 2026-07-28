@@ -28,6 +28,7 @@ class _NavbarHeader extends StatelessWidget {
   final String title;
 
   const _NavbarHeader({
+    // ignore: unused_element_parameter
     super.key,
     required this.onBackPressed,
     this.onTitlePressed, // 🔥 YE ADD KIYA HAI

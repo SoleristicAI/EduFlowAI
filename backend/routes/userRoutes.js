@@ -533,6 +533,9 @@ router.get('/admin/session-config', protect, adminOnly, async (req, res) => {
     }
 });
 
+// ==========================================================
+// --- DAY 264: SESSION CONFIGURATION & LOCKING SYSTEM ---
+// ==========================================================
 router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
     try {
         const { nextSession } = req.body;
@@ -540,9 +543,27 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
         
         school.activeSession = nextSession; // Naya saal shuru!
         school.upgradedClasses = []; // Purane locks clear kardo naye saal ke liye
+        school.sessionStartDate = new Date(); // Jis din lock hoga, us din se pichli dates block!
         
         await school.save();
-        res.json({ message: `Session Locked! 🔒 Successfully switched to ${nextSession} ✅` });
+
+        // 🔥 THE GLOBAL WIPEOUT PROTOCOL (All Notices & Fee Notices Erased) 🔥
+        try {
+            const Notice = require('../models/Notice');
+            const FeeNotice = require('../models/FeeNotice');
+
+            // 1. Delete all Regular Notices (Admin/Teacher Broadcasts)
+            await Notice.deleteMany({ schoolId: req.user.schoolId });
+            
+            // 2. Delete all Fee Notices (Finance Department)
+            await FeeNotice.deleteMany({ schoolId: req.user.schoolId });
+
+            console.log(`[GLOBAL WIPE] All notices and fee notices cleared for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
+        } catch (noticeErr) {
+            console.log("Notice cleanup failed, but session upgraded.", noticeErr);
+        }
+        
+        res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old notices cleared! ✅` });
     } catch (error) {
         res.status(500).json({ message: "Failed to finalize session." });
     }

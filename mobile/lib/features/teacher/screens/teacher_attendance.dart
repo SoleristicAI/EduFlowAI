@@ -24,6 +24,7 @@ class _TeacherAttendanceState extends ConsumerState<TeacherAttendance> {
   bool isDateOpen = false;
 
   String? assignedClass;
+  DateTime? sessionStartDate; // 🔥 NAYA BOUNDARY VARIABLE
   DateTime selectedDate = DateTime.now();
   DateTime viewDate = DateTime.now();
   
@@ -80,6 +81,9 @@ class _TeacherAttendanceState extends ConsumerState<TeacherAttendance> {
       if (mounted) {
         setState(() {
           pendingCount = leavesResp.data['count'] ?? 0;
+          if (stdResp.data['sessionStartDate'] != null) {
+            sessionStartDate = DateTime.parse(stdResp.data['sessionStartDate']);
+          }
           
           List<dynamic> stdList = stdResp.data['students'] ?? [];
           List<dynamic> existingRecords = existingResp.data?['records'] ?? [];
@@ -469,21 +473,31 @@ class _TeacherAttendanceState extends ConsumerState<TeacherAttendance> {
     for (int day = 1; day <= daysInMonth; day++) {
       DateTime currentDate = DateTime(viewDate.year, viewDate.month, day);
       bool isSelected = selectedDate.year == currentDate.year && selectedDate.month == currentDate.month && selectedDate.day == currentDate.day;
+      
       bool isFuture = currentDate.isAfter(DateTime.now());
+      
+      // 🔥 BOUNDARY LOGIC 🔥
+      bool isPastSession = false;
+      if (sessionStartDate != null) {
+        DateTime startBoundary = DateTime(sessionStartDate!.year, sessionStartDate!.month, sessionStartDate!.day);
+        isPastSession = currentDate.isBefore(startBoundary);
+      }
+      
+      bool isDisabled = isFuture || isPastSession;
 
       dayWidgets.add(
         GestureDetector(
-          onTap: isFuture ? null : () {
+          onTap: isDisabled ? null : () {
             setState(() {
               selectedDate = currentDate;
               isDateOpen = false;
-              _fetchData(); // Fetch new date data
+              _fetchData(); 
             });
           },
           child: Container(
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFF42A5F5) : Colors.transparent,
+              color: isSelected ? const Color(0xFF42A5F5) : (isDisabled ? Colors.red.withOpacity(0.05) : Colors.transparent),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -491,7 +505,9 @@ class _TeacherAttendanceState extends ConsumerState<TeacherAttendance> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w900,
-                color: isFuture ? (isDarkMode ? Colors.white24 : Colors.black26) : (isSelected ? Colors.white : textColorPrimary),
+                color: isDisabled 
+                    ? (isDarkMode ? Colors.white24 : Colors.black26) 
+                    : (isSelected ? Colors.white : textColorPrimary),
               ),
             ),
           ),
