@@ -19,6 +19,9 @@ class FinanceStudentLedger extends ConsumerStatefulWidget {
 class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
   bool isInitialLoading = true;
   Map<String, dynamic>? audit;
+  String? activeSession;
+  List<String> availableSessions = [];
+  bool _isDropdownOpen = false;
 
   @override
   void initState() {
@@ -26,11 +29,19 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
     _fetchAudit();
   }
 
-  Future<void> _fetchAudit({bool hideLoader = false}) async {
+ Future<void> _fetchAudit({bool hideLoader = false, String? session}) async {
     if (!hideLoader) setState(() => isInitialLoading = true);
 
     try {
-      final res = await ApiClient.dio.get('/fees/audit/${widget.studentId}');
+      if (activeSession == null) {
+        final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+        activeSession = sessionRes.data['activeSession'];
+        availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+      }
+
+      final query = session ?? activeSession;
+      final res = await ApiClient.dio.get('/fees/audit/${widget.studentId}?session=$query');
+      
       if (mounted) setState(() => audit = res.data);
     } catch (e) {
       _showToast("Ledger decryption error ❌", isError: true);
@@ -39,9 +50,8 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
     }
   }
 
-  // 🔥 NATIVE REFRESH LOGIC 🔥
   Future<void> _handleRefresh() async {
-    await _fetchAudit(hideLoader: true);
+    await _fetchAudit(hideLoader: true, session: activeSession);
   }
 
   void _showToast(String message, {bool isError = false}) {
@@ -66,6 +76,64 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         margin: const EdgeInsets.all(20),
         duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Widget _buildSessionDropdown(bool isDarkMode) {
+    if (availableSessions.isEmpty || activeSession == null) return const SizedBox.shrink();
+    
+    return PopupMenuButton<String>(
+      initialValue: activeSession,
+      color: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFF42A5F5),
+      elevation: 8,
+      onOpened: () => setState(() => _isDropdownOpen = true),
+      onCanceled: () => setState(() => _isDropdownOpen = false),
+      onSelected: (String newValue) {
+        setState(() {
+          activeSession = newValue;
+          _isDropdownOpen = false;
+        });
+        _fetchAudit(session: newValue); 
+      },
+      itemBuilder: (BuildContext context) {
+        return availableSessions.map((String session) {
+          return PopupMenuItem<String>(
+            value: session,
+            child: Text(
+              session, 
+              style: TextStyle(
+                fontWeight: FontWeight.w900, 
+                fontStyle: FontStyle.italic,
+                color: activeSession == session ? Colors.white : Colors.white70, 
+              )
+            ),
+          );
+        }).toList();
+      },
+      offset: const Offset(0, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2), 
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(activeSession!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: _isDropdownOpen ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -190,7 +258,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                     color: Colors.white, size: 24),
                               ),
                             ),
-                            Column(
+                           Column(
                               children: [
                                 const Text("Student Ledger",
                                     style: TextStyle(
@@ -199,12 +267,8 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                         color: Colors.white,
                                         fontStyle: FontStyle.italic,
                                         letterSpacing: -1)),
-                                Text("FEES RECORDS",
-                                    style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white.withOpacity(0.9),
-                                        letterSpacing: 2)),
+                                const SizedBox(height: 8),
+                                _buildSessionDropdown(isDarkMode), // 🔥 YAHAN ADD KIYA
                               ],
                             ),
                             Container(

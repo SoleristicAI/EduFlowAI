@@ -7,6 +7,7 @@ const feeSchema = new mongoose.Schema({
     date: { type: Date, default: Date.now },
     month: { type: String, required: true }, // e.g., "February"
     year: { type: Number, required: true },
+    session: { type: String },
     paymentMode: {
         type: String, required: true, enum: ['Cash', 'Bank Transfer', 'Cheque', 'Online', 'PhonePe', 'Google Pay', 'Paytm', 'UPI'], // Inhe add karo
         default: 'Cash'},

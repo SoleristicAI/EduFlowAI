@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft, Download, ChevronDown, X, Zap } from 'lucide-react';
+import { CreditCard, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft, Download, ChevronDown, X, Zap, History } from 'lucide-react';
 import API from '../../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Direct function import karein
@@ -16,17 +16,30 @@ const StudentFees = () => {
     // STATE add karo top pe
     const [showAllFees, setShowAllFees] = useState(false);
     const [selectedYear, setSelectedYear] = useState('All');
-
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const { data } = await API.get('/fees/student-summary');
-                // console.log("🔥 API Response Data:", data); // <--- YAHAN LAGA!
-                setSummary(data);
+                // Pehle session info laao
+                if (!activeSession) {
+                    const sessionRes = await API.get('/users/general/session-info');
+                    setActiveSession(sessionRes.data.activeSession);
+                    setAvailableSessions(sessionRes.data.allAvailableSessions);
+
+                    // Phir fee summary laao with session
+                    const { data } = await API.get(`/fees/student-summary?session=${sessionRes.data.activeSession}`);
+                    setSummary(data);
+                } else {
+                    // Dropdown change hone par call
+                    const { data } = await API.get(`/fees/student-summary?session=${activeSession}`);
+                    setSummary(data);
+                }
             } catch (err) { console.error("Summary Load Error"); }
         };
         fetchSummary();
-    }, []);
+    }, [activeSession]);
     const downloadReceipt = async (paymentId) => {
         try {
             const { data: p } = await API.get(`/fees/receipt/${paymentId}`);
@@ -158,13 +171,48 @@ const StudentFees = () => {
                     </button>
 
                     {/* Center Title */}
+                    {/* Center Title & Glass Dropdown */}
                     <div className="flex flex-col items-center">
                         <h1 className="text-5xl font-black italic tracking-tight capitalize">
                             My Fees
                         </h1>
-                        <p className="text-[17px] font-bold text-white/80 tracking-widest mt-1 capitalize">
-                            Payment Details
-                        </p>
+                        
+                        {/* 🔥 PREMIUM GLASS DROPDOWN 🔥 */}
+                        <div className="relative mt-3">
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 rounded-2xl backdrop-blur-sm active:scale-95 transition-all"
+                            >
+                                <History size={14} className="text-white" />
+                                <span className="text-[13px] font-black tracking-widest text-white">{activeSession || 'Loading...'}</span>
+                                <ChevronDown size={14} className={`text-white transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                    >
+                                        {availableSessions.map((session) => (
+                                            <div
+                                                key={session}
+                                                onClick={() => {
+                                                    setActiveSession(session);
+                                                    setIsDropdownOpen(false);
+                                                    setSummary(null); // Loader dikhane ke liye
+                                                }}
+                                                className={`px-4 py-3 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                            >
+                                                {session}
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
                     {/* Right Icon */}

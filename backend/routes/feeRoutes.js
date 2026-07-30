@@ -286,31 +286,40 @@ router.get('/reports/summary', protect, financeOnly, async (req, res) => {
     }
 });
 
+// --- DAY 268: STUDENT FEE SUMMARY (WITH TIME-FREEZE & SESSION TRAVEL) ---
 router.get('/student-summary', protect, async (req, res) => {
     try {
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
-        const today = new Date();
-        const currentMonthName = today.toLocaleString('default', { month: 'long' });
-        const currentYear = today.getFullYear();
+        const requestedSession = req.query.session; // Frontend se aayega
 
         const User = require('../models/User');
         const School = require('../models/School');
-
         const student = await User.findById(studentId).populate('schoolId');
         if (!student) return res.status(404).json({ message: 'Identity missing' });
 
         const schoolData = await School.findById(schoolId);
+        
+        // 1. Session Filter Logic (Legacy Support)
+        const targetSession = requestedSession || schoolData.activeSession;
+        const isPastSession = targetSession !== schoolData.activeSession;
+        
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
         const rawGrade = student.grade || "";
         const numericPart = rawGrade.match(/\d+/);
         const classMatch = numericPart ? `Class ${numericPart[0]}` : rawGrade;
+        
+        // 🔥 Naya session naya fee structure laayega, past wala past structure
         const structure = await FeeStructure.findOne({ schoolId, className: classMatch });
 
         const verifiedPayments = await Fee.find({
             student: studentId,
             schoolId: schoolId,
-            status: 'Verified'
+            status: 'Verified',
+            ...sessionFilter // Sirf is session ki payments uthao
         }).sort({ date: -1 });
 
         let monthlyUnit = 0;
@@ -323,7 +332,6 @@ router.get('/student-summary', protect, async (req, res) => {
                 if (item && !item.isNone && item.amount > 0) {
                     const amount = Number(item.amount) || 0;
                     const label = key.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
-
                     if (item.billingCycle === 'monthly') {
                         monthlyUnit += amount;
                         structureDetails.monthly.push({ label, amount });
@@ -335,72 +343,65 @@ router.get('/student-summary', protect, async (req, res) => {
             });
         }
 
-        // --- CALCULATION LOGIC ---
+        // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
         const joinDate = new Date(student.createdAt);
-        const monthsElapsed = Math.max(1, (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth()) + 1);
+        let calculationEndDate = new Date(); // Normal case mein Aaj tak ka bill
+
+        if (isPastSession && schoolData.sessionStartDate) {
+            // Agar purana session dekh raha hai, toh calculation us din ruk jayegi jis din naya saal shuru hua tha!
+            calculationEndDate = new Date(schoolData.sessionStartDate);
+        }
+
+        // Mahine calculate karo joining se leke (Aaj ya Freeze Date) tak
+        let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
+        
+        // Maximum 12 mahine ki fee lag sakti hai ek session mein
+        if (monthsElapsed > 12) monthsElapsed = 12; 
 
         const totalTargetMonthly = monthlyUnit * monthsElapsed;
-
-        // Total payments distribution
         const totalPaidAll = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
-        // Logic: Pehle One-time fees cover hoti hai, fir Monthly dues.
-        // Par hum frontend ke liye outstanding split karenge:
         let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidAll);
         let surplusAfterOneTime = Math.max(0, totalPaidAll - oneTimeFixed);
-
         let remainingMonthly = Math.max(0, totalTargetMonthly - surplusAfterOneTime);
         let finalAdvance = Math.max(0, surplusAfterOneTime - totalTargetMonthly);
 
-        const pendingPayment = await Fee.findOne({ student: studentId, status: 'Pending' }).sort({ createdAt: -1 });
+        const pendingPayment = await Fee.findOne({ student: studentId, status: 'Pending', ...sessionFilter }).sort({ createdAt: -1 });
 
         const groupedHistory = verifiedPayments.reduce((acc, pay) => {
             const key = `${pay.month} ${pay.year}`;
             if (!acc[key]) acc[key] = [];
-            const rawRemarks = pay.remarks || "";
             let displayCategory = pay.feeCategory || "GENERAL FEE";
-            if (rawRemarks.toUpperCase().includes("PURPOSE:")) { displayCategory = rawRemarks.split(":")[1].trim(); }
+            if ((pay.remarks || "").toUpperCase().includes("PURPOSE:")) { displayCategory = pay.remarks.split(":")[1].trim(); }
             acc[key].push({
-                id: pay._id, amount: pay.amountPaid,
-                category: displayCategory.toUpperCase(), date: pay.date, mode: pay.paymentMode
+                id: pay._id, amount: pay.amountPaid, category: displayCategory.toUpperCase(), date: pay.date, mode: pay.paymentMode
             });
             return acc;
         }, {});
 
         res.json({
-            studentName: student.name,
-            enrollmentNo: student.enrollmentNo,
-            fatherName: student.fatherName,
-            mobile: student.phone,
-            grade: student.grade,
-            schoolName: student.schoolId?.schoolName || "N/A",
-            schoolPhone: schoolData?.paymentSettings?.upiId || "N/A",
-            schoolQR: schoolData?.paymentSettings?.qrCode || null,
-            adminName: schoolData?.adminDetails?.fullName || "N/A",
-            adminEmail: schoolData?.adminDetails?.email || "N/A",
-            currentMonth: currentMonthName,
-            totalPaidThisMonth: verifiedPayments.filter(p => p.month === currentMonthName && p.year === currentYear).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0),
+            studentName: student.name, enrollmentNo: student.enrollmentNo,
+            fatherName: student.fatherName, mobile: student.phone, grade: student.grade,
+            schoolName: student.schoolId?.schoolName || "N/A", schoolPhone: schoolData?.paymentSettings?.upiId || "N/A",
+            currentMonth: calculationEndDate.toLocaleString('default', { month: 'long' }),
+            totalPaidThisMonth: verifiedPayments.filter(p => p.month === calculationEndDate.toLocaleString('default', { month: 'long' }) && p.year === calculationEndDate.getFullYear()).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0),
             lastActivity: verifiedPayments.length > 0 ? verifiedPayments[0].date : null,
-            totalPenalty: 0,
             grandTotal: remainingMonthly + remainingOneTime,
-
-            // --- NEW SPLIT DATA FOR FRONTEND ---
             monthlyOutstanding: remainingMonthly,
             oneTimeOutstanding: remainingOneTime,
             advanceBalance: finalAdvance,
-
             totalFeesStructure: monthlyUnit,
             feeStructureDetails: structureDetails,
             paymentHistory: groupedHistory,
+            targetSession, // Frontend ko batane ke liye ki konsa data bheja hai
             pendingSignal: pendingPayment ? {
-                id: pendingPayment._id, amount: pendingPayment.amountPaid,
-                screenshot: pendingPayment.paymentScreenshot, date: pendingPayment.date, status: pendingPayment.status
+                id: pendingPayment._id, amount: pendingPayment.amountPaid, screenshot: pendingPayment.paymentScreenshot, date: pendingPayment.date, status: pendingPayment.status
             } : null
         });
 
     } catch (error) {
         console.error("SUMMARY_CRITICAL_ERROR:", error);
-        res.status(500).json({ message: 'Neural Link Failure: ' + error.message });
+        res.status(500).json({ message: 'Neural Link Failure' });
     }
 });
 
@@ -612,12 +613,14 @@ router.get('/tracker/students/:grade', protect, financeOnly, async (req, res) =>
     }
 });
 
+// --- DAY 268: FINANCE STUDENT LEDGER (WITH TIME-FREEZE & SESSION TRAVEL) ---
 router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
     try {
         const studentId = req.params.studentId;
         const schoolId = req.user.schoolId;
+        const requestedSession = req.query.session; // Frontend se aayega
+        
         const today = new Date();
-        const currentMonthName = today.toLocaleString('default', { month: 'long' });
         const currentYear = today.getFullYear();
 
         const User = require('../models/User');
@@ -629,6 +632,14 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         }
 
         const schoolData = await School.findById(schoolId);
+
+        // 1. Session Filter Logic
+        const targetSession = requestedSession || schoolData.activeSession;
+        const isPastSession = targetSession !== schoolData.activeSession;
+        
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
         const rawGrade = student.grade || "";
         const numericPart = rawGrade.match(/\d+/);
@@ -642,106 +653,65 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         const verifiedPayments = await Fee.find({
             student: studentId,
             schoolId,
-            status: 'Verified'
+            status: 'Verified',
+            ...sessionFilter // Sirf is session ki payments uthao
         }).sort({ date: -1 });
 
         let monthlyUnit = 0;
         let oneTimeFixed = 0;
-
-        const structureDetails = {
-            monthly: [],
-            oneTime: []
-        };
+        const structureDetails = { monthly: [], oneTime: [] };
 
         if (structure && structure.fees) {
             Object.keys(structure.fees).forEach(key => {
                 const item = structure.fees[key];
-
                 if (item && !item.isNone && item.amount > 0) {
                     const amount = Number(item.amount) || 0;
-                    const label = key
-                        .replace(/([A-Z])/g, ' $1')
-                        .trim()
-                        .toUpperCase();
+                    const label = key.replace(/([A-Z])/g, ' $1').trim().toUpperCase();
 
                     if (item.billingCycle === 'monthly') {
                         monthlyUnit += amount;
-                        structureDetails.monthly.push({
-                            label,
-                            amount
-                        });
+                        structureDetails.monthly.push({ label, amount });
                     } else {
                         oneTimeFixed += amount;
-                        structureDetails.oneTime.push({
-                            label,
-                            amount
-                        });
+                        structureDetails.oneTime.push({ label, amount });
                     }
                 }
             });
         }
 
-        // EXACT SAME LOGIC AS /student-summary
-
+        // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
         const joinDate = new Date(student.createdAt);
+        let calculationEndDate = new Date(); // Normal
 
-        const monthsElapsed = Math.max(
-            1,
-            (today.getFullYear() - joinDate.getFullYear()) * 12 +
-            (today.getMonth() - joinDate.getMonth()) +
-            1
-        );
+        if (isPastSession && schoolData.sessionStartDate) {
+            calculationEndDate = new Date(schoolData.sessionStartDate); // Time Freeze!
+        }
+
+        const currentMonthName = calculationEndDate.toLocaleString('default', { month: 'long' });
+
+        let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
+        if (monthsElapsed > 12) monthsElapsed = 12; // Cap at 12 months per session
 
         const totalTargetMonthly = monthlyUnit * monthsElapsed;
+        const totalPaidAll = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
-        const totalPaidAll = verifiedPayments.reduce(
-            (sum, p) => sum + (Number(p.amountPaid) || 0),
-            0
-        );
-
-        let remainingOneTime = Math.max(
-            0,
-            oneTimeFixed - totalPaidAll
-        );
-
-        let surplusAfterOneTime = Math.max(
-            0,
-            totalPaidAll - oneTimeFixed
-        );
-
-        let remainingMonthly = Math.max(
-            0,
-            totalTargetMonthly - surplusAfterOneTime
-        );
-
-        let finalAdvance = Math.max(
-            0,
-            surplusAfterOneTime - totalTargetMonthly
-        );
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidAll);
+        let surplusAfterOneTime = Math.max(0, totalPaidAll - oneTimeFixed);
+        let remainingMonthly = Math.max(0, totalTargetMonthly - surplusAfterOneTime);
+        let finalAdvance = Math.max(0, surplusAfterOneTime - totalTargetMonthly);
 
         const groupedHistory = verifiedPayments.reduce((acc, pay) => {
             const key = `${pay.month} ${pay.year}`;
-
-            if (!acc[key]) {
-                acc[key] = [];
-            }
-
+            if (!acc[key]) acc[key] = [];
             const rawRemarks = pay.remarks || "";
-
             let displayCategory = pay.feeCategory || "GENERAL FEE";
-
             if (rawRemarks.toUpperCase().includes("PURPOSE:")) {
                 displayCategory = rawRemarks.split(":")[1].trim();
             }
 
             acc[key].push({
-                id: pay._id,
-                amount: pay.amountPaid,
-                category: displayCategory.toUpperCase(),
-                date: pay.date,
-                mode: pay.paymentMode
+                id: pay._id, amount: pay.amountPaid, category: displayCategory.toUpperCase(), date: pay.date, mode: pay.paymentMode
             });
-
             return acc;
         }, {});
 
@@ -753,47 +723,22 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
             adminEmail: schoolData?.adminDetails?.email || "N/A",
 
             currentMonth: currentMonthName,
-
-            totalPaidThisMonth: verifiedPayments
-                .filter(
-                    p =>
-                        p.month === currentMonthName &&
-                        p.year === currentYear
-                )
-                .reduce(
-                    (sum, p) =>
-                        sum + (Number(p.amountPaid) || 0),
-                    0
-                ),
-
-            lastActivity:
-                verifiedPayments.length > 0
-                    ? verifiedPayments[0].date
-                    : null,
-
-            grandTotal:
-                remainingMonthly + remainingOneTime,
-
+            totalPaidThisMonth: verifiedPayments.filter(p => p.month === currentMonthName && p.year === calculationEndDate.getFullYear()).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0),
+            lastActivity: verifiedPayments.length > 0 ? verifiedPayments[0].date : null,
+            grandTotal: remainingMonthly + remainingOneTime,
             monthlyOutstanding: remainingMonthly,
             oneTimeOutstanding: remainingOneTime,
             advanceBalance: finalAdvance,
-
             totalFeesStructure: monthlyUnit,
             structureDetails,
-
             history: groupedHistory,
-
-            status:
-                (remainingMonthly + remainingOneTime) <= 0
-                    ? 'COMPLETED'
-                    : 'PENDING'
+            targetSession, // Frontend ke liye
+            status: (remainingMonthly + remainingOneTime) <= 0 ? 'COMPLETED' : 'PENDING'
         });
 
     } catch (error) {
         console.error("AUDIT_ERROR:", error);
-        res.status(500).json({
-            message: 'Neural Ledger Reset Failed'
-        });
+        res.status(500).json({ message: 'Neural Ledger Reset Failed' });
     }
 });
 

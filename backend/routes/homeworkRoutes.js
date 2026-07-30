@@ -31,11 +31,25 @@ router.post('/assign', protect, async (req, res) => {
     }
 });
 
-// 2. STUDENT/TEACHER: Get Homework for specific class and date
+// 2. STUDENT/TEACHER: Get Homework for specific class and date (WITH STRICT BOUNDARY LOCK)
 router.get('/view', protect, async (req, res) => {
     try {
         const { className, date } = req.query;
         const schoolId = req.user.schoolId;
+
+        // 🔥 THE SILENT BOUNDARY LOCK PROTOCOL 🔥
+        const School = require('../models/School');
+        const school = await School.findById(schoolId).select('sessionStartDate');
+
+        if (school && school.sessionStartDate) {
+            // Yahan date ko "YYYY-MM-DD" format mein convert kar rahe hain taaki string compare ho sake
+            const boundaryDate = new Date(school.sessionStartDate).toISOString().split('T')[0];
+            
+            // Agar baccha pichle session (boundary se pehle) ki diary maang raha hai, toh block kardo!
+            if (date < boundaryDate) {
+                return res.json([]); // Return empty array silently
+            }
+        }
 
         const diaries = await Homework.find({ schoolId, className, date })
             .populate('teacherId', 'name'); // Taaki bache ko pta chale kis sir ne diya hai
@@ -45,7 +59,6 @@ router.get('/view', protect, async (req, res) => {
         res.status(500).json({ message: "Fetch Error" });
     }
 });
-
 // 3. TEACHER: Get the most recent diary for a subject/class to edit
 // 3. TEACHER: Check if diary exists for a SPECIFIC date
 router.get('/check', protect, async (req, res) => {

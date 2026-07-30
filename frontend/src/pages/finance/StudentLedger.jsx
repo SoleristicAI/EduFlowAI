@@ -1,29 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, AlertCircle, History, Wallet, User as UserIcon, Calendar, Layers, Zap, CheckCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, History, Wallet, User as UserIcon, Calendar, Layers, Zap, CheckCircle, ChevronDown } from 'lucide-react';
 import API from '../../api';
 import Loader from '../../components/Loader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const StudentLedger = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [audit, setAudit] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     useEffect(() => {
         const fetchAudit = async () => {
             try {
-                setLoading(true); // Fetch shuru hote hi loading ON
-                const { data } = await API.get(`/fees/audit/${id}`);
-                setAudit(data);
+                if (!activeSession) {
+                    setLoading(true);
+                    const sessionRes = await API.get('/users/general/session-info');
+                    setActiveSession(sessionRes.data.activeSession);
+                    setAvailableSessions(sessionRes.data.allAvailableSessions);
+                    
+                    const { data } = await API.get(`/fees/audit/${id}?session=${sessionRes.data.activeSession}`);
+                    setAudit(data);
+                } else {
+                    setLoading(true);
+                    const { data } = await API.get(`/fees/audit/${id}?session=${activeSession}`);
+                    setAudit(data);
+                }
             } catch (err) {
                 console.error("Ledger decrypt error");
             } finally {
-                setLoading(false); // Data mil jaye ya error aaye, loading OFF
+                setLoading(false); 
             }
         };
         fetchAudit();
-    }, [id]);
+    }, [id, activeSession]);
 
     if (loading) return <Loader />;
 
@@ -44,15 +58,53 @@ const StudentLedger = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] text-slate-800 p-6 font-sans italic pb-24 text-[15px]">
-            {/* Header */}
-            <div className="flex items-center gap-5 mb-8 border-l-4 border-[#42A5F5] pl-4">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="p-3 bg-white rounded-2xl border border-[#DDE3EA] shadow-md hover:bg-blue-50 transition-all active:scale-90 group"
-                >
-                    <ArrowLeft size={24} className="text-[#42A5F5]" />
-                </button>
-                <h1 className="text-3xl font-black italic tracking-tight capitalize">Student fees records</h1>
+            {/* Header & Session Dropdown */}
+            <div className="flex justify-between items-center mb-8 border-l-4 border-[#42A5F5] pl-4">
+                <div className="flex items-center gap-5">
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="p-3 bg-white rounded-2xl border border-[#DDE3EA] shadow-md hover:bg-blue-50 transition-all active:scale-90 group"
+                    >
+                        <ArrowLeft size={24} className="text-[#42A5F5]" />
+                    </button>
+                    <h1 className="text-3xl font-black italic tracking-tight capitalize">Student ledger</h1>
+                </div>
+
+                {/* 🔥 PREMIUM GLASS DROPDOWN 🔥 */}
+                <div className="relative mr-4">
+                    <button
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        className="flex items-center gap-2 px-5 py-3 bg-white border border-[#DDE3EA] shadow-sm rounded-2xl active:scale-95 transition-all"
+                    >
+                        <History size={16} className="text-[#42A5F5]" />
+                        <span className="text-[14px] font-black tracking-widest text-slate-700">{activeSession || 'Loading...'}</span>
+                        <ChevronDown size={16} className={`text-slate-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence>
+                        {isDropdownOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute top-full mt-2 w-full min-w-[150px] right-0 bg-white rounded-2xl shadow-xl border border-blue-50 overflow-hidden z-[100]"
+                            >
+                                {availableSessions.map((session) => (
+                                    <div
+                                        key={session}
+                                        onClick={() => {
+                                            setActiveSession(session);
+                                            setIsDropdownOpen(false);
+                                        }}
+                                        className={`px-4 py-4 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                    >
+                                        {session}
+                                    </div>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* TOP STATUS BAR */}

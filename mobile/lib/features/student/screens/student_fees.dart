@@ -27,15 +27,30 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
   Map<String, dynamic>? summary;
   bool loading = true;
 
+  String? activeSession;
+  List<String> availableSessions = [];
+  bool _isDropdownOpen = false;
+
   @override
   void initState() {
     super.initState();
     _fetchSummary();
   }
 
-  Future<void> _fetchSummary() async {
+  Future<void> _fetchSummary({String? session}) async {
+    setState(() => loading = true);
     try {
-      final response = await ApiClient.dio.get('/fees/student-summary');
+      // 1. Agar session load nahi hua hai, toh pehle usko laao
+      if (activeSession == null) {
+        final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+        activeSession = sessionRes.data['activeSession'];
+        availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+      }
+
+      // 2. Fees fetch karo (jo dropdown mein select hai, ya default current)
+      final query = session ?? activeSession;
+      final response = await ApiClient.dio.get('/fees/student-summary?session=$query');
+      
       setState(() {
         summary = response.data;
         loading = false;
@@ -378,6 +393,76 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
     );
   }
 
+  // 🔥 THE PREMIUM MOBILE GLASS DROPDOWN (ANIMATED & SINGLE COLOR) 🔥
+  Widget _buildSessionDropdown(bool isDarkMode) {
+    if (availableSessions.isEmpty || activeSession == null) return const SizedBox.shrink();
+    
+    return PopupMenuButton<String>(
+      initialValue: activeSession,
+      // 🔥 YAHI FIX HAI: Surface tint hataya taaki dual-color mix na ho!
+      color: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFF42A5F5),
+      surfaceTintColor: Colors.transparent, 
+      elevation: 8,
+      onOpened: () => setState(() => _isDropdownOpen = true),
+      onCanceled: () => setState(() => _isDropdownOpen = false),
+      onSelected: (String newValue) {
+        setState(() {
+          activeSession = newValue;
+          _isDropdownOpen = false;
+        });
+        _fetchSummary(session: newValue); 
+      },
+      itemBuilder: (BuildContext context) {
+        return availableSessions.map((String session) {
+          return PopupMenuItem<String>(
+            value: session,
+            child: Row(
+              children: [
+                Text(
+                  session, 
+                  style: TextStyle(
+                    fontWeight: activeSession == session ? FontWeight.w900 : FontWeight.w700, 
+                    fontStyle: FontStyle.italic,
+                    color: Colors.white, // 🔥 Ek hi solid white color rakha hai
+                  )
+                ),
+                // Jo select hoga uske aage check icon aayega, premium feel ke liye
+                if (activeSession == session) ...[
+                  const Spacer(),
+                  const Icon(Icons.check, color: Colors.white, size: 18),
+                ]
+              ],
+            ),
+          );
+        }).toList();
+      },
+      offset: const Offset(0, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.2), 
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.history, color: Colors.white, size: 16),
+            const SizedBox(width: 8),
+            Text(activeSession!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+            const SizedBox(width: 4),
+            AnimatedRotation(
+              turns: _isDropdownOpen ? 0.5 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              child: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (loading) return const CustomLoader();
@@ -510,14 +595,9 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
                                   fontStyle: FontStyle.italic,
                                   letterSpacing: -1),
                             ),
-                            Text(
-                              "PAYMENT DETAILS",
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white.withValues(alpha: 0.8),
-                                  letterSpacing: 2),
-                            ),
+                            const SizedBox(height: 8), // Thoda space
+                            // 🔥 NAYA DROPDOWN YAHAN AAYEGA 🔥
+                            _buildSessionDropdown(isDarkMode),
                           ],
                         ),
                         Container(
