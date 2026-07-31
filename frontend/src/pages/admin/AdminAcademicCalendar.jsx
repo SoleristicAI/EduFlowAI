@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowLeft, Calendar, Plus, Trash2, ChevronDown, RefreshCw, AlertTriangle, Layers, Text } from 'lucide-react';
+import { ArrowLeft, Calendar, Plus, Trash2, ChevronDown, RefreshCw, AlertTriangle, Layers, Text, History } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Toast from '../../components/Toast';
@@ -41,8 +41,22 @@ const AdminAcademicCalendar = () => {
         'Event': { badge: 'bg-emerald-50 text-emerald-600 border-emerald-100', dot: 'bg-emerald-500' }
     };
 
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
+
     useEffect(() => {
-        fetchCalendarEvents();
+        const init = async () => {
+            if (!activeSession) {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                fetchCalendarEvents(sessionRes.data.activeSession);
+            } else {
+                fetchCalendarEvents(activeSession);
+            }
+        };
+        init();
 
         const handleOutsideClick = (e) => {
             if (typeRef.current && !typeRef.current.contains(e.target)) setIsTypeDropdownOpen(false);
@@ -52,16 +66,18 @@ const AdminAcademicCalendar = () => {
         };
         document.addEventListener("mousedown", handleOutsideClick);
         return () => document.removeEventListener("mousedown", handleOutsideClick);
-    }, [viewMode]);
+    }, [activeSession, viewMode]);
 
     const triggerToast = (message, type = "success") => {
         setShowToast({ show: true, message, type });
         setTimeout(() => setShowToast({ show: false, message: '', type: '' }), 3000);
     };
 
-    const fetchCalendarEvents = async () => {
+    const fetchCalendarEvents = async (sessionParam) => {
+        const query = sessionParam || activeSession;
+        if (!query) return;
         try {
-            const { data } = await API.get('/academic-calendar/all-events');
+            const { data } = await API.get(`/academic-calendar/all-events?session=${query}`);
             setEventsClasses(data);
         } catch (err) { console.error(err); }
     };
@@ -113,8 +129,8 @@ const AdminAcademicCalendar = () => {
     const executeGlobalReset = async () => {
         setLoading(true);
         try {
-            await API.delete('/academic-calendar/actions/reset-year');
-            triggerToast("Academic Year Calendar Wiped out! 🧹", "success");
+            await API.delete(`/academic-calendar/actions/reset-year?session=${activeSession}`);
+            triggerToast(`${activeSession} Calendar Wiped out! 🧹`, "success");
             setShowResetConfirm(false);
             fetchCalendarEvents();
         } catch (err) { triggerToast("Reset failed.", "error"); }
@@ -135,11 +151,14 @@ const AdminAcademicCalendar = () => {
             {showToast.show && <Toast message={showToast.message} type={showToast.type} onClose={() => setShowToast({ show: false, message: '', type: '' })} />}
 
             {/* BASE HEADER */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-lg relative overflow-hidden">
-                {/* Background glow */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+            <div className="relative text-white px-6 pt-12 pb-24">
+                
+                {/* 1. Background Layers - Sent to Back (z-0) */}
+                <div className="absolute inset-0 bg-[#42A5F5] rounded-b-[4rem] shadow-lg z-0"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50 rounded-b-[4rem] z-0"></div>
 
-                <div className="flex justify-between items-center gap-2 relative z-10">
+                {/* 2. Top Row Content - Brought to Front (z-[100]) */}
+                <div className="flex justify-between items-center gap-2 relative z-[100]">
 
                     {/* Back Button */}
                     <button
@@ -153,16 +172,46 @@ const AdminAcademicCalendar = () => {
                     </button>
 
                     {/* Center Content */}
-                    <div className="text-center absolute left-1/2 -translate-x-1/2">
+                    <div className="text-center absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
                         <h1 className="text-4xl md:text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
                             {viewMode === 'declare' ? 'New Schedule' : 'Calendar Hub'}
                         </h1>
+                        
+                        {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
+                        <div className="relative mt-2">
+                            <button
+                                onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm rounded-full active:scale-95 transition-all"
+                            >
+                                <History size={14} className="text-white hidden md:block" />
+                                <span className="text-[12px] md:text-[14px] font-black tracking-widest text-white uppercase">{activeSession || 'Loading...'}</span>
+                                <ChevronDown size={14} className={`text-white transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
 
-                        <p className="text-[13px] md:text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-1 whitespace-nowrap">
-                            {viewMode === 'declare'
-                                ? 'Declare Event Date'
-                                : 'Manage Institutional Dates'}
-                        </p>
+                            <AnimatePresence>
+                                {isSessionDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -10 }}
+                                        className="absolute top-full mt-2 w-full min-w-[150px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-xl border border-blue-50 overflow-hidden z-[100]"
+                                    >
+                                        {availableSessions.map((session) => (
+                                            <div
+                                                key={session}
+                                                onClick={() => {
+                                                    setActiveSession(session);
+                                                    setIsSessionDropdownOpen(false);
+                                                }}
+                                                className={`px-4 py-4 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                            >
+                                                {session}
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
                     {/* Right Icon */}

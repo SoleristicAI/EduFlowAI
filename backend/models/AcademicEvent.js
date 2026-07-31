@@ -9,8 +9,9 @@ const academicEventSchema = new mongoose.Schema({
         enum: ['Holiday', 'Exam', 'PTM', 'Event'], 
         required: true 
     },
-    date: { type: String, required: true }, // Format: "DD-MM-YYYY"
-    rawDate: { type: Date, required: true } // Queries aur sorting ke liye absolute date
+    date: { type: String, required: true },
+    rawDate: { type: Date, required: true } ,
+    session: { type: String }
 }, { timestamps: true });
 
 module.exports = mongoose.model('AcademicEvent', academicEventSchema);

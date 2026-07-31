@@ -23,7 +23,10 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
   late DateTime viewDate;
   Map<String, dynamic>? selectedEvent;
 
-  // --- Theme Maps ---
+  // 🔥 SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
+
   final Map<String, Map<String, Color>> eventThemeMap = {
     'Holiday': {'badgeBg': const Color(0xFFFEE2E2), 'badgeText': const Color(0xFFDC2626), 'dot': const Color(0xFFEF4444)},
     'Exam': {'badgeBg': const Color(0xFFFEF3C7), 'badgeText': const Color(0xFFD97706), 'dot': const Color(0xFFF59E0B)},
@@ -34,16 +37,33 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
   @override
   void initState() {
     super.initState();
-    today = DateTime(today.year, today.month, today.day); // Strip time
+    today = DateTime(today.year, today.month, today.day);
     viewDate = DateTime(today.year, today.month, 1);
-    _fetchCalendarEvents();
+    _initSessionData();
   }
 
-  Future<void> _fetchCalendarEvents({bool isRefresh = false}) async {
+  Future<void> _initSessionData() async {
+    try {
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _fetchCalendarEvents(activeSession);
+      }
+    } catch (e) {
+      _showToast("Session Error.", isError: true);
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _fetchCalendarEvents(String? sessionParam, {bool isRefresh = false}) async {
+    if (sessionParam == null) return;
     if (!isRefresh && mounted) setState(() => isLoading = true);
 
     try {
-      final response = await ApiClient.dio.get('/academic-calendar/all-events');
+      final response = await ApiClient.dio.get('/academic-calendar/all-events?session=$sessionParam');
       if (mounted) {
         setState(() {
           rawEvents = response.data ?? [];
@@ -57,7 +77,6 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
     }
   }
 
-  // --- SMART PARSER FOR MULTIPLE DAYS ---
   void _processEventsForCalendar(List<dynamic> apiEvents) {
     final Map<String, dynamic> map = {};
     final RegExp multiDayRegex = RegExp(r'Duration: From (\d{2}-\d{2}-\d{4}) To (\d{2}-\d{2}-\d{4})');
@@ -86,12 +105,11 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
     eventMap = map;
   }
 
-  // 🔥 NAYA LOGIC: isSunday parameter add kiya 🔥
   void _handleDateClick(String dateStr, bool isPast, bool isSunday) {
     if (isPast) return;
     setState(() {
       if (eventMap.containsKey(dateStr)) {
-        selectedEvent = Map<String, dynamic>.from(eventMap[dateStr]); // Avoid mutating original map
+        selectedEvent = Map<String, dynamic>.from(eventMap[dateStr]); 
         selectedEvent!['isEmpty'] = false;
         selectedEvent!['isSunday'] = isSunday; 
       } else {
@@ -150,7 +168,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
         body: RefreshIndicator(
           color: const Color(0xFF42A5F5),
           backgroundColor: cardColor,
-          onRefresh: () => _fetchCalendarEvents(isRefresh: true),
+          onRefresh: () => _fetchCalendarEvents(activeSession, isRefresh: true),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()), 
             slivers: [
@@ -171,7 +189,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
                         boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           GestureDetector(
@@ -185,13 +203,61 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
                               child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
                             ),
                           ),
+                          
+                          // 🔥 CENTER: TITLE + DROPDOWN 🔥
                           Column(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text("Calendar", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)),
-                              Text("HOLIDAYS & EVENTS", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
+                              const Text("Calendar", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
+                              const SizedBox(height: 4),
+                              // 🔥 FIX: NAYA POPUP MENU WITH POSITION UNDER 🔥
+                              PopupMenuButton<String>(
+                                initialValue: activeSession,
+                                position: PopupMenuPosition.under, // 👉 FIX: Button ke theek neeche khulega
+                                offset: const Offset(0, 8), // 👉 FIX: Thoda sa gap dega button aur menu ke beech
+                                color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
+                                elevation: 12,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                onSelected: (String newValue) {
+                                  setState(() { activeSession = newValue; isLoading = true; });
+                                  _fetchCalendarEvents(newValue);
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return availableSessions.map((String session) {
+                                    return PopupMenuItem<String>(
+                                      value: session,
+                                      child: Text(
+                                        session, 
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900, 
+                                          fontStyle: FontStyle.italic,
+                                          color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87), 
+                                        )
+                                      ),
+                                    );
+                                  }).toList();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2), 
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white.withOpacity(0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.history, color: Colors.white, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
+
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.3))),
@@ -305,10 +371,9 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
     int month = viewDate.month;
     DateTime firstDay = DateTime(year, month, 1);
     int lastDate = DateTime(year, month + 1, 0).day;
-    int startDay = firstDay.weekday; // 1 = Monday, 7 = Sunday
+    int startDay = firstDay.weekday; 
     
     List<Widget> days = [];
-    
     for (int i = 1; i < startDay; i++) {
       days.add(const SizedBox());
     }
@@ -316,7 +381,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
     for (int d = 1; d <= lastDate; d++) {
       DateTime tempDate = DateTime(year, month, d);
       bool isPast = tempDate.isBefore(today);
-      bool isSunday = tempDate.weekday == DateTime.sunday; // 🔥 SUNDAY CHECK 🔥
+      bool isSunday = tempDate.weekday == DateTime.sunday; 
       String formattedVal = DateFormat('dd-MM-yyyy').format(tempDate);
       
       var hasEvent = eventMap[formattedVal];
@@ -334,8 +399,8 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
         cellBg = eventThemeMap[hasEvent['eventType']]!['badgeBg']!.withOpacity(isDarkMode ? 0.2 : 1);
         cellText = eventThemeMap[hasEvent['eventType']]!['dot']!;
         dotColor = eventThemeMap[hasEvent['eventType']]!['dot'];
-      } else if (isSunday) { // Sunday highlighting (Optional but good UX)
-        cellText = const Color(0xFFF43F5E); // Soft red for Sunday
+      } else if (isSunday) { 
+        cellText = const Color(0xFFF43F5E); 
       }
 
       if ((isSelected || isSelectedEmpty) && !isPast) {
@@ -344,7 +409,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
 
       days.add(
         GestureDetector(
-          onTap: isPast ? null : () => _handleDateClick(formattedVal, isPast, isSunday), // 🔥 PASSED isSunday 🔥
+          onTap: isPast ? null : () => _handleDateClick(formattedVal, isPast, isSunday), 
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             alignment: Alignment.center,
@@ -379,8 +444,6 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
 
   Widget _buildEventCard(bool isDarkMode, Color cardColor, Color cardBorder, Color textColorPrimary, Color textColorSecondary, Color subtleBgColor) {
     if (selectedEvent!['isEmpty'] == true) {
-      
-      // 🔥 EXACT IMPLEMENTATION AS REQUESTED 🔥
       bool isSunday = selectedEvent!['isSunday'] == true;
 
       return Container(

@@ -534,7 +534,7 @@ router.get('/admin/session-config', protect, adminOnly, async (req, res) => {
 });
 
 // ==========================================================
-// --- DAY 264: SESSION CONFIGURATION & LOCKING SYSTEM ---
+// --- SESSION CONFIGURATION & MASTER WIPEOUT SYSTEM ---
 // ==========================================================
 router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
     try {
@@ -547,23 +547,27 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
         
         await school.save();
 
-        // 🔥 THE GLOBAL WIPEOUT PROTOCOL (All Notices & Fee Notices Erased) 🔥
+        // 🔥 THE GLOBAL WIPEOUT PROTOCOL (Clean Slate for New Year) 🔥
         try {
             const Notice = require('../models/Notice');
             const FeeNotice = require('../models/FeeNotice');
+            const Assignment = require('../models/Assignment'); // Assignment Model
+            const Submission = require('../models/Submission'); // Submission Model
 
-            // 1. Delete all Regular Notices (Admin/Teacher Broadcasts)
+            // 1. Wipeout All Notices
             await Notice.deleteMany({ schoolId: req.user.schoolId });
-            
-            // 2. Delete all Fee Notices (Finance Department)
             await FeeNotice.deleteMany({ schoolId: req.user.schoolId });
 
-            console.log(`[GLOBAL WIPE] All notices and fee notices cleared for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
-        } catch (noticeErr) {
-            console.log("Notice cleanup failed, but session upgraded.", noticeErr);
+            // 2. Wipeout All Assignments & Submissions
+            await Assignment.deleteMany({ schoolId: req.user.schoolId });
+            await Submission.deleteMany({ schoolId: req.user.schoolId });
+
+            console.log(`[MASTER RESET] Notices, Fee Notices, Assignments & Submissions CLEARED for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
+        } catch (wipeErr) {
+            console.log("Master Reset failed, but session upgraded.", wipeErr);
         }
         
-        res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old notices cleared! ✅` });
+        res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old tasks & notices wiped! ✅` });
     } catch (error) {
         res.status(500).json({ message: "Failed to finalize session." });
     }

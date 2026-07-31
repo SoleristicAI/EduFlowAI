@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
-import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
+import '../../../core/theme/theme_provider.dart';
 
 class StudentAcademicCalendar extends ConsumerStatefulWidget {
   const StudentAcademicCalendar({super.key});
@@ -23,18 +23,39 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
   late DateTime viewDate;
   Map<String, dynamic>? selectedEvent;
 
+  // 🔥 SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
+
   @override
   void initState() {
     super.initState();
     today = DateTime.now();
     today = DateTime(today.year, today.month, today.day);
     viewDate = DateTime(today.year, today.month, 1);
-    _fetchCalendarEvents();
+    _initSessionData();
   }
 
-  Future<void> _fetchCalendarEvents() async {
+  Future<void> _initSessionData() async {
     try {
-      final response = await ApiClient.dio.get('/academic-calendar/all-events');
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _fetchCalendarEvents(activeSession);
+      }
+    } catch (e) {
+      _showToast("Session Error.", isError: true);
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> _fetchCalendarEvents(String? sessionParam) async {
+    if (sessionParam == null) return;
+    try {
+      final response = await ApiClient.dio.get('/academic-calendar/all-events?session=$sessionParam');
       final data = response.data as List<dynamic>;
       
       if (mounted) {
@@ -51,7 +72,7 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
   }
 
   Future<void> _handleRefresh() async {
-    await _fetchCalendarEvents();
+    await _fetchCalendarEvents(activeSession);
   }
 
   // --- SMART PARSER FOR MULTIPLE DAYS ---
@@ -128,7 +149,6 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
 
     bool canGoPrev = viewDate.year > today.year || (viewDate.year == today.year && viewDate.month > today.month);
 
-    // 🔥 THEME LOGIC START
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
@@ -139,7 +159,6 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
     final Color borderColor = isDarkMode ? const Color(0xFF334155) : const Color(0xFFF1F5F9);
     final Color subtleBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
-    // Dynamic Color Legends Theme
     final Map<String, Map<String, Color>> eventThemeMap = {
       'Holiday': {
         'badgeBg': isDarkMode ? const Color(0xFF7F1D1D).withOpacity(0.3) : const Color(0xFFFEE2E2), 
@@ -170,7 +189,6 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
         'bg': isDarkMode ? const Color(0xFF022C22).withOpacity(0.3) : const Color(0xFFECFDF5)
       }
     };
-    // 🔥 THEME LOGIC END
 
     return PopScope(
       canPop: false,
@@ -196,9 +214,8 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                   // --- BLUE HEADER SECTION ---
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.only(top: 60, bottom: 80),
+                    padding: const EdgeInsets.only(top: 60, bottom: 80, left: 24, right: 24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF42A5F5),
                       gradient: LinearGradient(
                         colors: isDarkMode 
                             ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] 
@@ -209,48 +226,90 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
                       boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  if (context.canPop()) context.pop();
-                                  else context.go('/');
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            if (context.canPop()) context.pop();
+                            else context.go('/');
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.white.withOpacity(0.3)),
+                            ),
+                            child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                          ),
+                        ),
+                        
+                        // 🔥 CENTER: TITLE + DROPDOWN 🔥
+                        Column(
+                          children: [
+                            const Text("Calendar", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
+                            const SizedBox(height: 4),
+                            // 🔥 FIX: NAYA POPUP MENU WITH POSITION UNDER 🔥
+                              PopupMenuButton<String>(
+                                initialValue: activeSession,
+                                position: PopupMenuPosition.under, // 👉 FIX: Button ke theek neeche khulega
+                                offset: const Offset(0, 8), // 👉 FIX: Thoda sa gap dega button aur menu ke beech
+                                color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
+                                elevation: 12,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                onSelected: (String newValue) {
+                                  setState(() { activeSession = newValue; loading = true; });
+                                  _fetchCalendarEvents(newValue);
+                                },
+                                itemBuilder: (BuildContext context) {
+                                  return availableSessions.map((String session) {
+                                    return PopupMenuItem<String>(
+                                      value: session,
+                                      child: Text(
+                                        session, 
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900, 
+                                          fontStyle: FontStyle.italic,
+                                          color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87), 
+                                        )
+                                      ),
+                                    );
+                                  }).toList();
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.all(10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(16),
+                                    color: Colors.white.withOpacity(0.2), 
+                                    borderRadius: BorderRadius.circular(20),
                                     border: Border.all(color: Colors.white.withOpacity(0.3)),
                                   ),
-                                  child: const Icon(Icons.arrow_back, color: Colors.white, size: 22),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.history, color: Colors.white, size: 14),
+                                      const SizedBox(width: 6),
+                                      Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                                      const SizedBox(width: 4),
+                                      const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              Column(
-                                children: [
-                                  const Text("Calendar", style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
-                                  Text("HOLIDAYS & EVENTS", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
-                                ],
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: Colors.white.withOpacity(0.3)),
-                                ),
-                                child: const Icon(Icons.calendar_month, color: Colors.white, size: 22),
-                              ),
-                            ],
+                          ],
+                        ),
+
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.3)),
                           ),
-                        ],
-                      ),
+                          child: const Icon(Icons.calendar_month, color: Colors.white, size: 22),
+                        ),
+                      ],
                     ),
                   ),
 
@@ -379,7 +438,6 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                                       }
                                     }
 
-                                    // Default Box Styles (Dynamic Theme)
                                     Color boxBg = subtleBgColor;
                                     Color boxBorder = borderColor;
                                     Color textColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF334155);
@@ -444,13 +502,8 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                                         const SizedBox(height: 16),
                                         Text("DATE: ${selectedEvent!['date']}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 2)),
                                         const SizedBox(height: 4),
-                                        
-                                        Text(
-                                          selectedEvent!['isSunday'] == true ? "SUNDAY" : "REGULAR DAY", 
-                                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic, letterSpacing: 1)
-                                        ),
+                                        Text(selectedEvent!['isSunday'] == true ? "SUNDAY" : "REGULAR DAY", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic, letterSpacing: 1)),
                                         const SizedBox(height: 12),
-                                        
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), 
                                           decoration: BoxDecoration(color: subtleBgColor, borderRadius: BorderRadius.circular(20)), 
