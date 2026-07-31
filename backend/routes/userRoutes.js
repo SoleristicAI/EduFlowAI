@@ -551,8 +551,11 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
         try {
             const Notice = require('../models/Notice');
             const FeeNotice = require('../models/FeeNotice');
-            const Assignment = require('../models/Assignment'); // Assignment Model
-            const Submission = require('../models/Submission'); // Submission Model
+            const Assignment = require('../models/Assignment'); 
+            const Submission = require('../models/Submission'); 
+            const FeedbackSession = require('../models/FeedbackSession'); 
+            const FeedbackResponse = require('../models/FeedbackResponse'); 
+            const Syllabus = require('../models/Syllabus'); // 🔥 NAYA: Syllabus Model
 
             // 1. Wipeout All Notices
             await Notice.deleteMany({ schoolId: req.user.schoolId });
@@ -562,12 +565,19 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
             await Assignment.deleteMany({ schoolId: req.user.schoolId });
             await Submission.deleteMany({ schoolId: req.user.schoolId });
 
-            console.log(`[MASTER RESET] Notices, Fee Notices, Assignments & Submissions CLEARED for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
+            // 3. Wipeout All Feedbacks
+            await FeedbackSession.deleteMany({ schoolId: req.user.schoolId });
+            await FeedbackResponse.deleteMany({ schoolId: req.user.schoolId });
+
+            // 4. Wipeout All Syllabus Records
+            await Syllabus.deleteMany({ schoolId: req.user.schoolId });
+
+            console.log(`[MASTER RESET] Notices, Assignments, Submissions, Feedbacks & Syllabus CLEARED for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
         } catch (wipeErr) {
             console.log("Master Reset failed, but session upgraded.", wipeErr);
         }
         
-        res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old tasks & notices wiped! ✅` });
+        res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old tasks, notices, feedbacks & syllabus wiped! ✅` });
     } catch (error) {
         res.status(500).json({ message: "Failed to finalize session." });
     }
@@ -654,7 +664,5 @@ router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
         res.status(500).json({ message: "Critical Server Error: " + error.message });
     }
 });
-
-module.exports = router;
 
 module.exports = router;
