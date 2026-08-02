@@ -15,7 +15,7 @@ const StudentAdmitCard = ({ user }) => {
     // BACKEND URL FOR PHOTO FETCHING
     const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
     // (Apna asli render link daal dena)
-    const studentPhoto = user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`) : null;
+    const studentPhoto = user?.avatar ? (user.avatar.startsWith('http') || user.avatar.startsWith('data:') ? user.avatar : `${BASE_URL}${user.avatar}`) : null;
     const [admitCards, setAdmitCards] = useState([]);
     const [showToast, setShowToast] = useState({ show: false, message: '', type: '' });
 
@@ -351,8 +351,13 @@ const StudentAdmitCard = ({ user }) => {
                             {/* Header */}
                             <div className="flex justify-between items-center border-b-[3px] border-[#2B7A9F] pb-4 px-4 pt-2">
                                 <div className="w-20 h-20 flex items-center justify-center rounded-full overflow-hidden border-2 border-[#e2e8f0]">
-                                    {selectedAdmitCard.schoolLogo ? (
-                                        <img src={selectedAdmitCard.schoolLogo.startsWith('http') ? selectedAdmitCard.schoolLogo : `${BASE_URL}${selectedAdmitCard.schoolLogo}`} alt="Logo" className="w-full h-full object-cover" />
+                                   {selectedAdmitCard.schoolLogo ? (
+                                        <img 
+                                            // 🔥 FIX 2: Added startsWith('data:') for School Logo 🔥
+                                            src={selectedAdmitCard.schoolLogo.startsWith('http') || selectedAdmitCard.schoolLogo.startsWith('data:') ? selectedAdmitCard.schoolLogo : `${BASE_URL}${selectedAdmitCard.schoolLogo}`} 
+                                            alt="Logo" 
+                                            className="w-full h-full object-cover" 
+                                        />
                                     ) : (
                                         <div className="w-full h-full bg-[#f1f5f9] flex items-center justify-center text-[10px] font-bold text-[#94a3b8]">LOGO</div>
                                     )}
@@ -493,7 +498,14 @@ const StudentAdmitCard = ({ user }) => {
                                     <div className="border-t-2 border-[#000000] pt-1 w-32 md:w-48 uppercase">Candidate Signature</div>
                                 </div>
                                 <div className="text-center font-extrabold text-[12px] text-[#000000] relative">
-                                    {selectedAdmitCard.datesheetId?.signatures?.incharge && <img src={selectedAdmitCard.datesheetId.signatures.incharge.startsWith('http') ? selectedAdmitCard.datesheetId.signatures.incharge : `${BASE_URL}${selectedAdmitCard.datesheetId.signatures.incharge}`} alt="sign" className="h-10 mx-auto absolute bottom-8 left-1/2 -translate-x-1/2" />}
+                                    {selectedAdmitCard.datesheetId?.signatures?.incharge && (
+                                        <img 
+                                            // 🔥 FIX 3: Added startsWith('data:') for Signature 🔥
+                                            src={selectedAdmitCard.datesheetId.signatures.incharge.startsWith('http') || selectedAdmitCard.datesheetId.signatures.incharge.startsWith('data:') ? selectedAdmitCard.datesheetId.signatures.incharge : `${BASE_URL}${selectedAdmitCard.datesheetId.signatures.incharge}`} 
+                                            alt="sign" 
+                                            className="h-10 mx-auto absolute bottom-8 left-1/2 -translate-x-1/2" 
+                                        />
+                                    )}
                                     <div className="border-t-2 border-[#000000] pt-1 w-32 md:w-48 uppercase">Controller of Exams</div>
                                 </div>
                             </div>

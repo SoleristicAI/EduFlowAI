@@ -413,7 +413,8 @@ const StudentExamResult = () => {
                                             }}
                                         >
                                             <img
-                                                src={schoolLogo.startsWith('http') ? schoolLogo : `${BASE_URL}${schoolLogo}`}
+                                                // 🔥 SURGICAL FIX: Added check for 'data:' (Base64 format) 🔥
+                                                src={schoolLogo.startsWith('http') || schoolLogo.startsWith('data:') ? schoolLogo : `${BASE_URL}${schoolLogo}`}
                                                 alt="School Logo"
                                                 className="w-full h-full object-cover"
                                                 crossOrigin="anonymous"

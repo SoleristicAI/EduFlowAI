@@ -511,12 +511,17 @@ const StudentDatesheet = ({ user }) => {
                                 </ul>
                             </div>
 
-                            {/* SIGNATURE BLOCK: WIDTH ADJUSTED TO PREVENT OVERFLOW */}
+                            {/* SIGNATURE BLOCK: FIXED BASE64 CRASH ISSUE */}
                             <div className="flex justify-between items-end mt-16 pb-4">
 
                                 <div className="text-left w-48 flex flex-col justify-end">
                                     {selectedDatesheet.signatures?.incharge && (
-                                        <img src={selectedDatesheet.signatures.incharge.startsWith('http') ? selectedDatesheet.signatures.incharge : `${BASE_URL}${selectedDatesheet.signatures.incharge}`} alt="Incharge" className="h-16 mb-3 object-contain object-left" />
+                                        <img 
+                                            // 🔥 FIX: ADDED startsWith('data:') CHECK 🔥
+                                            src={selectedDatesheet.signatures.incharge.startsWith('http') || selectedDatesheet.signatures.incharge.startsWith('data:') ? selectedDatesheet.signatures.incharge : `${BASE_URL}${selectedDatesheet.signatures.incharge}`} 
+                                            alt="Incharge" 
+                                            className="h-16 mb-3 object-contain object-left" 
+                                        />
                                     )}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full">
                                         <p className="font-black text-[#1e293b] uppercase text-sm">Examination Incharge</p>
@@ -525,7 +530,12 @@ const StudentDatesheet = ({ user }) => {
 
                                 <div className="text-right w-48 flex flex-col justify-end">
                                     {selectedDatesheet.signatures?.principal && (
-                                        <img src={selectedDatesheet.signatures.principal.startsWith('http') ? selectedDatesheet.signatures.principal : `${BASE_URL}${selectedDatesheet.signatures.principal}`} alt="Principal" className="h-16 mb-3 object-contain object-right" />
+                                        <img 
+                                            // 🔥 FIX: ADDED startsWith('data:') CHECK 🔥
+                                            src={selectedDatesheet.signatures.principal.startsWith('http') || selectedDatesheet.signatures.principal.startsWith('data:') ? selectedDatesheet.signatures.principal : `${BASE_URL}${selectedDatesheet.signatures.principal}`} 
+                                            alt="Principal" 
+                                            className="h-16 mb-3 object-contain object-right" 
+                                        />
                                     )}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full">
                                         <p className="font-black text-[#1e293b] uppercase text-sm">Principal</p>

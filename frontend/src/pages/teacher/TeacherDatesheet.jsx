@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, FileDown, CheckCircle, Download, FileText,CalendarDays, Printer, Check, ArrowRight, LayoutDashboard, BookOpen } from 'lucide-react';
+import { ArrowLeft, Calendar, FileDown, CheckCircle, Download, FileText, CalendarDays, Printer, Check, ArrowRight, LayoutDashboard, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
@@ -99,34 +99,34 @@ const TeacherDatesheet = () => {
 
             {/* Custom Adapted Header */}
             <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible print:hidden">
-    <div className="flex justify-between items-center relative z-10">
+                <div className="flex justify-between items-center relative z-10">
 
-        {/* Back Button */}
-        <button
-            onClick={handleBack}
-            className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
-        >
-            <ArrowLeft size={24} />
-        </button>
+                    {/* Back Button */}
+                    <button
+                        onClick={handleBack}
+                        className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
 
-        {/* Center Title */}
-        <div className="text-center">
-            <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
-                Date Sheet
-            </h1>
+                    {/* Center Title */}
+                    <div className="text-center">
+                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                            Date Sheet
+                        </h1>
 
-            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
-                Examination Schedule
-            </p>
-        </div>
+                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
+                            Examination Schedule
+                        </p>
+                    </div>
 
-        {/* Right Icon */}
-        <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
-            <CalendarDays size={24} />
-        </div>
+                    {/* Right Icon */}
+                    <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
+                        <CalendarDays size={24} />
+                    </div>
 
-    </div>
-</div>
+                </div>
+            </div>
 
             <div className="px-5 -mt-10 relative z-20 space-y-6 max-w-lg mx-auto print:hidden">
                 <AnimatePresence mode="wait">
@@ -254,13 +254,26 @@ const TeacherDatesheet = () => {
                                 </ul>
                             </div>
 
+                            {/* 🔥 SIGNATURE BLOCK: FIXED BASE64 CRASH ISSUE 🔥 */}
                             <div className="flex justify-between items-end mt-16 pb-4">
                                 <div className="text-left w-48 flex flex-col justify-end">
-                                    {selectedDatesheet.signatures?.incharge && <img src={selectedDatesheet.signatures.incharge.startsWith('http') ? selectedDatesheet.signatures.incharge : `${BASE_URL}${selectedDatesheet.signatures.incharge}`} alt="Incharge" className="h-16 mb-3 object-contain object-left" />}
+                                    {selectedDatesheet.signatures?.incharge && (
+                                        <img 
+                                            src={selectedDatesheet.signatures.incharge.startsWith('http') || selectedDatesheet.signatures.incharge.startsWith('data:') ? selectedDatesheet.signatures.incharge : `${BASE_URL}${selectedDatesheet.signatures.incharge}`} 
+                                            alt="Incharge" 
+                                            className="h-16 mb-3 object-contain object-left" 
+                                        />
+                                    )}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full"><p className="font-black text-[#1e293b] uppercase text-sm">Examination Incharge</p></div>
                                 </div>
                                 <div className="text-right w-48 flex flex-col justify-end">
-                                    {selectedDatesheet.signatures?.principal && <img src={selectedDatesheet.signatures.principal.startsWith('http') ? selectedDatesheet.signatures.principal : `${BASE_URL}${selectedDatesheet.signatures.principal}`} alt="Principal" className="h-16 mb-3 object-contain object-right" />}
+                                    {selectedDatesheet.signatures?.principal && (
+                                        <img 
+                                            src={selectedDatesheet.signatures.principal.startsWith('http') || selectedDatesheet.signatures.principal.startsWith('data:') ? selectedDatesheet.signatures.principal : `${BASE_URL}${selectedDatesheet.signatures.principal}`} 
+                                            alt="Principal" 
+                                            className="h-16 mb-3 object-contain object-right" 
+                                        />
+                                    )}
                                     <div className="border-t-2 border-solid border-[#1e293b] pt-2 w-full"><p className="font-black text-[#1e293b] uppercase text-sm">Principal</p></div>
                                 </div>
                             </div>

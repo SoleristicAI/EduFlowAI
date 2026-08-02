@@ -2,13 +2,12 @@ const mongoose = require('mongoose');
 
 const datesheetSchema = new mongoose.Schema({
     schoolId: { type: String, required: true },
-    title: { type: String, required: true }, // e.g., "MID TERM EXAMINATION JUNE/JULY - 2026"
+    title: { type: String, required: true },
     classes: [{ type: String }],
     
-    // --- SMART VALIDATION: Only required if it is an AI Generated Datesheet ---
     startDate: { 
         type: Date, 
-        required: function() { return !this.isManual; } // Agar manual nahi hai, tabhi required hai
+        required: function() { return !this.isManual; } 
     },
     timing: { 
         type: String, 
@@ -23,18 +22,20 @@ const datesheetSchema = new mongoose.Schema({
     notes: { type: String },
     
     isManual: { type: Boolean, default: false },
-    fileUrl: { type: String }, // Base64 ya URL store karne ke liye
+    fileUrl: { type: String }, 
     
     schedule: [{
         date: String,
         day: String,
         timing: String,
-        classExams: { type: Map, of: String } // Key: Class Name, Value: Subject
+        classExams: { type: Map, of: String } 
     }],
     signatures: {
-        incharge: { type: String }, // Base64 or URL
-        principal: { type: String } // Base64 or URL
-    }
+        incharge: { type: String }, 
+        principal: { type: String } 
+    },
+    // 🔥 NAYA: Session Tag zaroori hai 🔥
+    session: { type: String } 
 }, { timestamps: true });
 
 module.exports = mongoose.model('Datesheet', datesheetSchema);

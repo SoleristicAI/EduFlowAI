@@ -2,21 +2,21 @@ const express = require('express');
 const router = express.Router();
 const Datesheet = require('../models/Datesheet');
 const Timetable = require('../models/Timetable');
+const School = require('../models/School');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
-// --- 1. THE AUTO-GENERATION ENGINE (UPDATED WITH SMART REGEX & SHUFFLE) ---
+
+// --- 1. THE AUTO-GENERATION ENGINE ---
 router.post('/generate-preview', protect, adminOnly, async (req, res) => {
     try {
         const { title, classes, startDate, gapDays, timing, resultDate, notes, signatures } = req.body;
         const schoolId = req.user.schoolId;
 
-        const School = require('../models/School');
         const schoolDoc = await School.findById(schoolId);
         const schoolName = schoolDoc ? schoolDoc.schoolName : "EduFlowAI Public School";
 
         const classSubjectsMap = {};
 
         for (let cls of classes) {
-            // SMART REGEX: Agar cls '9' hai, toh ye '9-A', '9-B' ya '9' sab check karega aur pehla uthayega
             const timetable = await Timetable.findOne({ 
                 grade: new RegExp(`^${cls}(-[A-Za-z])?$`, 'i'), 
                 schoolId 
@@ -36,10 +36,7 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
                 subjectsArray = ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi'];
             }
             
-            // --- SHUFFLE LOGIC ---
-            // Isse har class ka exam alag din hoga, ek line mein same subjects nahi aayenge
             subjectsArray = subjectsArray.sort(() => Math.random() - 0.5);
-            
             classSubjectsMap[cls] = subjectsArray;
         }
 
@@ -51,7 +48,7 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
 
         for (let i = 0; i < maxSubjects; i++) {
             while (currentDate.getDay() === 0) {
-                currentDate.setDate(currentDate.getDate() + 1); // Skip Sunday
+                currentDate.setDate(currentDate.getDate() + 1); 
             }
 
             const formattedDate = currentDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
@@ -81,7 +78,6 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
 router.get('/class-subjects/:baseClass', protect, adminOnly, async (req, res) => {
     try {
         const baseClass = req.params.baseClass;
-        // Same Smart Regex Logic
         const timetable = await Timetable.findOne({
             schoolId: req.user.schoolId,
             grade: new RegExp(`^${baseClass}(-[A-Za-z])?$`, 'i')
@@ -105,31 +101,38 @@ router.get('/class-subjects/:baseClass', protect, adminOnly, async (req, res) =>
     }
 });
 
+// Save AI Datesheet
 router.post('/save', protect, adminOnly, async (req, res) => {
     try {
-        const newDatesheet = await Datesheet.create({ ...req.body, schoolId: req.user.schoolId });
+        const school = await School.findById(req.user.schoolId);
+        const newDatesheet = await Datesheet.create({ 
+            ...req.body, 
+            schoolId: req.user.schoolId,
+            session: school?.activeSession || '2026-2027' // 🔥 Tagged
+        });
         res.status(201).json({ message: "Datesheet Published!", data: newDatesheet });
     } catch (error) {
         res.status(500).json({ message: "Save failed." });
     }
 });
 
-// Manual Upload Save Route (Upgraded with Scheduler Matrix)
+// Save Manual Datesheet
 router.post('/save-manual', protect, adminOnly, async (req, res) => {
     try {
         const { title, classes, fileData, schedule, timing, signatures } = req.body;
-        
         if (!fileData) return res.status(400).json({ message: "No PDF/Image file provided!" });
 
+        const school = await School.findById(req.user.schoolId);
         const newDatesheet = await Datesheet.create({ 
             schoolId: req.user.schoolId,
             title,
-            classes, // Base classes array e.g., ["9", "10"]
+            classes, 
             isManual: true,
             fileUrl: fileData,
-            schedule: schedule || [], // Saves the matrix built by wizard
+            schedule: schedule || [], 
             timing: timing || "Refer to Document",
-            signatures: signatures || { incharge: '' }
+            signatures: signatures || { incharge: '' },
+            session: school?.activeSession || '2026-2027' // 🔥 Tagged
         });
 
         res.status(201).json({ message: "Manual Datesheet Published with Matrix!", data: newDatesheet });
@@ -138,50 +141,52 @@ router.post('/save-manual', protect, adminOnly, async (req, res) => {
     }
 });
 
-// 3. STUDENT: Fetch Datesheet for their specific class (SMART BASE-CLASS MATCH)
+// 3. STUDENT: Fetch Datesheet (Filtered by Session)
 router.get('/my-datesheet', protect, async (req, res) => {
     try {
         const studentGrade = req.user.grade;
-        
-        if (!studentGrade) {
-            return res.status(400).json({ message: "Student grade configuration missing." });
-        }
+        if (!studentGrade) return res.status(400).json({ message: "Student grade missing." });
 
-        // DYNAMIC SCHOOL NAME FETCHING
-        const School = require('../models/School');
         const schoolDoc = await School.findById(req.user.schoolId);
         const schoolName = schoolDoc ? schoolDoc.schoolName : "EduFlowAI Public School";
+        
+        const targetSession = schoolDoc?.activeSession || '2026-2027';
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
-        // --- SMART LOGIC: "9-A" ko "9" mein badlo ---
         const baseGrade = String(studentGrade).split('-')[0].trim().toUpperCase();
 
-        // '.lean()' use kiya hai taaki Mongoose document normal JSON object ban jaye
         let datesheets = await Datesheet.find({
             schoolId: req.user.schoolId,
-            // $in check karega: Agar datesheet "9-A" ki bani hai ya "9" ki, dono dikha dega!
-            classes: { $in: [studentGrade.toUpperCase(), baseGrade] }
+            classes: { $in: [studentGrade.toUpperCase(), baseGrade] },
+            ...sessionFilter
         }).lean().sort({ createdAt: -1 });
 
-        // Har datesheet payload mein schoolName attach kar do
         datesheets = datesheets.map(ds => ({ ...ds, schoolName }));
-
         res.json(datesheets);
     } catch (error) {
-        res.status(500).json({ message: "Neural Link Error: Failed to fetch datesheet." });
+        res.status(500).json({ message: "Failed to fetch datesheet." });
     }
 });
 
-// 4. ADMIN: Fetch all published datesheets (AI & Manual)
+// 4. ADMIN: Fetch all published datesheets (Filtered by Session)
 router.get('/all', protect, adminOnly, async (req, res) => {
     try {
-        const datesheets = await Datesheet.find({ schoolId: req.user.schoolId }).sort({ createdAt: -1 });
+        const school = await School.findById(req.user.schoolId);
+        const targetSession = school?.activeSession || '2026-2027';
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
+
+        const datesheets = await Datesheet.find({ schoolId: req.user.schoolId, ...sessionFilter }).sort({ createdAt: -1 });
         res.json(datesheets);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch datesheets." });
     }
 });
 
-// 5. ADMIN: Delete a specific datesheet
+// 5. ADMIN: Delete datesheet
 router.delete('/:id', protect, adminOnly, async (req, res) => {
     try {
         await Datesheet.findByIdAndDelete(req.params.id);
@@ -191,26 +196,27 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
     }
 });
 
-// 6. TEACHER: Fetch all published datesheets for the school with identity population
+// 6. TEACHER: Fetch all datesheets (Filtered by Session)
 router.get('/teacher-datesheets', protect, async (req, res) => {
     try {
-        const School = require('../models/School');
         const schoolDoc = await School.findById(req.user.schoolId);
         const schoolName = schoolDoc ? schoolDoc.schoolName : "EduFlowAI Public School";
+        
+        const targetSession = schoolDoc?.activeSession || '2026-2027';
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
-        // School ki saari current exam schedules fetch karo
         let datesheets = await Datesheet.find({
-            schoolId: req.user.schoolId
+            schoolId: req.user.schoolId,
+            ...sessionFilter
         }).lean().sort({ createdAt: -1 });
 
-        // Document matrices mein object parameters append karo
         datesheets = datesheets.map(ds => ({ ...ds, schoolName }));
-
         res.json(datesheets);
     } catch (error) {
-        res.status(500).json({ message: "Neural Link Error: Failed to fetch institutional schedules." });
+        res.status(500).json({ message: "Failed to fetch institutional schedules." });
     }
 });
-
 
 module.exports = router;
