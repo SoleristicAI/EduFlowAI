@@ -63,10 +63,12 @@ router.post('/initiate', protect, async (req, res) => {
 router.get('/pending', protect, async (req, res) => {
     try {
         const empId = req.user.employeeId;
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const targetSession = school?.activeSession || '2026-2027';
 
-        // Exact Syllabus logic: $elemMatch use karke perfect array filtering
         const pending = await Result.find({
             schoolId: req.user.schoolId,
+            session: targetSession, // Purane saal ke pending nahi dikhayenge
             status: 'pending',
             'subjects': {
                 $elemMatch: {
@@ -85,8 +87,17 @@ router.get('/pending', protect, async (req, res) => {
 // 3. Monitor Hub (For Class Teachers)
 router.get('/monitor/:grade', protect, async (req, res) => {
     try {
-        const exactGrade = req.params.grade.trim(); // "9-A" pura use hoga
-        const managed = await Result.find({ schoolId: req.user.schoolId, grade: exactGrade }).sort({ createdAt: -1 });
+        const exactGrade = req.params.grade.trim(); 
+        const { session } = req.query; // Frontend se aayega
+        const school = await School.findById(req.user.schoolId).select('activeSession');
+        const activeSession = school?.activeSession || '2026-2027';
+
+        // LEGACY FIX: Jinka tag nahi hai wo current session mein manenge
+        const sessionFilter = (!session || session === activeSession)
+            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
+            : { session: session };
+
+        const managed = await Result.find({ schoolId: req.user.schoolId, grade: exactGrade, ...sessionFilter }).sort({ createdAt: -1 });
         res.json(managed);
     } catch (error) { res.status(500).json({ message: "Error fetching monitor data." }); }
 });
@@ -164,20 +175,22 @@ router.get('/my-results', protect, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
         const studentGrade = req.user.grade?.trim();
+        const { session } = req.query; // Session aayega query se
 
-        if (!studentGrade) {
-            return res.status(400).json({
-                message: "Student grade configuration missing."
-            });
-        }
+        if (!studentGrade) return res.status(400).json({ message: "Student grade configuration missing." });
 
-        // School fetch
-        const school = await School.findById(schoolId).select("schoolName logo");
+        const school = await School.findById(schoolId).select("schoolName logo activeSession");
+        const activeSession = school?.activeSession || '2026-2027';
+
+        const sessionFilter = (!session || session === activeSession)
+            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
+            : { session: session };
 
         const results = await Result.find({
             schoolId,
             grade: studentGrade,
-            status: 'published'
+            status: 'published',
+            ...sessionFilter
         }).sort({ createdAt: -1 });
 
         const preppedResults = results.map((resObj) => {

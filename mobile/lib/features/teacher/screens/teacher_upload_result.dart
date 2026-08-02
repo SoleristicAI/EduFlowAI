@@ -45,7 +45,11 @@ class _TeacherUploadResultState extends ConsumerState<TeacherUploadResult> {
 
   // Form State
   String formDataTitle = '';
-  String formDataMaxMarks = '';
+ String formDataMaxMarks = '';
+
+  // 🔥 NAYE SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
 
   @override
   void initState() {
@@ -66,10 +70,15 @@ class _TeacherUploadResultState extends ConsumerState<TeacherUploadResult> {
         userId = currentUser?['_id'];
       }
 
+      // 🔥 FETCH SESSION FIRST 🔥
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      activeSession = sessionRes.data['activeSession'];
+      availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+
       await Future.wait([
         _fetchPendingRequests(),
         if (assignedClass != null && assignedClass!.isNotEmpty)
-          _fetchManagedResults(),
+          _fetchManagedResults(sessionParam: activeSession),
         if (assignedClass != null && assignedClass!.isNotEmpty)
           _fetchDatesheetTitles(),
       ]);
@@ -80,6 +89,7 @@ class _TeacherUploadResultState extends ConsumerState<TeacherUploadResult> {
     }
   }
 
+  // Pending hamesha current ka hi aayega as per backend logic
   Future<void> _fetchPendingRequests() async {
     try {
       final res = await ApiClient.dio.get('/exam-results/pending');
@@ -89,11 +99,11 @@ class _TeacherUploadResultState extends ConsumerState<TeacherUploadResult> {
     }
   }
 
-  Future<void> _fetchManagedResults() async {
-    if (assignedClass == null) return;
+  // Monitor hub session support ke sath
+  Future<void> _fetchManagedResults({String? sessionParam}) async {
+    if (assignedClass == null || sessionParam == null) return;
     try {
-      final res =
-          await ApiClient.dio.get('/exam-results/monitor/$assignedClass');
+      final res = await ApiClient.dio.get('/exam-results/monitor/$assignedClass?session=$sessionParam');
       if (mounted) setState(() => managedResults = res.data ?? []);
     } catch (e) {
       debugPrint("Error managed: $e");
@@ -748,17 +758,53 @@ void _showExamTitlesBottomSheet(Function(String) onTitleSelected) {
                                       color: Colors.white,
                                       fontStyle: FontStyle.italic,
                                       letterSpacing: -0.5)),
-                              Text(
-                                  viewMode == 'monitor'
-                                      ? "CLASS $assignedClass"
-                                      : (assignedClass != null
-                                          ? "MANAGE & EVALUATE"
-                                          : "SUBJECT EVALUATIONS"),
-                                  style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white.withOpacity(0.9),
-                                      letterSpacing: 2)),
+                              const SizedBox(height: 4),
+                              
+                              if (viewMode == 'monitor')
+                                PopupMenuButton<String>(
+                                  initialValue: activeSession,
+                                  position: PopupMenuPosition.under,
+                                  offset: const Offset(0, 8),
+                                  color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
+                                  elevation: 12,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  onSelected: (String newValue) {
+                                    setState(() { activeSession = newValue; isLoading = true; });
+                                    _fetchManagedResults(sessionParam: newValue).then((_) => setState(() => isLoading = false));
+                                  },
+                                  itemBuilder: (BuildContext context) {
+                                    return availableSessions.map((String session) {
+                                      return PopupMenuItem<String>(
+                                        value: session,
+                                        child: Text(session, style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87))),
+                                      );
+                                    }).toList();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.history, color: Colors.white, size: 14),
+                                        const SizedBox(width: 6),
+                                        Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Text(
+                                    assignedClass != null
+                                        ? "MANAGE & EVALUATE"
+                                        : "SUBJECT EVALUATIONS",
+                                    style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white.withOpacity(0.9),
+                                        letterSpacing: 2)),
                             ],
                           ),
                           Container(

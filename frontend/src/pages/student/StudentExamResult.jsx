@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, BarChart3, ChevronDown, Download, Layers } from 'lucide-react';
+import { ArrowLeft, BarChart3, ChevronDown, Download, Layers , History} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Toast from '../../components/Toast';
@@ -17,6 +17,9 @@ const StudentExamResult = () => {
     const [isDownloading, setIsDownloading] = useState(false);
 
     const [viewMode, setViewMode] = useState('select');
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
     const [publishedResults, setPublishedResults] = useState([]);
     const [selectedResult, setSelectedResult] = useState(null);
     const [studentProfile, setStudentProfile] = useState(null);
@@ -29,10 +32,19 @@ const StudentExamResult = () => {
         type: ''
     });
 
-    useEffect(() => {
-        setSelectedResult(null);
-        loadData();
-    }, []);
+   useEffect(() => {
+        const init = async () => {
+            if (!activeSession) {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                loadData(sessionRes.data.activeSession);
+            } else {
+                loadData(activeSession);
+            }
+        };
+        init();
+    }, [activeSession]);
 
     const triggerToast = (message, type = "success") => {
         setShowToast({ show: true, message, type });
@@ -41,73 +53,43 @@ const StudentExamResult = () => {
         }, 3000);
     };
 
-    const loadData = async () => {
+    const loadData = async (sessionParam) => {
+        if (!sessionParam) return;
         setLoading(true);
 
         try {
             const userStr = localStorage.getItem("user");
-
-            // Agar user hi nahi hai toh aage mat badho
             if (!userStr) return;
-
             const user = JSON.parse(userStr);
 
             setStudentProfile(user);
+            if (user.schoolId?.name) setSchoolName(user.schoolId.name);
+            if (user.schoolId?.logo) setSchoolLogo(user.schoolId.logo);
 
-            if (user.schoolId?.name) {
-                setSchoolName(user.schoolId.name);
-            }
-
-            if (user.schoolId?.logo) {
-                setSchoolLogo(user.schoolId.logo);
-            }
-
-            // ===============================
-            // SMART RESULTS CACHE SYSTEM (Fix for cross-account leak)
-            // ===============================
-            // Cache ko specific user ki ID ke sath lock kar diya
-            const cacheKey = `studentExamResults_${user._id}`;
+            // Session basis par cache key
+            const cacheKey = `studentExamResults_${user._id}_${sessionParam}`;
             const cachedResults = localStorage.getItem(cacheKey);
 
-            if (cachedResults) {
-                // instant load from cache ONLY FOR THIS STUDENT
-                setPublishedResults(JSON.parse(cachedResults));
-            }
+            if (cachedResults) setPublishedResults(JSON.parse(cachedResults));
 
-            // background fresh fetch (silent)
-            const { data } = await API.get("/exam-results/my-results");
+            const { data } = await API.get(`/exam-results/my-results?session=${sessionParam}`);
 
-            // compare old vs new
-            const oldData = cachedResults ? JSON.parse(cachedResults) : [];
-
-            const oldString = JSON.stringify(oldData);
+            const oldString = JSON.stringify(cachedResults ? JSON.parse(cachedResults) : []);
             const newString = JSON.stringify(data);
 
             if (oldString !== newString) {
-                localStorage.setItem(
-                    cacheKey, // Updated key
-                    JSON.stringify(data)
-                );
-
+                localStorage.setItem(cacheKey, JSON.stringify(data));
                 setPublishedResults(data);
             }
 
-            // latest logo fetch
             try {
                 const { data: logoData } = await API.get("/school/logo");
-
-                if (logoData?.logo) {
-                    setSchoolLogo(logoData.logo);
-                }
-            } catch {
-                console.log("Logo fetch skipped");
-            }
+                if (logoData?.logo) setSchoolLogo(logoData.logo);
+            } catch { console.log("Logo fetch skipped"); }
 
         } catch {
             triggerToast("Failed to load results", "error");
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     const handleResultSelect = (id) => {
@@ -204,14 +186,49 @@ const StudentExamResult = () => {
                 </div>
 
                 {/* Heading + Subtitle */}
-                <div className="relative z-10 text-center mt-4">
+                {/* Heading + Session Dropdown */}
+                <div className="relative z-10 text-center mt-4 flex flex-col items-center">
                     <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
                         Exam Results
                     </h1>
 
-                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
-                        Student Performance Report
-                    </p>
+                    {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
+                    <div className="relative mt-2">
+                        <button
+                            onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm rounded-full active:scale-95 transition-all"
+                        >
+                            <History size={14} className="text-white" />
+                            <span className="text-[12px] font-black tracking-widest text-white uppercase">{activeSession || 'Loading...'}</span>
+                            <ChevronDown size={14} className={`text-white transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        <AnimatePresence>
+                            {isSessionDropdownOpen && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                >
+                                    {availableSessions.map((session) => (
+                                        <div
+                                            key={session}
+                                            onClick={() => {
+                                                setActiveSession(session);
+                                                setSelectedResult(null); // Reset result on change
+                                                setViewMode('select');
+                                                setIsSessionDropdownOpen(false);
+                                            }}
+                                            className={`px-4 py-3 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                        >
+                                            {session}
+                                        </div>
+                                    ))}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
 
             </div>

@@ -33,16 +33,36 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
   Map<String, dynamic>? studentProfile;
   String schoolName = "EduFlowAI Public School";
   String? schoolLogo;
+  
+  // 🔥 NAYE SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
 
   @override
   void initState() {
     super.initState();
-    _loadData(isRefresh: false);
+    _initSessionData(); // Naya function call kiya hai
   }
 
-  Future<void> _loadData({bool isRefresh = false}) async {
-    if (!isRefresh && mounted) setState(() => isInitialLoading = true);
+  Future<void> _initSessionData() async {
+    try {
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _loadData(sessionParam: activeSession);
+      }
+    } catch (e) {
+      _showToast("Session Error.", isError: true);
+      if (mounted) setState(() => isInitialLoading = false);
+    }
+  }
 
+  Future<void> _loadData({String? sessionParam, bool isRefresh = false}) async {
+    if (sessionParam == null) return;
+    if (!isRefresh && mounted) setState(() => isInitialLoading = true);
     if (!isRefresh) await Future.delayed(const Duration(milliseconds: 1000));
 
     try {
@@ -58,16 +78,12 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
       studentProfile = user;
 
       if (user['schoolId'] != null && user['schoolId'] is Map) {
-        if (user['schoolId']['name'] != null) {
-          schoolName = user['schoolId']['name'];
-        }
-        if (user['schoolId']['logo'] != null) {
-          schoolLogo = user['schoolId']['logo'];
-        }
+        if (user['schoolId']['name'] != null) schoolName = user['schoolId']['name'];
+        if (user['schoolId']['logo'] != null) schoolLogo = user['schoolId']['logo'];
       }
 
-      // 🔥 SMART CACHE SYSTEM 🔥
-      final cacheKey = 'studentExamResults_${user['_id']}';
+      // 🔥 SMART CACHE SYSTEM WITH SESSION 🔥
+      final cacheKey = 'studentExamResults_${user['_id']}_$sessionParam';
       final cachedResultsStr = prefs.getString(cacheKey);
 
       if (cachedResultsStr != null && !isRefresh) {
@@ -75,8 +91,8 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
         if (mounted) setState(() => isInitialLoading = false);
       }
 
-      // Background Fetch
-      final response = await ApiClient.dio.get('/exam-results/my-results');
+      // Background Fetch with Session Param
+      final response = await ApiClient.dio.get('/exam-results/my-results?session=$sessionParam');
       final newData = response.data as List<dynamic>;
       final newString = jsonEncode(newData);
 
@@ -85,7 +101,6 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
         if (mounted) {
           setState(() {
             publishedResults = newData;
-            // Update selected result if it was already selected
             if (selectedResult != null) {
               final found = publishedResults.firstWhere((r) => r['_id'] == selectedResult!['_id'], orElse: () => null);
               if (found != null) selectedResult = found;
@@ -94,15 +109,12 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
         }
       }
 
-      // Logo fetch logic
       try {
         final logoRes = await ApiClient.dio.get('/school/logo');
         if (logoRes.data != null && logoRes.data['logo'] != null) {
           if (mounted) setState(() => schoolLogo = logoRes.data['logo']);
         }
-      } catch (e) {
-        debugPrint("Logo fetch skipped");
-      }
+      } catch (e) { debugPrint("Logo fetch skipped"); }
 
     } catch (e) {
       _showToast("Failed to load results", isError: true);
@@ -112,7 +124,7 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
   }
 
   Future<void> _handleRefresh() async {
-    await _loadData(isRefresh: true);
+    await _loadData(sessionParam: activeSession, isRefresh: true);
   }
 
   void _handleResultSelect(Map<String, dynamic> result) {
@@ -437,12 +449,59 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
                                     child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
                                   ),
                                 ),
-                                Column(
+                               Column(
                                   children: [
                                     const Text("Exam Results",
                                         style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
-                                    Text("STUDENT PERFORMANCE REPORT",
-                                        style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white.withOpacity(0.9), letterSpacing: 2)),
+                                    const SizedBox(height: 4),
+                                    
+                                    // 🔥 SESSION POPUP MENU DROP DOWN 🔥
+                                    PopupMenuButton<String>(
+                                      initialValue: activeSession,
+                                      position: PopupMenuPosition.under,
+                                      offset: const Offset(0, 8),
+                                      color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
+                                      elevation: 12,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      onSelected: (String newValue) {
+                                        setState(() { 
+                                          activeSession = newValue; 
+                                          isInitialLoading = true;
+                                          selectedResult = null; // Reset
+                                          viewMode = 'select'; // Go back to select screen
+                                        });
+                                        _loadData(sessionParam: newValue);
+                                      },
+                                      itemBuilder: (BuildContext context) {
+                                        return availableSessions.map((String session) {
+                                          return PopupMenuItem<String>(
+                                            value: session,
+                                            child: Text(
+                                              session, 
+                                              style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87))
+                                            ),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2), 
+                                          borderRadius: BorderRadius.circular(20), 
+                                          border: Border.all(color: Colors.white.withOpacity(0.3))
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.history, color: Colors.white, size: 14),
+                                            const SizedBox(width: 6),
+                                            Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
+                                            const SizedBox(width: 4),
+                                            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 Container(

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Plus, Send, CheckCircle, Clock, X, AlertTriangle, BarChart3, ChevronDown, Users, LayoutDashboard, CheckCircle2, Save, Trash2, Edit3 } from 'lucide-react';
+import { ArrowLeft, Plus, Send, CheckCircle, Clock, X, AlertTriangle, BarChart3, History,ChevronDown, Users, LayoutDashboard, CheckCircle2, Save, Trash2, Edit3 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Toast from '../../components/Toast';
@@ -21,6 +21,9 @@ const TeacherUploadResult = ({ user }) => {
     const [examTitles, setExamTitles] = useState([]); // Fetched from datesheets
     const [isExamDropdownOpen, setIsExamDropdownOpen] = useState(false);
     const [returnViewMode, setReturnViewMode] = useState('pending');
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
 
     // Modals State
     const [showInitiateModal, setShowInitiateModal] = useState(false);
@@ -71,15 +74,28 @@ const TeacherUploadResult = ({ user }) => {
         triggerToast("Results Updated Successfully! ✨", "success");
     };
 
-    // FAST LOAD EFFECT
+   // 1. Initial Session Load
     useEffect(() => {
-        fetchPendingRequests();
-        if (user?.assignedClass) {
-            fetchManagedResults();
-            fetchDatesheetTitles(); // Load titles IMMEDIATELY on page load
-        }
-    }, [viewMode]);
+        const initSession = async () => {
+            try {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+            } catch (e) { console.log(e); }
+        };
+        if (!activeSession) initSession();
+    }, []);
 
+    // 2. UPDATED FAST LOAD EFFECT (Reacts to Session Change)
+    useEffect(() => {
+        fetchPendingRequests(); 
+        if (user?.assignedClass && activeSession) {
+            fetchManagedResults(activeSession);
+            fetchDatesheetTitles(); 
+        }
+    }, [viewMode, activeSession]);
+
+    // Pending request function same rahega
     const fetchPendingRequests = async () => {
         try {
             const { data } = await API.get('/exam-results/pending');
@@ -87,9 +103,11 @@ const TeacherUploadResult = ({ user }) => {
         } catch (err) { console.error("Error fetching pending:", err); }
     };
 
-    const fetchManagedResults = async () => {
+    // 3. UPDATED fetchManagedResults function (Session ke sath)
+    const fetchManagedResults = async (sessionParam = activeSession) => {
+        if (!sessionParam) return;
         try {
-            const { data } = await API.get(`/exam-results/monitor/${user.assignedClass}`);
+            const { data } = await API.get(`/exam-results/monitor/${user.assignedClass}?session=${sessionParam}`);
             setManagedResults(data);
         } catch (err) { console.error("Error fetching managed:", err); }
     };
@@ -233,24 +251,71 @@ const TeacherUploadResult = ({ user }) => {
             {showToast.show && <Toast message={showToast.message} type={showToast.type} onClose={() => setShowToast({ show: false, message: '', type: '' })} />}
 
             {/* HEADER SECTION */}
-            <div className="bg-[#42A5F5] px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative z-10 overflow-visible">
-                <div className="flex justify-between items-center relative z-10">
+            <div className="relative px-6 pt-12 pb-24">
+                
+                {/* Background Layer (Ye z-0 hai taaki white box iske upar overlap ho sake jaisa pehle tha) */}
+                <div className="absolute inset-0 bg-[#42A5F5] rounded-b-[4rem] shadow-xl z-0"></div>
+
+                {/* Content Layer (Ye z-[100] hai taaki Dropdown khulne par kisi ke peeche na chhipe) */}
+                <div className="flex justify-between items-center relative z-[100]">
+                    
+                    {/* ORIGINAL WHITE BACK BUTTON */}
                     <button onClick={() => {
                         if (viewMode === 'monitor' || viewMode === 'editor') setViewMode('pending');
                         else navigate(-1);
                     }} className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-md active:scale-95 transition-all">
                         <ArrowLeft size={24} />
                     </button>
-                    <div className="text-center">
-                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize">
+                    
+                    {/* CENTER LOGIC WITH CONDITIONAL SESSION DROPDOWN */}
+                    <div className="text-center absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+                        <h1 className="text-4xl font-black italic tracking-tight text-white capitalize whitespace-nowrap">
                             {viewMode === 'monitor' ? 'Result Hub' : 'Enter Marks'}
                         </h1>
-                        <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1">
-                            {viewMode === 'monitor'
-                                ? `Class ${user?.assignedClass}`
-                                : (user?.assignedClass ? 'Manage & Evaluate' : 'Subject Evaluations')}
-                        </p>
+                        
+                        {viewMode === 'monitor' ? (
+                            <div className="relative mt-2">
+                                <button
+                                    onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm rounded-full active:scale-95 transition-all"
+                                >
+                                    <History size={14} className="text-white" />
+                                    <span className="text-[12px] font-black tracking-widest text-white uppercase">{activeSession || 'Loading...'}</span>
+                                    <ChevronDown size={14} className={`text-white transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isSessionDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[110]"
+                                        >
+                                            {availableSessions.map((session) => (
+                                                <div
+                                                    key={session}
+                                                    onClick={() => {
+                                                        setActiveSession(session);
+                                                        setIsSessionDropdownOpen(false);
+                                                    }}
+                                                    className={`px-4 py-3 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                                >
+                                                    {session}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        ) : (
+                            <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-80 mt-1 whitespace-nowrap">
+                                {user?.assignedClass ? 'Manage & Evaluate' : 'Subject Evaluations'}
+                            </p>
+                        )}
                     </div>
+
+                    {/* ORIGINAL WHITE RIGHT ICON */}
                     <div className="p-3 bg-white rounded-2xl text-[#42A5F5] shadow-sm">
                         {viewMode === 'monitor' ? <LayoutDashboard size={24} /> : <BarChart3 size={24} />}
                     </div>
