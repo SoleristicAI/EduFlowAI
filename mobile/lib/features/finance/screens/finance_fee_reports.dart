@@ -21,41 +21,50 @@ class _FinanceFeeReportsState extends ConsumerState<FinanceFeeReports> {
   String? selectedClassView; 
   String studentSearchQuery = '';
 
+  // 🔥 NAYE SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
+
   Map<String, dynamic> report = {
-    'totalCollected': 0,
-    'transactionCount': 0,
-    'classWise': [],
-    'history': [],
-    'schoolName': "",
-    'schoolAddress': ""
+    'totalCollected': 0, 'transactionCount': 0, 'classWise': [], 'history': [], 'schoolName': "", 'schoolAddress': ""
   };
 
   @override
   void initState() {
     super.initState();
-    _fetchReport();
+    _initSession();
   }
 
-  Future<void> _fetchReport({bool hideLoader = false}) async {
-    if (!hideLoader) {
-      setState(() => isInitialLoading = true);
+  Future<void> _initSession() async {
+    try {
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _fetchReport(sessionParam: activeSession);
+      }
+    } catch (e) {
+      _fetchReport(); // fallback
     }
+  }
+
+  Future<void> _fetchReport({bool hideLoader = false, String? sessionParam}) async {
+    if (!hideLoader) setState(() => isInitialLoading = true);
 
     try {
       final results = await Future.wait([
         ApiClient.dio.get('/users/finance/stats'),
-        ApiClient.dio.get('/fees/reports/summary'),
+        ApiClient.dio.get('/fees/reports/summary${sessionParam != null ? "?session=$sessionParam" : ""}'),
       ]);
-
-      final statsData = results[0].data;
-      final reportData = results[1].data;
 
       if (mounted) {
         setState(() {
           report = {
-            ...reportData,
-            'schoolName': statsData['schoolName'] ?? "",
-            'schoolAddress': statsData['schoolAddress'] ?? ""
+            ...results[1].data,
+            'schoolName': results[0].data['schoolName'] ?? "",
+            'schoolAddress': results[0].data['schoolAddress'] ?? ""
           };
         });
       }
@@ -218,12 +227,42 @@ class _FinanceFeeReportsState extends ConsumerState<FinanceFeeReports> {
                                         color: Colors.white,
                                         fontStyle: FontStyle.italic,
                                         letterSpacing: -1)),
-                                Text("SCHOOL ACCOUNT",
-                                    style: TextStyle(
-                                        fontSize: 9, 
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white.withOpacity(0.9),
-                                        letterSpacing: 2)),
+                                const SizedBox(height: 6),
+                                
+                                // 🔥 SESSION DROPDOWN (Replacing Subheading) 🔥
+                                PopupMenuButton<String>(
+                                  initialValue: activeSession,
+                                  position: PopupMenuPosition.under,
+                                  color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
+                                  elevation: 8,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  onSelected: (String newValue) {
+                                    setState(() { activeSession = newValue; selectedClassView = null; studentSearchQuery = ''; });
+                                    _fetchReport(sessionParam: newValue);
+                                  },
+                                  itemBuilder: (BuildContext context) {
+                                    return availableSessions.map((String session) {
+                                      return PopupMenuItem<String>(
+                                        value: session,
+                                        child: Text(session, style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87))),
+                                      );
+                                    }).toList();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.3))),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.history, color: Colors.white, size: 12),
+                                        const SizedBox(width: 6),
+                                        Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
+                                        const SizedBox(width: 4),
+                                        const Icon(Icons.arrow_drop_down, color: Colors.white, size: 16),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             GestureDetector(

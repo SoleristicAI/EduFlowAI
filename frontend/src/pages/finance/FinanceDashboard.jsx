@@ -1,50 +1,80 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, Users, AlertCircle, Clock, IndianRupee, TrendingUp, Plus, ArrowRight, Bell, Zap, CheckCircle, Layers, ShieldCheck , Megaphone} from 'lucide-react';
+import { Wallet, Users, AlertCircle, Clock, IndianRupee, TrendingUp, Plus, ArrowRight, Bell, Zap, CheckCircle, Layers, ShieldCheck , Megaphone, History, ChevronDown} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 
 const FinanceDashboard = ({ searchQuery }) => {
     const [stats, setStats] = useState({
-        collectedToday: 0,
-        collectedMonth: 0,
-        recentPayments: [],
-        pendingCount: 0,
-        // penaltySettings: { dailyRate: 0, isActive: false }
+        collectedToday: 0, collectedMonth: 0, recentPayments: [], pendingCount: 0
     });
     const [showAllSlips, setShowAllSlips] = useState(false);
     const [newPaymentAlert, setNewPaymentAlert] = useState(null);
-    // const [penaltyUpdateMsg, setPenaltyUpdateMsg] = useState(null);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
 
-    const fetchStats = async () => {
-        try {
-            // Sirf stats mangwao, penaltyRes hata diya
-            const { data } = await API.get('/users/finance/stats');
+    // 🔥 NAYE SESSION STATES 🔥
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
 
-            if (stats.recentPayments.length > 0 && data.recentPayments.length > 0) {
-                const latestNewId = data.recentPayments[0]._id;
+    useEffect(() => {
+        const initSession = async () => {
+            try {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                fetchStats(sessionRes.data.activeSession);
+            } catch (e) { console.log(e); }
+        };
+        initSession();
+    }, []);
+
+    const fetchStats = async (sessionParam = activeSession) => {
+        if (!sessionParam) return;
+        try {
+            // Hum backend se `stats` API ko future mein update kar sakte hain if needed, par abhi summary API use karenge recent payments filter karne ke liye
+            const { data } = await API.get('/users/finance/stats');
+            
+            // 🔥 NAYA LOGIC: Recent payments ko filter karne ke liye specific API bula lo jisme session hai
+            const { data: summaryData } = await API.get(`/fees/reports/summary?session=${sessionParam}`);
+
+            if (stats.recentPayments.length > 0 && summaryData.history.length > 0) {
+                const latestNewId = summaryData.history[0]._id;
                 const latestOldId = stats.recentPayments[0]._id;
 
                 if (latestNewId !== latestOldId) {
-                    setNewPaymentAlert(data.recentPayments[0]);
+                    setNewPaymentAlert({
+                        studentName: summaryData.history[0].student?.name,
+                        grade: summaryData.history[0].student?.grade,
+                        amount: summaryData.history[0].amountPaid
+                    });
                     setTimeout(() => setNewPaymentAlert(null), 7000);
                 }
             }
 
-            setStats(data); // Seedha data set karo
-        } catch (err) {
-            console.error("Stats sync error:", err);
-        }
+            // Stats update - Replacing recent payments with session filtered history
+            setStats({
+                ...data,
+                recentPayments: summaryData.history.map(p => ({
+                    _id: p._id,
+                    studentName: p.student?.name || 'Unknown',
+                    grade: p.student?.grade || 'N/A',
+                    amount: p.amountPaid,
+                    paymentMode: p.paymentMode,
+                    date: new Date(p.date).toLocaleDateString(),
+                    time: new Date(p.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                }))
+            }); 
+        } catch (err) { console.error("Stats sync error:", err); }
     };
 
     useEffect(() => {
-        fetchStats();
-        const interval = setInterval(fetchStats, 10000);
+        if(!activeSession) return;
+        const interval = setInterval(() => fetchStats(activeSession), 10000);
         return () => clearInterval(interval);
-    }, [stats.recentPayments]);
+    }, [stats.recentPayments, activeSession]);
 
     const statCards = [
         { label: "Today's collection", value: stats.collectedToday, icon: <Wallet className="text-[#42A5F5]" />, color: "border-[#DDE3EA]", path: '/finance/add-payment' },
@@ -209,12 +239,49 @@ const FinanceDashboard = ({ searchQuery }) => {
                 )} */}
 
                 {/* Recent Payments Section */}
-                <div className="bg-white rounded-[3rem] border border-[#DDE3EA] p-8 shadow-md relative overflow-hidden">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Clock size={18} className="text-[#42A5F5]" />
-                        <h3 className="text-[15px] font-black text-slate-700 capitalize tracking-widest">
-                            Recent Transactions
-                        </h3>
+                <div className="bg-white rounded-[3rem] border border-[#DDE3EA] p-8 shadow-md relative overflow-visible z-30">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div className="flex items-center gap-3">
+                            <Clock size={18} className="text-[#42A5F5]" />
+                            <h3 className="text-[15px] font-black text-slate-700 capitalize tracking-widest">
+                                Recent Transactions
+                            </h3>
+                        </div>
+
+                        {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
+                        <div className="relative z-50">
+                            <button
+                                onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 shadow-sm rounded-full active:scale-95 transition-all"
+                            >
+                                <History size={14} className="text-[#42A5F5]" />
+                                <span className="text-[12px] font-black tracking-widest text-[#42A5F5] uppercase">{activeSession || 'Loading...'}</span>
+                                <ChevronDown size={14} className={`text-[#42A5F5] transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            <AnimatePresence>
+                                {isSessionDropdownOpen && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                                        className="absolute top-full mt-2 w-full min-w-[140px] right-0 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                    >
+                                        {availableSessions.map((session) => (
+                                            <div
+                                                key={session}
+                                                onClick={() => {
+                                                    setActiveSession(session);
+                                                    setIsSessionDropdownOpen(false);
+                                                    fetchStats(session); // Naye session ka data laao
+                                                }}
+                                                className={`px-4 py-3 cursor-pointer text-center text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                            >
+                                                {session}
+                                            </div>
+                                        ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
                     <div className="space-y-4">

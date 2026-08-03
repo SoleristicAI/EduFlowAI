@@ -25,12 +25,16 @@ class _FinanceGatewayState extends ConsumerState<FinanceGateway> {
   List<dynamic> resolvedSignals = [];
 
   final TextEditingController _upiController = TextEditingController();
-  final TextEditingController _merchantController = TextEditingController();
+final TextEditingController _merchantController = TextEditingController();
+
+  // 🔥 NAYE SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTerminal();
+    _initSession();
   }
 
   @override
@@ -40,13 +44,28 @@ class _FinanceGatewayState extends ConsumerState<FinanceGateway> {
     super.dispose();
   }
 
-  Future<void> _loadTerminal({bool hideLoader = false}) async {
+  Future<void> _initSession() async {
+    try {
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _loadTerminal(sessionParam: activeSession);
+      }
+    } catch (e) {
+      _loadTerminal(); // fallback
+    }
+  }
+
+  Future<void> _loadTerminal({bool hideLoader = false, String? sessionParam}) async {
     if (!hideLoader) setState(() => isInitialLoading = true);
 
     try {
       final results = await Future.wait([
         ApiClient.dio.get('/fees/settings/penalty'),
-        ApiClient.dio.get('/fees/audit/pending-verifications'),
+        ApiClient.dio.get('/fees/audit/pending-verifications${sessionParam != null ? "?session=$sessionParam" : ""}'),
       ]);
 
       if (mounted) {
@@ -810,7 +829,46 @@ class _FinanceGatewayState extends ConsumerState<FinanceGateway> {
                               const SizedBox(height: 32),
 
                               // 4. ONLINE PAYMENT HISTORY
-                              Text("PAYMENT HISTORY", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 2, fontStyle: FontStyle.italic)),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text("PAYMENT HISTORY", style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 2, fontStyle: FontStyle.italic)),
+                                  
+                                  // 🔥 SESSION GLASS DROPDOWN 🔥
+                                  PopupMenuButton<String>(
+                                    initialValue: activeSession,
+                                    position: PopupMenuPosition.under,
+                                    color: cardColor,
+                                    elevation: 8,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                    onSelected: (String newValue) {
+                                      setState(() { activeSession = newValue; });
+                                      _loadTerminal(sessionParam: newValue);
+                                    },
+                                    itemBuilder: (BuildContext context) {
+                                      return availableSessions.map((String session) {
+                                        return PopupMenuItem<String>(
+                                          value: session,
+                                          child: Text(session, style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : textColorPrimary)),
+                                        );
+                                      }).toList();
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.3))),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.history, color: Color(0xFF42A5F5), size: 12),
+                                          const SizedBox(width: 4),
+                                          Text(activeSession ?? '...', style: const TextStyle(color: Color(0xFF42A5F5), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
+                                          const Icon(Icons.arrow_drop_down, color: Color(0xFF42A5F5), size: 16),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                               const SizedBox(height: 16),
                               
                               if (resolvedSignals.isEmpty)

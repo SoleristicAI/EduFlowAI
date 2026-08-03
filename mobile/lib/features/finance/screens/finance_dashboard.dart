@@ -27,15 +27,17 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
     'pendingCount': 0,
   };
 
-  bool showAllSlips = false;
+ bool showAllSlips = false;
   Map<String, dynamic>? newPaymentAlert;
+
+  // 🔥 NAYE SESSION STATES 🔥
+  String? activeSession;
+  List<String> availableSessions = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchStats();
-    _pollingTimer = Timer.periodic(
-        const Duration(seconds: 10), (_) => _fetchStats(isPolling: true));
+    _initSession();
   }
 
   @override
@@ -44,15 +46,51 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
     super.dispose();
   }
 
-  Future<void> _fetchStats(
-      {bool isRefresh = false, bool isPolling = false}) async {
+  Future<void> _initSession() async {
+    try {
+      final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+      if (mounted) {
+        setState(() {
+          activeSession = sessionRes.data['activeSession'];
+          availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        });
+        _fetchStats(sessionParam: activeSession);
+        _pollingTimer = Timer.periodic(
+            const Duration(seconds: 10), (_) => _fetchStats(isPolling: true, sessionParam: activeSession));
+      }
+    } catch (e) {
+      _fetchStats(); // Fallback
+    }
+  }
+
+  Future<void> _fetchStats({bool isRefresh = false, bool isPolling = false, String? sessionParam}) async {
     if (!isRefresh && !isPolling && mounted) setState(() => isLoading = true);
 
     try {
-      final response = await ApiClient.dio.get('/users/finance/stats');
-      final data = response.data;
-
+      final statsRes = await ApiClient.dio.get('/users/finance/stats');
+      final summaryRes = await ApiClient.dio.get('/fees/reports/summary${sessionParam != null ? "?session=$sessionParam" : ""}');
+      
       if (mounted) {
+        Map<String, dynamic> data = statsRes.data;
+        List<dynamic> history = summaryRes.data['history'] ?? [];
+        
+        // Map History to Recent Payments format for UI
+        List<dynamic> sessionRecentPayments = history.map((p) {
+          DateTime? d;
+          try { d = DateTime.parse(p['date']); } catch (e) {}
+          return {
+            '_id': p['_id'],
+            'studentName': p['student']?['name'] ?? 'Unknown',
+            'grade': p['student']?['grade'] ?? 'N/A',
+            'amount': p['amountPaid'],
+            'paymentMode': p['paymentMode'],
+            'date': d != null ? "${d.day}/${d.month}/${d.year}" : '',
+            'time': d != null ? "${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}" : ''
+          };
+        }).toList();
+
+        data['recentPayments'] = sessionRecentPayments;
+
         List<dynamic> oldPayments = stats['recentPayments'] ?? [];
         List<dynamic> newPayments = data['recentPayments'] ?? [];
 
@@ -355,18 +393,62 @@ class _FinanceDashboardState extends ConsumerState<FinanceDashboard> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Row(
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start, // Left align karne ke liye
                                   children: [
-                                    const Icon(Icons.history,
-                                        color: Color(0xFF42A5F5), size: 20),
-                                    const SizedBox(width: 8),
-                                    Text("RECENT TRANSACTIONS",
-                                        style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w900,
-                                            color: textColorSecondary,
-                                            letterSpacing: 2,
-                                            fontStyle: FontStyle.italic)),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.history,
+                                            color: Color(0xFF42A5F5), size: 20),
+                                        const SizedBox(width: 8),
+                                        Text("RECENT TRANSACTIONS",
+                                            style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w900,
+                                                color: textColorSecondary,
+                                                letterSpacing: 2,
+                                                fontStyle: FontStyle.italic)),
+                                      ],
+                                    ),
+                                    
+                                    const SizedBox(height: 12), // Title aur dropdown ke beech space
+
+                                    // 🔥 SESSION GLASS DROPDOWN 🔥
+                                    PopupMenuButton<String>(
+                                      initialValue: activeSession,
+                                      position: PopupMenuPosition.under,
+                                      color: cardColor,
+                                      elevation: 8,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                      onSelected: (String newValue) {
+                                        setState(() { activeSession = newValue; });
+                                        _fetchStats(sessionParam: newValue);
+                                      },
+                                      itemBuilder: (BuildContext context) {
+                                        return availableSessions.map((String session) {
+                                          return PopupMenuItem<String>(
+                                            value: session,
+                                            child: Text(
+                                              session, 
+                                              style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : textColorPrimary)
+                                            ),
+                                          );
+                                        }).toList();
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                        decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.3))),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.history, color: Color(0xFF42A5F5), size: 12),
+                                            const SizedBox(width: 4),
+                                            Text(activeSession ?? '...', style: const TextStyle(color: Color(0xFF42A5F5), fontWeight: FontWeight.w900, fontSize: 10, letterSpacing: 1)),
+                                            const Icon(Icons.arrow_drop_down, color: Color(0xFF42A5F5), size: 16),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 20),

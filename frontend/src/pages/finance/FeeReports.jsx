@@ -1,41 +1,49 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Printer, Layers, Calendar, ArrowLeft, IndianRupee } from 'lucide-react';
+import { Download, Printer, Layers, Calendar, ArrowLeft, IndianRupee, History, ChevronDown } from 'lucide-react';
 import API from '../../api';
 import { useNavigate } from 'react-router-dom';
 import Loader from '../../components/Loader';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const FeeReports = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(true); // Shuru mein true rahega
+    const [loading, setLoading] = useState(true); 
     const [report, setReport] = useState({
-        totalCollected: 0,
-        transactionCount: 0,
-        classWise: [],
-        history: [],
-        schoolName: "",
-        schoolAddress: ""
+        totalCollected: 0, transactionCount: 0, classWise: [], history: [], schoolName: "", schoolAddress: ""
     });
 
-    useEffect(() => {
-        const fetchReport = async () => {
-            try {
-                setLoading(true);
-                const { data: statsData } = await API.get('/users/finance/stats');
-                const { data: reportData } = await API.get('/fees/reports/summary');
+    // 🔥 NAYE SESSION STATES 🔥
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
 
-                setReport({
-                    ...reportData,
-                    schoolName: statsData.schoolName,
-                    schoolAddress: statsData.schoolAddress
-                });
-            } catch (err) {
-                console.error("Report fetch error");
-            } finally {
-                setLoading(false);
-            }
+    useEffect(() => {
+        const initSession = async () => {
+            try {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                fetchReport(sessionRes.data.activeSession);
+            } catch (e) { console.log(e); }
         };
-        fetchReport();
+        initSession();
     }, []);
+
+    const fetchReport = async (sessionParam = activeSession) => {
+        if (!sessionParam) return;
+        try {
+            setLoading(true);
+            const { data: statsData } = await API.get('/users/finance/stats');
+            const { data: reportData } = await API.get(`/fees/reports/summary?session=${sessionParam}`);
+
+            setReport({
+                ...reportData,
+                schoolName: statsData.schoolName,
+                schoolAddress: statsData.schoolAddress
+            });
+        } catch (err) { console.error("Report fetch error"); } 
+        finally { setLoading(false); }
+    };
 
     if (loading) return <Loader />;
 
@@ -62,7 +70,7 @@ const FeeReports = () => {
             </div>
 
             {/* --- SCREEN HEADER (VISIBLE ONLY) --- */}
-            <div className="flex justify-between items-center mb-10 border-l-4 border-[#42A5F5] pl-4 print:hidden">
+            <div className="flex justify-between items-center mb-10 border-l-4 border-[#42A5F5] pl-4 print:hidden relative z-50">
                 <div className="flex items-center gap-5">
                     <button
                         onClick={() => navigate(-1)}
@@ -72,7 +80,44 @@ const FeeReports = () => {
                     </button>
 
                     <div>
-                        <h1 className="text-3xl font-black italic tracking-tight capitalize">Fee records</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-3xl font-black italic tracking-tight capitalize">Fee records</h1>
+                            
+                            {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
+                            <div className="relative">
+                                <button
+                                    onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                    className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 shadow-sm rounded-full active:scale-95 transition-all"
+                                >
+                                    <History size={14} className="text-[#42A5F5]" />
+                                    <span className="text-[12px] font-black tracking-widest text-[#42A5F5] uppercase">{activeSession || 'Loading...'}</span>
+                                    <ChevronDown size={14} className={`text-[#42A5F5] transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isSessionDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                                            className="absolute top-full mt-2 w-full min-w-[140px] left-0 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                        >
+                                            {availableSessions.map((session) => (
+                                                <div
+                                                    key={session}
+                                                    onClick={() => {
+                                                        setActiveSession(session);
+                                                        setIsSessionDropdownOpen(false);
+                                                        fetchReport(session); // Naye session ka data laao
+                                                    }}
+                                                    className={`px-4 py-3 cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                                >
+                                                    {session}
+                                                </div>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
                         <p className="text-[12px] text-slate-400 font-bold uppercase tracking-widest mt-1">School Account</p>
                     </div>
                 </div>

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShieldCheck, Save, Eye, CheckCircle, Smartphone, User, Hash, Edit3, X, Zap, Activity, Database, Layers, Phone, UserCheck, ArrowLeft, Trash2 } from 'lucide-react';
+import { ShieldCheck, Save, Eye, CheckCircle, Smartphone, User, Hash, Edit3, X, Zap, Activity, Database, Layers, Phone, UserCheck, ArrowLeft, Trash2, History, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
-
 
 const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
 
@@ -18,11 +17,28 @@ const FinanceGateway = () => {
     const [toastMsg, setToastMsg] = useState("");
     const [resolvedSignals, setResolvedSignals] = useState([]);
     const [selectedSignal, setSelectedSignal] = useState(null);
-    const [isZoomed, setIsZoomed] = useState(false); // Screenshot bada karke dekhne ke liye
+    const [isZoomed, setIsZoomed] = useState(false); 
     const [confirmDelete, setConfirmDelete] = useState(false);
-    const formRef = useRef(null);
 
-    const loadTerminal = async () => {
+    // 🔥 NAYE SESSION STATES 🔥
+    const [activeSession, setActiveSession] = useState(null);
+    const [availableSessions, setAvailableSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
+
+    useEffect(() => {
+        const initSession = async () => {
+            try {
+                const sessionRes = await API.get('/users/general/session-info');
+                setActiveSession(sessionRes.data.activeSession);
+                setAvailableSessions(sessionRes.data.allAvailableSessions);
+                loadTerminal(sessionRes.data.activeSession);
+            } catch (e) { console.log(e); }
+        };
+        initSession();
+    }, []);
+
+    const loadTerminal = async (sessionParam = activeSession) => {
+        if (!sessionParam) return;
         try {
             setLoading(true);
             const { data: config } = await API.get('/fees/settings/penalty');
@@ -32,7 +48,7 @@ const FinanceGateway = () => {
                     merchantName: config.paymentSettings.merchantName || ''
                 });
             }
-            const { data } = await API.get('/fees/audit/pending-verifications');
+            const { data } = await API.get(`/fees/audit/pending-verifications?session=${sessionParam}`);
             setPendingVerifications(data.pending || []);
             setResolvedSignals(data.resolved || []);
         } catch (err) { console.error("Sync error"); }
@@ -354,13 +370,50 @@ const FinanceGateway = () => {
                     </div>
 
                     {/* ONLINE PAYMENT HISTORY */}
-                    <div className="mt-8 bg-white p-8 md:p-10 rounded-[3.5rem] border border-[#DDE3EA] shadow-sm">
-                        <div className="flex items-center justify-between mb-10">
+                    <div className="mt-8 bg-white p-8 md:p-10 rounded-[3.5rem] border border-[#DDE3EA] shadow-sm relative overflow-visible z-10">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
                             <div className="flex items-center gap-4">
                                 <Database size={22} className="text-[#42A5F5]" />
                                 <h2 className="text-2xl font-black text-slate-700 italic capitalize">Payment History</h2>
                             </div>
-                            <span className="text-[9px] bg-slate-50 px-4 py-2 rounded-full text-slate-700 uppercase font-black tracking-widest border border-slate-100 shadow-inner">V1.3.0 stable</span>
+
+                            <div className="flex items-center gap-3">
+                                {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 shadow-sm rounded-full active:scale-95 transition-all"
+                                    >
+                                        <History size={14} className="text-[#42A5F5]" />
+                                        <span className="text-[12px] font-black tracking-widest text-[#42A5F5] uppercase">{activeSession || 'Loading...'}</span>
+                                        <ChevronDown size={14} className={`text-[#42A5F5] transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+
+                                    <AnimatePresence>
+                                        {isSessionDropdownOpen && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                                                className="absolute top-full mt-2 w-full min-w-[140px] right-0 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                            >
+                                                {availableSessions.map((session) => (
+                                                    <div
+                                                        key={session}
+                                                        onClick={() => {
+                                                            setActiveSession(session);
+                                                            setIsSessionDropdownOpen(false);
+                                                            loadTerminal(session); // Naye session ka data laao
+                                                        }}
+                                                        className={`px-4 py-3 cursor-pointer text-center text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
+                                                    >
+                                                        {session}
+                                                    </div>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                                <span className="text-[9px] bg-slate-50 px-4 py-2 rounded-full text-slate-700 uppercase font-black tracking-widest border border-slate-100 shadow-inner">V1.3.0 stable</span>
+                            </div>
                         </div>
 
                         <div className="space-y-4">

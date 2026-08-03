@@ -181,23 +181,35 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
     }
 });
 
-// --- DAY 132: GET SEPARATED ACTIVITY LOGS ---
+// --- DAY 132 & 272: GET SEPARATED ACTIVITY LOGS (SESSION FILTERED) ---
 router.get('/audit/pending-verifications', protect, financeOnly, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
+        const School = require('../models/School');
+        const school = await School.findById(schoolId).select('activeSession');
+        
+        // Target Session: Jo school ka current active session hai
+        const targetSession = school?.activeSession || '2026-2027';
+        
+        // Legacy Data Fallback Filter
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
-        // 1. Sirf Pending uthao (Upar wale box ke liye)
+        // 1. Sirf Pending uthao (Upar wale box ke liye - Current Session Only)
         const pending = await Fee.find({
             schoolId,
             paymentScreenshot: { $exists: true, $ne: null },
-            status: 'Pending'
+            status: 'Pending',
+            ...sessionFilter // 🔥 Session Filter Added
         }).populate('student', 'name enrollmentNo grade fatherName phone').sort({ createdAt: -1 });
 
-        // 2. Verified aur Rejected uthao (Niche wale history box ke liye)
+        // 2. Verified aur Rejected uthao (Niche wale history box ke liye - Current Session Only)
         const resolved = await Fee.find({
             schoolId,
             paymentScreenshot: { $exists: true, $ne: null },
-            status: { $in: ['Verified', 'Rejected'] }
+            status: { $in: ['Verified', 'Rejected'] },
+            ...sessionFilter // 🔥 Session Filter Added
         }).populate('student', 'name enrollmentNo grade fatherName phone').sort({ updatedAt: -1 });
 
         res.json({ pending, resolved });
@@ -235,29 +247,48 @@ router.post('/audit/reject-payment', protect, financeOnly, async (req, res) => {
     }
 });
 
-// --- DAY 96: TRIGGER MANUAL ALERT (Point 8) ---
+// --- DAY 96 & 272: TRIGGER MANUAL ALERT & STATS (SESSION FILTERED) ---
 router.get('/reports/summary', protect, financeOnly, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
+        const School = require('../models/School');
+        const school = await School.findById(schoolId).select('activeSession');
+        
+        // Target Session / Request Session
+        const requestedSession = req.query.session; // Frontend Dropdown se aayega
+        const targetSession = requestedSession || school?.activeSession || '2026-2027';
+        
+        // Legacy Data Fallback Filter
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
-        // 1. Fetch History (Asli payments ki list)
-        // 'populate' student detail mangwayega
+        // 1. Fetch History (Asli payments ki list - Session Filtered)
         const feeHistory = await Fee.find({
             schoolId,
-            status: 'Verified' // Fix: Rejected ko summary mein mat lao
+            status: 'Verified',
+            ...sessionFilter // 🔥 Session Filter Added
         })
             .sort({ date: -1 })
             .populate('student', 'name grade');
 
-        // 2. Total Math (Sum of all payments)
+        // 2. Total Math (Sum of all verified payments for this session)
         const totalCollected = feeHistory.reduce((sum, f) => sum + f.amountPaid, 0);
 
-        // 3. Class-wise Math (Aggregation)
+        // 3. Class-wise Math (Aggregation - Needs exact Match condition)
+        // Agar sessionFilter mein $or hai, toh direct dalenge, warna simple object
+        const matchCondition = { schoolId: req.user.schoolId, status: 'Verified' };
+        if (targetSession === '2026-2027') {
+            matchCondition.$or = [{ session: targetSession }, { session: { $exists: false } }];
+        } else {
+            matchCondition.session = targetSession;
+        }
+
         const classWise = await Fee.aggregate([
-            { $match: { schoolId: req.user.schoolId, status: 'Verified' } },
+            { $match: matchCondition }, // 🔥 Session Filter Added in Aggregate
             {
                 $lookup: {
-                    from: 'users', // Compass mein 'users' collection hai
+                    from: 'users', 
                     localField: 'student',
                     foreignField: '_id',
                     as: 'studentInfo'
@@ -277,8 +308,9 @@ router.get('/reports/summary', protect, financeOnly, async (req, res) => {
         res.json({
             totalCollected,
             transactionCount: feeHistory.length,
-            classWise: classWise.filter(item => item._id !== null), // Sirf jin bacho ki class hai wo dikhao
-            history: feeHistory // Naye formatted list data frontend ke liye
+            classWise: classWise.filter(item => item._id !== null), 
+            history: feeHistory,
+            targetSession // Frontend ko batane ke liye ki data kis session ka hai
         });
     } catch (error) {
         console.error("REPORT_API_ERROR:", error);
