@@ -106,7 +106,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
   }
 
   void _handleDateClick(String dateStr, bool isPast, bool isSunday) {
-    if (isPast) return;
+    // 🔥 FIX: isPast return hata diya
     setState(() {
       if (eventMap.containsKey(dateStr)) {
         selectedEvent = Map<String, dynamic>.from(eventMap[dateStr]); 
@@ -151,7 +151,7 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
     final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF475569);
     final Color inputBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
-    bool canGoPrev = viewDate.year > today.year || (viewDate.year == today.year && viewDate.month > today.month);
+    bool canGoPrev = true;
 
     return PopScope(
       canPop: false,
@@ -309,10 +309,13 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         GestureDetector(
+                                          // ignore: dead_code
                                           onTap: canGoPrev ? () => setState(() { viewDate = DateTime(viewDate.year, viewDate.month - 1, 1); selectedEvent = null; }) : null,
                                           child: Container(
                                             padding: const EdgeInsets.all(12),
+                                            // ignore: dead_code
                                             decoration: BoxDecoration(color: canGoPrev ? (isDarkMode ? const Color(0xFF1E3A8A) : Colors.white) : Colors.transparent, shape: BoxShape.circle, boxShadow: canGoPrev ? const [BoxShadow(color: Colors.black12, blurRadius: 5)] : []),
+                                            // ignore: dead_code
                                             child: Icon(Icons.arrow_back_ios_new, size: 14, color: canGoPrev ? const Color(0xFF42A5F5) : textColorSecondary.withOpacity(0.3)),
                                           ),
                                         ),
@@ -388,28 +391,33 @@ class _TeacherAcademicCalendarState extends ConsumerState<TeacherAcademicCalenda
       bool isSelected = selectedEvent != null && selectedEvent!['isEmpty'] == false && selectedEvent!['_id'] == hasEvent?['_id'];
       bool isSelectedEmpty = selectedEvent != null && selectedEvent!['isEmpty'] == true && selectedEvent!['date'] == formattedVal;
 
-      Color cellBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+     Color cellBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
       Color cellText = textColorPrimary;
       Color? dotColor;
       bool hasBorder = false;
 
-      if (isPast) {
-        cellText = textColorPrimary.withOpacity(0.3);
-      } else if (hasEvent != null) {
+      // 🔥 FIX: Event ko pehle check karo
+      if (hasEvent != null) {
         cellBg = eventThemeMap[hasEvent['eventType']]!['badgeBg']!.withOpacity(isDarkMode ? 0.2 : 1);
         cellText = eventThemeMap[hasEvent['eventType']]!['dot']!;
         dotColor = eventThemeMap[hasEvent['eventType']]!['dot'];
+        if (isPast) {
+          cellBg = cellBg.withOpacity(0.5); // Thoda fade for past events
+        }
+      } else if (isPast) {
+        cellText = textColorPrimary.withOpacity(0.3);
       } else if (isSunday) { 
         cellText = const Color(0xFFF43F5E); 
       }
 
-      if ((isSelected || isSelectedEmpty) && !isPast) {
+      if (isSelected || isSelectedEmpty) { // !isPast hata diya
         hasBorder = true;
       }
 
       days.add(
         GestureDetector(
-          onTap: isPast ? null : () => _handleDateClick(formattedVal, isPast, isSunday), 
+          // 🔥 FIX: onTap hamesha allow kardo
+          onTap: () => _handleDateClick(formattedVal, isPast, isSunday), 
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             alignment: Alignment.center,

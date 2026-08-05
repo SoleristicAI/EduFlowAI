@@ -440,7 +440,18 @@ class _TeacherAssignmentsState extends ConsumerState<TeacherAssignments> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(DateFormat('dd MMM yyyy').format(dueDate), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
+                            // 🔥 FIX: Expanded aur FittedBox add kiya overflow rokne ke liye
+                            Expanded(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  DateFormat('dd MMM yyyy').format(dueDate), 
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4), // Thoda buffer space
                             const Icon(Icons.calendar_today, size: 16, color: Color(0xFF42A5F5)),
                           ],
                         ),

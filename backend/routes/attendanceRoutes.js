@@ -260,9 +260,10 @@ router.get('/student-report/:studentId', protect, adminOnly, async (req, res) =>
             ? { $or: [{ session: session }, { session: { $exists: false } }] }
             : { session: session };
 
+        // 🔥 FIX 1: grade hata kar 'records.studentId' laga diya! Ab bacha kisi bhi class mein ho, data aayega! 🔥
         const attendanceData = await Attendance.find({ 
             schoolId: req.user.schoolId, 
-            grade: student.grade,
+            'records.studentId': studentId, // YE LINE CHANGE KI HAI
             ...(session && sessionFilter)
         });
 

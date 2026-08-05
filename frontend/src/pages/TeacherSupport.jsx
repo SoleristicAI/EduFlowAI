@@ -109,7 +109,7 @@ const TeacherSupport = () => {
                                         Assigned student
                                     </span>
                                     <h4 className="font-black text-slate-800 text-[19px] capitalize italic tracking-tight group-hover:text-[#42A5F5] transition-all leading-none">{q.student?.name}</h4>
-                                    <p className="text-[14px] font-bold text-slate-700 uppercase tracking-widest mt-2 italic">Class {q.student?.grade} </p>
+                                    {/* <p className="text-[14px] font-bold text-slate-700 uppercase tracking-widest mt-2 italic">Class {q.student?.grade} </p> */}
                                 </div>
                             </div>
                             {q.isUrgent && (

@@ -255,8 +255,8 @@ class _TeacherSupportState extends ConsumerState<TeacherSupport> {
                                                         ),
                                                         const SizedBox(height: 8),
                                                         Text((q['student']?['name'] ?? 'Unknown').toString().toUpperCase(), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                                                        const SizedBox(height: 4),
-                                                        Text("CLASS ${q['student']?['grade'] ?? 'N/A'}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColorSecondary, letterSpacing: 1.5, fontStyle: FontStyle.italic)),
+                                                        // const SizedBox(height: 4),
+                                                        // Text("CLASS ${q['student']?['grade'] ?? 'N/A'}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColorSecondary, letterSpacing: 1.5, fontStyle: FontStyle.italic)),
                                                       ],
                                                     ),
                                                   )

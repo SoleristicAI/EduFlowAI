@@ -199,7 +199,11 @@ const StudentDetail = () => {
 
     // Crunching logic for Performance
     const processPerformanceData = (rawData) => {
-        if (!rawData || rawData.length === 0) return;
+        // 🔥 FIX 2: Agar array khali hai, toh purana data clear (null) kar do! 🔥
+        if (!rawData || rawData.length === 0) {
+            setPerformance(null); 
+            return;
+        }
 
         let totalMarksObtained = 0;
         let totalMaxMarks = 0;

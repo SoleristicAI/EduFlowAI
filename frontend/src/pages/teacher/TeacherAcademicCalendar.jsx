@@ -96,7 +96,7 @@ const TeacherAcademicCalendar = () => {
     };
 
     const handleDateClick = (dateStr, isPast) => {
-        if (isPast) return;
+        // 🔥 FIX: Past dates par click allow kar diya
         if (eventMap[dateStr]) {
             setSelectedEvent(eventMap[dateStr]);
         } else {
@@ -108,7 +108,8 @@ const TeacherAcademicCalendar = () => {
         }
     };
 
-    const canGoPrev = viewDate.getFullYear() > today.getFullYear() || (viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() > today.getMonth());
+   // 🔥 FIX: Navigation backward allow kardo
+    const canGoPrev = true;
 
     const prevMonth = () => { if (canGoPrev) setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)); setSelectedEvent(null); };
     const nextMonth = () => { setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)); setSelectedEvent(null); };
@@ -236,14 +237,15 @@ const TeacherAcademicCalendar = () => {
                                 const isSelected = selectedEvent && !selectedEvent.isEmpty && selectedEvent._id === hasEvent?._id;
                                 const isSelectedEmpty = selectedEvent && selectedEvent.isEmpty && selectedEvent.date === formattedVal;
 
+                                // 🔥 FIX: Event ko priority do, phir past ko
                                 let cellStyle = "text-slate-700 bg-slate-50 border border-slate-100 hover:border-[#42A5F5]";
-                                if (isPast) {
-                                    cellStyle = "text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed";
-                                } else if (hasEvent) {
-                                    cellStyle = `${eventThemeMap[hasEvent.eventType].bg} ${eventThemeMap[hasEvent.eventType].dot.replace('bg-', 'text-')} border-2 border-transparent font-black shadow-sm relative`;
+                                if (hasEvent) {
+                                    cellStyle = `${eventThemeMap[hasEvent.eventType].bg} ${eventThemeMap[hasEvent.eventType].dot.replace('bg-', 'text-')} border-2 border-transparent font-black shadow-sm relative ${isPast ? 'opacity-70' : 'opacity-100'}`;
+                                } else if (isPast) {
+                                    cellStyle = "text-slate-300 bg-slate-50 opacity-40 cursor-pointer";
                                 }
 
-                                if ((isSelected || isSelectedEmpty) && !isPast) {
+                                if (isSelected || isSelectedEmpty) { // !isPast hata diya yahan se
                                     cellStyle += " ring-4 ring-offset-2 ring-blue-300 transform scale-105 z-10 shadow-md";
                                 }
 
@@ -251,7 +253,7 @@ const TeacherAcademicCalendar = () => {
                                     <button
                                         key={d}
                                         type="button"
-                                        disabled={isPast}
+                                        // 🔥 FIX: disabled hata diya
                                         onClick={() => handleDateClick(formattedVal, isPast)}
                                         className={`p-3 md:p-4 rounded-2xl text-sm md:text-base font-black transition-all flex justify-center items-center ${cellStyle}`}
                                     >
