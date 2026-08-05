@@ -179,7 +179,7 @@ const StudentAttendance = () => {
                         <div key={i} className={`${item.bg} p-4 rounded-[2rem] border border-[#DDE3EA] shadow-sm flex flex-col items-center justify-center group active:scale-95 transition-all h-28`}>
                             <div className="mb-1 group-hover:scale-110 transition-transform">{item.icon}</div>
                             <span className="text-[20px] font-black">{item.value}</span>
-                            <p className="text-[13px] font-medium opacity-70 italic capitalize">{item.label}</p>
+                            <p className="text-[12px] font-medium opacity-70 italic capitalize">{item.label}</p>
                         </div>
                     ))}
                 </div>

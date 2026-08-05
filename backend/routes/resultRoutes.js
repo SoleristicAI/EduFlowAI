@@ -16,7 +16,7 @@ router.post('/initiate', protect, async (req, res) => {
         const school = await School.findById(schoolId).select('activeSession');
         const currentSession = school?.activeSession || '2026-2027';
 
-       const existing = await Result.findOne({ schoolId, grade, examTitle, session: currentSession });
+        const existing = await Result.findOne({ schoolId, grade, examTitle, session: currentSession });
         if (existing) return res.status(400).json({ message: "Request already active!" });
 
         const baseGrade = grade.split('-')[0].trim();
@@ -27,7 +27,6 @@ router.post('/initiate', protect, async (req, res) => {
         const subjectMap = {};
         timetable.schedule.forEach(day => {
             day.periods.forEach(p => {
-                // YAHAN p.teacherEmpId USE KARNA HAI (Not teacherId)
                 if (p.subject && p.subject !== 'Break' && p.teacherEmpId) {
                     if (!subjectMap[p.subject]) subjectMap[p.subject] = new Set();
                     subjectMap[p.subject].add(p.teacherEmpId);
@@ -37,7 +36,7 @@ router.post('/initiate', protect, async (req, res) => {
 
         const subjectsData = Object.keys(subjectMap).map(sub => ({
             subjectName: sub,
-            assignedTeachers: Array.from(subjectMap[sub]) // Array of teacherEmpId
+            assignedTeachers: Array.from(subjectMap[sub]) 
         }));
 
         const students = await User.find({ schoolId, role: 'student', grade: grade }).select('_id enrollmentNo name');
@@ -52,7 +51,7 @@ router.post('/initiate', protect, async (req, res) => {
         const newResult = await Result.create({
             schoolId, initiatorId, examTitle, grade, maxMarks,
             subjects: subjectsData, studentMarks: studentMarksData,
-            session: currentSession
+            session: currentSession // Always save in current session
         });
 
         res.status(201).json({ message: "Initiated!", data: newResult });
@@ -66,10 +65,15 @@ router.get('/pending', protect, async (req, res) => {
         const school = await School.findById(req.user.schoolId).select('activeSession');
         const targetSession = school?.activeSession || '2026-2027';
 
+        // 🔥 THE FIX: Strictly bind untagged data ONLY to 2026-2027 🔥
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
+
         const pending = await Result.find({
             schoolId: req.user.schoolId,
-            session: targetSession, // Purane saal ke pending nahi dikhayenge
             status: 'pending',
+            ...sessionFilter,
             'subjects': {
                 $elemMatch: {
                     assignedTeachers: empId,
@@ -88,14 +92,15 @@ router.get('/pending', protect, async (req, res) => {
 router.get('/monitor/:grade', protect, async (req, res) => {
     try {
         const exactGrade = req.params.grade.trim(); 
-        const { session } = req.query; // Frontend se aayega
+        const { session } = req.query; 
         const school = await School.findById(req.user.schoolId).select('activeSession');
-        const activeSession = school?.activeSession || '2026-2027';
+        
+        const targetSession = session || school?.activeSession || '2026-2027';
 
-        // LEGACY FIX: Jinka tag nahi hai wo current session mein manenge
-        const sessionFilter = (!session || session === activeSession)
-            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
-            : { session: session };
+        // 🔥 THE FIX 🔥
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
         const managed = await Result.find({ schoolId: req.user.schoolId, grade: exactGrade, ...sessionFilter }).sort({ createdAt: -1 });
         res.json(managed);
@@ -109,22 +114,18 @@ router.put('/submit-marks/:resultId', protect, async (req, res) => {
         const result = await Result.findById(req.params.resultId);
         if (!result) return res.status(404).json({ message: "Result record not found" });
 
-        // --- SECURITY VALIDATION ---
         const maxMarks = result.maxMarks;
         const isInvalid = studentMarks.some(sm => sm.marksObtained > maxMarks);
         if (isInvalid) return res.status(400).json({ message: `Marks cannot exceed ${maxMarks}` });
 
-        // Update logic: Dhoondho aur update karo, nahi mila toh push karo
         result.studentMarks.forEach(student => {
             const incomingMark = studentMarks.find(sm => sm.studentId === student.studentId.toString());
             if (incomingMark) {
                 const existingSubIdx = student.marks.findIndex(m => m.subjectName === subjectName);
                 if (existingSubIdx > -1) {
-                    // YAHAN PUSH KI JAGAH UPDATE KARO
                     student.marks[existingSubIdx].marksObtained = incomingMark.marksObtained;
                     student.marks[existingSubIdx].status = incomingMark.status;
                 } else {
-                    // Agar subject pehli baar add ho raha hai
                     student.marks.push({
                         subjectName,
                         marksObtained: incomingMark.marksObtained,
@@ -175,16 +176,17 @@ router.get('/my-results', protect, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
         const studentGrade = req.user.grade?.trim();
-        const { session } = req.query; // Session aayega query se
+        const { session } = req.query; 
 
         if (!studentGrade) return res.status(400).json({ message: "Student grade configuration missing." });
 
         const school = await School.findById(schoolId).select("schoolName logo activeSession");
-        const activeSession = school?.activeSession || '2026-2027';
+        const targetSession = session || school?.activeSession || '2026-2027';
 
-        const sessionFilter = (!session || session === activeSession)
-            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
-            : { session: session };
+        // 🔥 THE FIX 🔥
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
 
         const results = await Result.find({
             schoolId,
@@ -196,52 +198,29 @@ router.get('/my-results', protect, async (req, res) => {
         const preppedResults = results.map((resObj) => {
             const studentTotals = resObj.studentMarks.map(sm => {
                 const total = sm.marks.reduce(
-                    (acc, curr) =>
-                        acc + (curr.status === "Present" ? curr.marksObtained : 0),
-                    0
+                    (acc, curr) => acc + (curr.status === "Present" ? curr.marksObtained : 0), 0
                 );
-
-                return {
-                    studentId: sm.studentId.toString(),
-                    total
-                };
+                return { studentId: sm.studentId.toString(), total };
             });
 
-            // Rank sorting
             studentTotals.sort((a, b) => b.total - a.total);
 
             const myIdStr = req.user._id.toString();
-            const myRankIndex = studentTotals.findIndex(
-                st => st.studentId === myIdStr
-            );
-
+            const myRankIndex = studentTotals.findIndex(st => st.studentId === myIdStr);
             const myRank = myRankIndex !== -1 ? myRankIndex + 1 : "N/A";
 
-            const myMarksSubDoc = resObj.studentMarks.find(
-                sm => sm.studentId.toString() === myIdStr
-            );
-
+            const myMarksSubDoc = resObj.studentMarks.find(sm => sm.studentId.toString() === myIdStr);
             if (!myMarksSubDoc) return null;
 
             const myMarks = myMarksSubDoc.marks;
-
             let totalObtained = 0;
             let grandTotal = 0;
             let percentage = 0;
 
             if (myMarks.length > 0) {
-                totalObtained = myMarks.reduce(
-                    (acc, curr) =>
-                        acc + (curr.status === "Present" ? curr.marksObtained : 0),
-                    0
-                );
-
+                totalObtained = myMarks.reduce((acc, curr) => acc + (curr.status === "Present" ? curr.marksObtained : 0), 0);
                 grandTotal = resObj.maxMarks * myMarks.length;
-
-                percentage = (
-                    (totalObtained / grandTotal) *
-                    100
-                ).toFixed(2);
+                percentage = ((totalObtained / grandTotal) * 100).toFixed(2);
             }
 
             return {
@@ -255,8 +234,6 @@ router.get('/my-results', protect, async (req, res) => {
                 percentage,
                 rank: myRank,
                 totalStudents: studentTotals.length,
-
-                // NEW
                 schoolName: school?.schoolName || "School Name",
                 schoolLogo: school?.logo || null
             };
@@ -264,36 +241,32 @@ router.get('/my-results', protect, async (req, res) => {
         res.json(preppedResults.filter(Boolean));
 
     } catch (error) {
-        res.status(500).json({
-            message: "Failed to fetch exam results: " + error.message
-        });
+        res.status(500).json({ message: "Failed to fetch exam results: " + error.message });
     }
 });
 
-// Add this to your resultRoutes.js file
+// 8. STUDENT: Performance Stats
 router.get('/my-performance', protect, async (req, res) => {
     try {
         const studentId = req.user._id;
         const { session } = req.query;
         
         const school = await School.findById(req.user.schoolId).select('activeSession');
-        const activeSession = school?.activeSession || '2026-2027';
+        const targetSession = session || school?.activeSession || '2026-2027';
 
-        // 🔥 LEGACY DATA FIX: Agar session purana hai (bina tag wala), toh usey active session mein mila do 🔥
-        const sessionFilter = (!session || session === activeSession)
-            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
-            : { session: session };
+        // 🔥 THE FIX 🔥
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
         
         const results = await Result.find({ 
             'studentMarks.studentId': studentId,
             status: 'published',
-            ...sessionFilter // Filter yahan laga diya
+            ...sessionFilter
         });
 
-        // Data ko Frontend ke liye map karo
         const formattedData = results.map(resObj => {
             const myData = resObj.studentMarks.find(sm => sm.studentId.toString() === studentId.toString());
-            
             return {
                 examTitle: resObj.examTitle,
                 date: resObj.createdAt ? new Date(resObj.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : 'N/A',
@@ -312,29 +285,28 @@ router.get('/my-performance', protect, async (req, res) => {
     }
 });
 
-// Admin/Teacher: Fetch Specific Student's Performance
+// 9. Admin/Teacher: Fetch Specific Student's Performance
 router.get('/student-performance/:studentId', protect, async (req, res) => {
     try {
         const { studentId } = req.params;
-        const { session } = req.query; // Session query fetch
+        const { session } = req.query; 
 
         const school = await School.findById(req.user.schoolId).select('activeSession');
-        const activeSession = school?.activeSession || '2026-2027';
+        const targetSession = session || school?.activeSession || '2026-2027';
 
-        // 🔥 LEGACY DATA FIX 🔥
-        const sessionFilter = (!session || session === activeSession)
-            ? { $or: [{ session: activeSession }, { session: { $exists: false } }] }
-            : { session: session };
+        // 🔥 THE FIX 🔥
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
         
         const results = await Result.find({ 
             'studentMarks.studentId': studentId,
             status: 'published',
-            ...sessionFilter // Filter yahan laga diya
+            ...sessionFilter 
         });
 
         const formattedData = results.map(resObj => {
             const myData = resObj.studentMarks.find(sm => sm.studentId.toString() === studentId.toString());
-            
             return {
                 examTitle: resObj.examTitle,
                 date: resObj.createdAt ? new Date(resObj.createdAt).toLocaleDateString('en-GB').replace(/\//g, '-') : 'N/A',

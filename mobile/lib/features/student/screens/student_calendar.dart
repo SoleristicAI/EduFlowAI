@@ -112,8 +112,7 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
   }
 
   void _handleDateClick(String dateStr, bool isPast) {
-    if (isPast) return;
-    
+    // 🔥 FIX: isPast hone par bhi click chalega
     DateTime clickedDate = DateFormat('dd-MM-yyyy').parse(dateStr);
     bool isSunday = clickedDate.weekday == DateTime.sunday; 
 
@@ -147,7 +146,7 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
   Widget build(BuildContext context) {
     if (loading) return const CustomLoader();
 
-    bool canGoPrev = viewDate.year > today.year || (viewDate.year == today.year && viewDate.month > today.month);
+   bool canGoPrev = true;
 
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
@@ -359,15 +358,17 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       GestureDetector(
-                                        onTap: canGoPrev ? () {
+                                        onTap: () {
                                           setState(() {
                                             viewDate = DateTime(viewDate.year, viewDate.month - 1, 1);
                                             selectedEvent = null;
                                           });
-                                        } : null,
+                                        },
                                         child: Container(
                                           padding: const EdgeInsets.all(10),
+                                          // ignore: dead_code
                                           decoration: BoxDecoration(color: canGoPrev ? cardColor : Colors.transparent, shape: BoxShape.circle, boxShadow: canGoPrev ? const [BoxShadow(color: Colors.black12, blurRadius: 5)] : []),
+                                          // ignore: dead_code
                                           child: Icon(Icons.arrow_back_ios_new, size: 16, color: canGoPrev ? textColorPrimary : (isDarkMode ? const Color(0xFF475569) : const Color(0xFFCBD5E1))),
                                         ),
                                       ),
@@ -443,16 +444,20 @@ class _StudentAcademicCalendarState extends ConsumerState<StudentAcademicCalenda
                                     Color textColor = isDarkMode ? const Color(0xFFCBD5E1) : const Color(0xFF334155);
                                     Color? dotColor;
 
-                                    if (isPast) {
-                                      textColor = isDarkMode ? const Color(0xFF475569) : const Color(0xFFCBD5E1);
-                                    } else if (hasEvent != null) {
+                                    // 🔥 FIX: Event ko pehle check karo, chahe wo past ho ya future
+                                    if (hasEvent != null) {
                                       String type = hasEvent['eventType'];
                                       boxBg = eventThemeMap[type]!['bg']!;
                                       textColor = eventThemeMap[type]!['dot']!;
                                       dotColor = eventThemeMap[type]!['dot'];
+                                      if (isPast) {
+                                        boxBg = boxBg.withOpacity(0.5); // Thoda fade for past events
+                                      }
+                                    } else if (isPast) {
+                                      textColor = isDarkMode ? const Color(0xFF475569) : const Color(0xFFCBD5E1);
                                     }
 
-                                    if (isSelected && !isPast) {
+                                    if (isSelected) {
                                       boxBorder = const Color(0xFF42A5F5); 
                                       boxBg = cardColor;
                                     }

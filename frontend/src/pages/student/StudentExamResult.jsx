@@ -186,50 +186,15 @@ const StudentExamResult = () => {
                 </div>
 
                 {/* Heading + Subtitle */}
-                {/* Heading + Session Dropdown */}
-                <div className="relative z-10 text-center mt-4 flex flex-col items-center">
+                <div className="relative z-10 text-center mt-4">
                     <h1 className="text-4xl font-black italic tracking-tight capitalize whitespace-nowrap">
                         Exam Results
                     </h1>
-
-                    {/* 🔥 SESSION GLASS DROPDOWN 🔥 */}
-                    <div className="relative mt-2">
-                        <button
-                            onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 backdrop-blur-sm shadow-sm rounded-full active:scale-95 transition-all"
-                        >
-                            <History size={14} className="text-white" />
-                            <span className="text-[12px] font-black tracking-widest text-white uppercase">{activeSession || 'Loading...'}</span>
-                            <ChevronDown size={14} className={`text-white transition-transform ${isSessionDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        <AnimatePresence>
-                            {isSessionDropdownOpen && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: -10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: -10 }}
-                                    className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
-                                >
-                                    {availableSessions.map((session) => (
-                                        <div
-                                            key={session}
-                                            onClick={() => {
-                                                setActiveSession(session);
-                                                setSelectedResult(null); // Reset result on change
-                                                setViewMode('select');
-                                                setIsSessionDropdownOpen(false);
-                                            }}
-                                            className={`px-4 py-3 text-center cursor-pointer text-[13px] font-black italic transition-all ${activeSession === session ? 'bg-[#42A5F5] text-white' : 'text-slate-600 hover:bg-blue-50'}`}
-                                        >
-                                            {session}
-                                        </div>
-                                    ))}
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
+                    <p className="text-[15px] font-black uppercase tracking-widest text-white opacity-90 mt-2 whitespace-nowrap">
+                        Student Performance Report
+                    </p>
                 </div>
+               
 
             </div>
 

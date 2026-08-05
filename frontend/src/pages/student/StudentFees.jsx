@@ -154,13 +154,15 @@ const StudentFees = () => {
                 )}
             </AnimatePresence>
             {/* Header: Blue Theme */}
-            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-32 rounded-b-[3.5rem] shadow-lg relative overflow-hidden">
+            {/* 🔥 FIX 1: Yahan se z-[100] aur overflow-hidden hata diya taaki Blue Background apni original jagah (peeche) rahe 🔥 */}
+            <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-32 rounded-b-[3.5rem] shadow-lg relative">
 
                 {/* Background Glow */}
-                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-blue-400 to-transparent pointer-events-none opacity-50 rounded-b-[3.5rem] z-0"></div>
 
                 {/* Header Row */}
-                <div className="flex justify-between items-center relative z-10">
+                {/* 🔥 FIX 2: Is row ko 'z-30' de diya. Tera balance card 'z-20' pe hai. Toh ab sirf Dropdown uske upar khulega! 🔥 */}
+                <div className="flex justify-between items-center relative z-30">
 
                     {/* Back Button */}
                     <button
@@ -170,7 +172,6 @@ const StudentFees = () => {
                         <ArrowLeft size={24} />
                     </button>
 
-                    {/* Center Title */}
                     {/* Center Title & Glass Dropdown */}
                     <div className="flex flex-col items-center">
                         <h1 className="text-5xl font-black italic tracking-tight capitalize">
@@ -181,7 +182,7 @@ const StudentFees = () => {
                         <div className="relative mt-3">
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 rounded-2xl backdrop-blur-sm active:scale-95 transition-all"
+                                className="flex items-center gap-2 px-4 py-2 bg-white/20 border border-white/30 rounded-2xl backdrop-blur-sm active:scale-95 transition-all shadow-md"
                             >
                                 <History size={14} className="text-white" />
                                 <span className="text-[13px] font-black tracking-widest text-white">{activeSession || 'Loading...'}</span>
@@ -194,7 +195,7 @@ const StudentFees = () => {
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
-                                        className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden z-[100]"
+                                        className="absolute top-full mt-2 w-full min-w-[140px] left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl border border-blue-50 overflow-hidden"
                                     >
                                         {availableSessions.map((session) => (
                                             <div

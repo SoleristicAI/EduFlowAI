@@ -450,60 +450,22 @@ class _StudentExamResultState extends ConsumerState<StudentExamResult> {
                                   ),
                                 ),
                                Column(
-                                  children: [
-                                    const Text("Exam Results",
-                                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -1)),
-                                    const SizedBox(height: 4),
-                                    
-                                    // 🔥 SESSION POPUP MENU DROP DOWN 🔥
-                                    PopupMenuButton<String>(
-                                      initialValue: activeSession,
-                                      position: PopupMenuPosition.under,
-                                      offset: const Offset(0, 8),
-                                      color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.white,
-                                      elevation: 12,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                      onSelected: (String newValue) {
-                                        setState(() { 
-                                          activeSession = newValue; 
-                                          isInitialLoading = true;
-                                          selectedResult = null; // Reset
-                                          viewMode = 'select'; // Go back to select screen
-                                        });
-                                        _loadData(sessionParam: newValue);
-                                      },
-                                      itemBuilder: (BuildContext context) {
-                                        return availableSessions.map((String session) {
-                                          return PopupMenuItem<String>(
-                                            value: session,
-                                            child: Text(
-                                              session, 
-                                              style: TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: activeSession == session ? const Color(0xFF42A5F5) : (isDarkMode ? Colors.white : Colors.black87))
-                                            ),
-                                          );
-                                        }).toList();
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2), 
-                                          borderRadius: BorderRadius.circular(20), 
-                                          border: Border.all(color: Colors.white.withOpacity(0.3))
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.history, color: Colors.white, size: 14),
-                                            const SizedBox(width: 6),
-                                            Text(activeSession ?? 'Loading...', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1)),
-                                            const SizedBox(width: 4),
-                                            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                children: [
+                                  const Text("Exam Results",
+                                      style: TextStyle(
+                                          fontSize: 28, 
+                                          fontWeight: FontWeight.w900, 
+                                          color: Colors.white, 
+                                          fontStyle: FontStyle.italic, 
+                                          letterSpacing: -1)),
+                                  Text("STUDENT PERFORMANCE REPORT",
+                                      style: TextStyle(
+                                          fontSize: 8, 
+                                          fontWeight: FontWeight.w900, 
+                                          color: Colors.white.withOpacity(0.9), 
+                                          letterSpacing: 2)),
+                                ],
+                              ),
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(

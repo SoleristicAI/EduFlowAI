@@ -99,7 +99,7 @@ const StudentAcademicCalendar = () => {
     };
 
     const handleDateClick = (dateStr, isPast) => {
-        if (isPast) return; // Ignore past dates
+        // 🔥 FIX: Past dates par click allow kar diya
         if (eventMap[dateStr]) {
             setSelectedEvent(eventMap[dateStr]);
         } else {
@@ -110,10 +110,9 @@ const StudentAcademicCalendar = () => {
         }
     };
 
-    // Month Navigation Security Check
-    const canGoPrev = viewDate.getFullYear() > today.getFullYear() || (viewDate.getFullYear() === today.getFullYear() && viewDate.getMonth() > today.getMonth());
+   const canGoPrev = true; 
 
-    const prevMonth = () => { if (canGoPrev) setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)); setSelectedEvent(null); };
+    const prevMonth = () => { setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)); setSelectedEvent(null); };
     const nextMonth = () => { setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)); setSelectedEvent(null); };
 
     return (
@@ -257,12 +256,15 @@ const StudentAcademicCalendar = () => {
 
                                 // Determine Cell Styling
                                 let cellStyle = "text-slate-700 bg-slate-50 border border-slate-100 hover:border-[#42A5F5]";
-                                if (isPast) {
-                                    cellStyle = "text-slate-300 bg-slate-50 opacity-40 cursor-not-allowed";
-                                } else if (hasEvent) {
-                                    cellStyle = `${eventThemeMap[hasEvent.eventType].bg} ${eventThemeMap[hasEvent.eventType].dot.replace('bg-', 'text-')} border-2 border-transparent font-black shadow-sm relative`;
+                                
+                                // 🔥 FIX: Agar event hai toh color do chahe wo past ho ya future.
+                                if (hasEvent) {
+                                    cellStyle = `${eventThemeMap[hasEvent.eventType].bg} ${eventThemeMap[hasEvent.eventType].dot.replace('bg-', 'text-')} border-2 border-transparent font-black shadow-sm relative ${isPast ? 'opacity-70' : 'opacity-100'}`;
+                                } else if (isPast) {
+                                    cellStyle = "text-slate-300 bg-slate-50 opacity-40 cursor-pointer";
                                 }
-                                if (isSelected && !isPast) {
+                                
+                                if (isSelected) {
                                     cellStyle += " ring-4 ring-offset-2 ring-blue-300 transform scale-105 z-10 shadow-md";
                                 }
 
@@ -270,12 +272,11 @@ const StudentAcademicCalendar = () => {
                                     <button
                                         key={d}
                                         type="button"
-                                        disabled={isPast}
+                                        // 🔥 FIX: disabled={isPast} hata diya yahan se
                                         onClick={() => handleDateClick(formattedVal, isPast)}
                                         className={`p-3 md:p-4 rounded-2xl text-sm md:text-base font-black transition-all flex justify-center items-center ${cellStyle}`}
                                     >
                                         {d}
-                                        {/* Optional: Add a tiny dot under the number if there's an event */}
                                         {hasEvent && !isPast && (
                                             <div className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${eventThemeMap[hasEvent.eventType].dot}`}></div>
                                         )}
