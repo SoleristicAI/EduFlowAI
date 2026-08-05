@@ -287,12 +287,12 @@ hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 
         <button
           onClick={() => {
-            scrollToSection("platform");
+            scrollToSection("services");
             setMobileMenuOpen(false);
           }}
           className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
         >
-          Platform
+          Services
         </button>
 
         <button
@@ -615,11 +615,11 @@ font-semibold
                 ["Library Management System", Book],
                 ["Online Teacher Feedback", MessageSquare],
                 ["Examination Management System", BarChart3],
+                ["Student Id Card Generation", CheckCircle],
+                ["Support Requests", Shield],
+                ["Dark & Light Mode Toggle", CheckCircle],
                 
-                // ["Communication", MessageSquare],
-                // ["Admissions", Users],
-                // ["Academic Reporting", BarChart3],
-                // ["Scheduling", Calendar],
+                
               ].map(([title, Icon], i) => (
                 <div
                   key={i}
@@ -954,7 +954,7 @@ font-semibold
             </button>
 
             <p className="mt-4 text-sm opacity-80">
-              Implementation support included • No setup fee
+              Implementation support included
             </p>
           </div>
         </section>
