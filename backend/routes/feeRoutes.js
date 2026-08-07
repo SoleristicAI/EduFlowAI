@@ -149,6 +149,8 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
 
+        
+
         // BUG 1 FIX: Sabse pehle check karo ki photo aayi bhi hai ya nahi
         // Agar photo nahi aayi aur hum req.file.filename use karenge toh server crash ho jayega
         if (!req.file) {
@@ -161,6 +163,8 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
         await Fee.create({
             schoolId,
             student: studentId,
+            recordedGrade: req.user.grade,
+            recordedEnrollmentNo: req.user.enrollmentNo,
             amountPaid: Number(amount) || 0,
             paymentScreenshot: `/uploads/${req.file.filename}`,
             paymentMode: 'Online',
@@ -181,38 +185,48 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
     }
 });
 
-// --- DAY 132 & 272: GET SEPARATED ACTIVITY LOGS (SESSION FILTERED) ---
+// --- DAY 132, 272 & 278: GET SEPARATED ACTIVITY LOGS ---
 router.get('/audit/pending-verifications', protect, financeOnly, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
         const School = require('../models/School');
         const school = await School.findById(schoolId).select('activeSession');
         
-        // Target Session: Jo school ka current active session hai
-        const targetSession = school?.activeSession || '2026-2027';
+        const requestedSession = req.query.session; 
+        const targetSession = requestedSession || school?.activeSession || '2026-2027';
         
-        // Legacy Data Fallback Filter
         const sessionFilter = targetSession === '2026-2027' 
             ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
             : { session: targetSession };
 
-        // 1. Sirf Pending uthao (Upar wale box ke liye - Current Session Only)
         const pending = await Fee.find({
             schoolId,
             paymentScreenshot: { $exists: true, $ne: null },
             status: 'Pending',
-            ...sessionFilter // 🔥 Session Filter Added
+            ...sessionFilter
         }).populate('student', 'name enrollmentNo grade fatherName phone').sort({ createdAt: -1 });
 
-        // 2. Verified aur Rejected uthao (Niche wale history box ke liye - Current Session Only)
         const resolved = await Fee.find({
             schoolId,
             paymentScreenshot: { $exists: true, $ne: null },
             status: { $in: ['Verified', 'Rejected'] },
-            ...sessionFilter // 🔥 Session Filter Added
+            ...sessionFilter
         }).populate('student', 'name enrollmentNo grade fatherName phone').sort({ updatedAt: -1 });
 
-        res.json({ pending, resolved });
+        // 🔥 THE REAL FIX: Strict Snapshot Mapping Only 🔥
+        const mapWithSnapshot = (records) => records.map(f => {
+            const doc = f.toObject();
+            if (doc.student) {
+                if (doc.recordedGrade) doc.student.grade = doc.recordedGrade;
+                if (doc.recordedEnrollmentNo) doc.student.enrollmentNo = doc.recordedEnrollmentNo;
+            }
+            return doc;
+        });
+
+        res.json({ 
+            pending: mapWithSnapshot(pending), 
+            resolved: mapWithSnapshot(resolved) 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Audit Feed Failure' });
     }
@@ -247,36 +261,38 @@ router.post('/audit/reject-payment', protect, financeOnly, async (req, res) => {
     }
 });
 
-// --- DAY 96 & 272: TRIGGER MANUAL ALERT & STATS (SESSION FILTERED) ---
+// --- DAY 96, 272 & 278: TRIGGER MANUAL ALERT & STATS ---
 router.get('/reports/summary', protect, financeOnly, async (req, res) => {
     try {
         const schoolId = req.user.schoolId;
         const School = require('../models/School');
         const school = await School.findById(schoolId).select('activeSession');
         
-        // Target Session / Request Session
-        const requestedSession = req.query.session; // Frontend Dropdown se aayega
+        const requestedSession = req.query.session;
         const targetSession = requestedSession || school?.activeSession || '2026-2027';
         
-        // Legacy Data Fallback Filter
         const sessionFilter = targetSession === '2026-2027' 
             ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
             : { session: targetSession };
 
-        // 1. Fetch History (Asli payments ki list - Session Filtered)
         const feeHistory = await Fee.find({
             schoolId,
             status: 'Verified',
-            ...sessionFilter // 🔥 Session Filter Added
-        })
-            .sort({ date: -1 })
-            .populate('student', 'name grade');
+            ...sessionFilter
+        }).sort({ date: -1 }).populate('student', 'name grade enrollmentNo');
 
-        // 2. Total Math (Sum of all verified payments for this session)
-        const totalCollected = feeHistory.reduce((sum, f) => sum + f.amountPaid, 0);
+        // 🔥 THE REAL FIX: Strict Snapshot Mapping Only 🔥
+        const mappedHistory = feeHistory.map(f => {
+            const doc = f.toObject();
+            if (doc.student) {
+                if (doc.recordedGrade) doc.student.grade = doc.recordedGrade; 
+                if (doc.recordedEnrollmentNo) doc.student.enrollmentNo = doc.recordedEnrollmentNo;
+            }
+            return doc;
+        });
 
-        // 3. Class-wise Math (Aggregation - Needs exact Match condition)
-        // Agar sessionFilter mein $or hai, toh direct dalenge, warna simple object
+        const totalCollected = mappedHistory.reduce((sum, f) => sum + f.amountPaid, 0);
+
         const matchCondition = { schoolId: req.user.schoolId, status: 'Verified' };
         if (targetSession === '2026-2027') {
             matchCondition.$or = [{ session: targetSession }, { session: { $exists: false } }];
@@ -284,8 +300,8 @@ router.get('/reports/summary', protect, financeOnly, async (req, res) => {
             matchCondition.session = targetSession;
         }
 
-        const classWise = await Fee.aggregate([
-            { $match: matchCondition }, // 🔥 Session Filter Added in Aggregate
+        const classWiseRaw = await Fee.aggregate([
+            { $match: matchCondition },
             {
                 $lookup: {
                     from: 'users', 
@@ -297,7 +313,7 @@ router.get('/reports/summary', protect, financeOnly, async (req, res) => {
             { $unwind: { path: '$studentInfo', preserveNullAndEmptyArrays: true } },
             {
                 $group: {
-                    _id: '$studentInfo.grade',
+                    _id: { $ifNull: ['$recordedGrade', '$studentInfo.grade'] },
                     total: { $sum: '$amountPaid' },
                     count: { $sum: 1 }
                 }
@@ -307,10 +323,10 @@ router.get('/reports/summary', protect, financeOnly, async (req, res) => {
 
         res.json({
             totalCollected,
-            transactionCount: feeHistory.length,
-            classWise: classWise.filter(item => item._id !== null), 
-            history: feeHistory,
-            targetSession // Frontend ko batane ke liye ki data kis session ka hai
+            transactionCount: mappedHistory.length,
+            classWise: classWiseRaw.filter(item => item._id !== null), 
+            history: mappedHistory,
+            targetSession 
         });
     } catch (error) {
         console.error("REPORT_API_ERROR:", error);
@@ -375,28 +391,82 @@ router.get('/student-summary', protect, async (req, res) => {
             });
         }
 
-        // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
+       // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
         const joinDate = new Date(student.createdAt);
-        let calculationEndDate = new Date(); // Normal case mein Aaj tak ka bill
+        let calculationEndDate = new Date(); 
 
         if (isPastSession && schoolData.sessionStartDate) {
-            // Agar purana session dekh raha hai, toh calculation us din ruk jayegi jis din naya saal shuru hua tha!
-            calculationEndDate = new Date(schoolData.sessionStartDate);
+            calculationEndDate = new Date(schoolData.sessionStartDate); 
         }
 
-        // Mahine calculate karo joining se leke (Aaj ya Freeze Date) tak
         let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
-        
-        // Maximum 12 mahine ki fee lag sakti hai ek session mein
         if (monthsElapsed > 12) monthsElapsed = 12; 
 
-        const totalTargetMonthly = monthlyUnit * monthsElapsed;
-        const totalPaidAll = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+        // 🔥 THE MASTERPLAN: CARRY FORWARD LOGIC 🔥
+        let carryForwardDues = 0;
+        let carryForwardAdvance = 0;
 
-        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidAll);
-        let surplusAfterOneTime = Math.max(0, totalPaidAll - oneTimeFixed);
-        let remainingMonthly = Math.max(0, totalTargetMonthly - surplusAfterOneTime);
-        let finalAdvance = Math.max(0, surplusAfterOneTime - totalTargetMonthly);
+        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+            const legacyPayments = await Fee.find({
+                student: studentId, schoolId, status: 'Verified',
+                $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
+            });
+            const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+            
+            let prevClassMatch = classMatch;
+            let altPrevClassMatch = rawGrade;
+            const numMatch = rawGrade.match(/\d+/);
+            if (numMatch && parseInt(numMatch[0]) > 1) {
+                const prevNum = parseInt(numMatch[0]) - 1;
+                prevClassMatch = `Class ${prevNum}`;
+                altPrevClassMatch = rawGrade.replace(numMatch[0], prevNum); 
+            }
+
+            const legacyStructure = await FeeStructure.findOne({ 
+                schoolId, 
+                $or: [{ className: prevClassMatch }, { className: altPrevClassMatch }] 
+            });
+
+            if (legacyStructure && legacyStructure.fees) {
+                let legacyMonthly = 0, legacyOneTime = 0;
+                Object.keys(legacyStructure.fees).forEach(k => {
+                    if (legacyStructure.fees[k] && !legacyStructure.fees[k].isNone && legacyStructure.fees[k].amount > 0) {
+                        if (legacyStructure.fees[k].billingCycle === 'monthly') legacyMonthly += legacyStructure.fees[k].amount;
+                        else legacyOneTime += legacyStructure.fees[k].amount;
+                    }
+                });
+                
+                const today = new Date();
+                const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
+                
+                // 🔥 THE FIX: YAHAN '+ 1' MISSING THA JISKI WAJAH SE 4 KI JAGAH 3 MAHINE CALCULATE HO RAHE THE! 🔥
+                let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
+                if (legacyMonths > 12) legacyMonths = 12;
+                if (joinDate > legacyEndDate) legacyMonths = 0;
+
+                const legacyExpected = (legacyMonthly * legacyMonths) + legacyOneTime;
+                const legacyNet = legacyExpected - totalLegacyPaid;
+
+                if (legacyNet > 0) {
+                    carryForwardDues = legacyNet;
+                    structureDetails.monthly.unshift({ label: 'PREVIOUS SESSION DUES', amount: legacyNet }); 
+                } else if (legacyNet < 0) {
+                    carryForwardAdvance = Math.abs(legacyNet);
+                }
+            }
+        }
+
+        // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
+        const totalTargetMonthly = (monthlyUnit * monthsElapsed) + carryForwardDues;
+        const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidCurrentSession);
+        let surplusAfterOneTime = Math.max(0, totalPaidCurrentSession - oneTimeFixed);
+        
+        let totalAvailableForMonthly = surplusAfterOneTime + carryForwardAdvance;
+
+        let remainingMonthly = Math.max(0, totalTargetMonthly - totalAvailableForMonthly);
+        let finalAdvance = Math.max(0, totalAvailableForMonthly - totalTargetMonthly);
 
         const pendingPayment = await Fee.findOne({ student: studentId, status: 'Pending', ...sessionFilter }).sort({ createdAt: -1 });
 
@@ -425,7 +495,8 @@ router.get('/student-summary', protect, async (req, res) => {
             totalFeesStructure: monthlyUnit,
             feeStructureDetails: structureDetails,
             paymentHistory: groupedHistory,
-            targetSession, // Frontend ko batane ke liye ki konsa data bheja hai
+            targetSession, 
+            isActiveSession: !isPastSession,
             pendingSignal: pendingPayment ? {
                 id: pendingPayment._id, amount: pendingPayment.amountPaid, screenshot: pendingPayment.paymentScreenshot, date: pendingPayment.date, status: pendingPayment.status
             } : null
@@ -437,28 +508,43 @@ router.get('/student-summary', protect, async (req, res) => {
     }
 });
 
+// --- DAY 273 & 278 FIX: STRICT IMMUTABLE RECEIPT (NO MATH GUESSWORK) ---
 router.get('/receipt/:paymentId', protect, async (req, res) => {
     try {
+        const School = require('../models/School');
         const payment = await Fee.findById(req.params.paymentId)
             .populate({
                 path: 'student',
                 select: 'name enrollmentNo grade fatherName phone address'
             })
-            .populate({
-                path: 'schoolId',
-                select: 'schoolName schoolAddress schoolContact logo' // Check your School model fields
-            });
+            .populate('schoolId'); 
 
         if (!payment) {
             return res.status(404).json({ message: 'Receipt Identity Not Found! ❌' });
         }
 
-        // Security Check: Student sirf apni hi receipt dekh sake
         if (req.user.role === 'student' && payment.student._id.toString() !== req.user._id.toString()) {
             return res.status(403).json({ message: 'Neural Access Denied: Unauthorized Identity! 🛡️' });
         }
 
-        res.json(payment);
+        const paymentObj = payment.toObject();
+
+        if (paymentObj.schoolId) {
+            paymentObj.schoolId.schoolAddress = paymentObj.schoolId.schoolAddress || paymentObj.schoolId.address || "EduFlow Digital Campus";
+            paymentObj.schoolId.schoolContact = paymentObj.schoolId.schoolContact || paymentObj.schoolId.phone || "Not Available";
+        }
+
+        // 🔥 THE REAL FIX: Sirf Exact Snapshot use hoga. Koi '-1' ka jugaad nahi! 🔥
+        if (paymentObj.student) {
+            if (paymentObj.recordedGrade) {
+                paymentObj.student.grade = paymentObj.recordedGrade;
+            }
+            if (paymentObj.recordedEnrollmentNo) {
+                paymentObj.student.enrollmentNo = paymentObj.recordedEnrollmentNo;
+            }
+        }
+
+        res.json(paymentObj);
     } catch (error) {
         console.error("Receipt Fetch Error:", error);
         res.status(500).json({ message: 'Error generating receipt data' });
@@ -477,6 +563,8 @@ router.post('/finalize-online-payment', protect, async (req, res) => {
             schoolId,
             student: studentId,
             amountPaid: amount,
+            recordedGrade: req.user.grade,
+            recordedEnrollmentNo: req.user.enrollmentNo,
             month: month || new Date().toLocaleString('default', { month: 'long' }),
             year: year || new Date().getFullYear(),
             paymentMode: method || 'UPI',
@@ -614,32 +702,109 @@ router.get('/structure/list/all', protect, financeOnly, async (req, res) => {
     }
 });
 
-// --- DAY 116: FETCH CLASSES THAT HAVE STUDENTS ---
+// --- DAY 116, 276 & 279: FETCH CLASSES (SMART HYBRID LOOKUP) ---
 router.get('/tracker/classes', protect, financeOnly, async (req, res) => {
     try {
-        const User = require('../models/User');
-        // Sirf un grades ki list nikalna jinmein 'student' role wale bache hain
-        const classes = await User.distinct('grade', {
-            schoolId: req.user.schoolId,
-            role: 'student'
-        });
-        res.json(classes.sort());
+        const schoolId = req.user.schoolId;
+        const School = require('../models/School');
+        const school = await School.findById(schoolId).select('activeSession');
+        
+        const targetSession = req.query.session || school?.activeSession || '2026-2027';
+        const isPastSession = targetSession !== school?.activeSession;
+
+        let classList = [];
+
+        if (!isPastSession) {
+            // 🔥 CURRENT SESSION: Get real-time active classes from Users 🔥
+            const User = require('../models/User');
+            classList = await User.distinct('grade', { schoolId, role: 'student' });
+        } else {
+            // 🔥 PAST SESSION: Get classes from the Fee Ledger 🔥
+            const sessionFilter = targetSession === '2026-2027' 
+                ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+                : { session: targetSession };
+
+            const distinctClasses = await Fee.aggregate([
+                { $match: { schoolId: req.user.schoolId, ...sessionFilter } },
+                {
+                    $lookup: {
+                        from: 'users', localField: 'student', foreignField: '_id', as: 'studentInfo'
+                    }
+                },
+                { $unwind: { path: '$studentInfo', preserveNullAndEmptyArrays: true } },
+                {
+                    $group: {
+                        _id: null,
+                        classes: { $addToSet: { $ifNull: ['$recordedGrade', '$studentInfo.grade'] } }
+                    }
+                }
+            ]);
+            classList = distinctClasses.length > 0 ? distinctClasses[0].classes.filter(c => c != null) : [];
+        }
+
+        res.json(classList.sort());
     } catch (error) {
         res.status(500).json({ message: 'Error fetching classes' });
     }
 });
 
-// --- DAY 116: FETCH STUDENTS BY CLASS FOR TRACKER ---
-// --- DAY 116: FETCH STUDENTS BY CLASS (Updated Fields) ---
+// --- DAY 116, 276 & 279: FETCH STUDENTS BY CLASS (SMART HYBRID LOOKUP) ---
 router.get('/tracker/students/:grade', protect, financeOnly, async (req, res) => {
     try {
+        const { grade } = req.params;
+        const schoolId = req.user.schoolId;
+        const School = require('../models/School');
         const User = require('../models/User');
-        const students = await User.find({
-            schoolId: req.user.schoolId,
-            grade: req.params.grade,
-            role: 'student'
-        }).select('name enrollmentNo grade admissionNo phone'); // admissionNo add kiya agar alag hai toh
-        res.json(students);
+        const school = await School.findById(schoolId).select('activeSession');
+        
+        const targetSession = req.query.session || school?.activeSession || '2026-2027';
+        const isPastSession = targetSession !== school?.activeSession;
+
+        let mappedStudents = [];
+
+        if (!isPastSession) {
+            // 🔥 CURRENT SESSION: Fetch all students currently sitting in this class 🔥
+            const students = await User.find({
+                grade, schoolId, role: 'student', status: { $nin: ['Left', 'Alumni'] }
+            }).select('name enrollmentNo grade admissionNo phone role status');
+            mappedStudents = students.map(s => s.toObject());
+        } else {
+            // 🔥 PAST SESSION: Fetch students who paid fees in this class from Ledger 🔥
+            const sessionFilter = targetSession === '2026-2027' 
+                ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+                : { session: targetSession };
+
+            const studentIdsWithPayments = await Fee.aggregate([
+                { $match: { schoolId, ...sessionFilter } },
+                {
+                    $lookup: {
+                        from: 'users', localField: 'student', foreignField: '_id', as: 'studentInfo'
+                    }
+                },
+                { $unwind: { path: '$studentInfo', preserveNullAndEmptyArrays: true } },
+                {
+                    $match: {
+                        $expr: { $eq: [{ $ifNull: ['$recordedGrade', '$studentInfo.grade'] }, grade] }
+                    }
+                },
+                { $group: { _id: '$student' } } 
+            ]);
+
+            const distinctStudentIds = studentIdsWithPayments.map(item => item._id);
+
+            const students = await User.find({
+                _id: { $in: distinctStudentIds },
+                schoolId
+            }).select('name enrollmentNo grade admissionNo phone role status');
+            
+            mappedStudents = students.map(s => {
+                const doc = s.toObject();
+                doc.grade = grade; // Override memory grade to matched past grade
+                return doc;
+            });
+        }
+
+        res.json(mappedStudents);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching students' });
     }
@@ -724,13 +889,71 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
         if (monthsElapsed > 12) monthsElapsed = 12; // Cap at 12 months per session
 
-        const totalTargetMonthly = monthlyUnit * monthsElapsed;
-        const totalPaidAll = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+        // 🔥 THE MASTERPLAN: CARRY FORWARD LOGIC FOR ADMIN 🔥
+        let carryForwardDues = 0;
+        let carryForwardAdvance = 0;
 
-        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidAll);
-        let surplusAfterOneTime = Math.max(0, totalPaidAll - oneTimeFixed);
-        let remainingMonthly = Math.max(0, totalTargetMonthly - surplusAfterOneTime);
-        let finalAdvance = Math.max(0, surplusAfterOneTime - totalTargetMonthly);
+        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+            const legacyPayments = await Fee.find({
+                student: studentId, schoolId, status: 'Verified',
+                $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
+            });
+            const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+            
+            let prevClassMatch = classMatch;
+            let altPrevClassMatch = rawGrade;
+            const numMatch = rawGrade.match(/\d+/);
+            if (numMatch && parseInt(numMatch[0]) > 1) {
+                const prevNum = parseInt(numMatch[0]) - 1;
+                prevClassMatch = `Class ${prevNum}`;
+                altPrevClassMatch = rawGrade.replace(numMatch[0], prevNum); 
+            }
+
+            const legacyStructure = await FeeStructure.findOne({ 
+                schoolId, 
+                $or: [{ className: prevClassMatch }, { className: altPrevClassMatch }] 
+            });
+
+            if (legacyStructure && legacyStructure.fees) {
+                let legacyMonthly = 0, legacyOneTime = 0;
+                Object.keys(legacyStructure.fees).forEach(k => {
+                    if (legacyStructure.fees[k] && !legacyStructure.fees[k].isNone && legacyStructure.fees[k].amount > 0) {
+                        if (legacyStructure.fees[k].billingCycle === 'monthly') legacyMonthly += legacyStructure.fees[k].amount;
+                        else legacyOneTime += legacyStructure.fees[k].amount;
+                    }
+                });
+                
+                const today = new Date();
+                const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
+                
+                // 🔥 THE FIX: YAHAN '+ 1' LAGA DIYA HAI TAARI 4 KI JAGAH 3 MAHINE NA GINE 🔥
+                let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
+                if (legacyMonths > 12) legacyMonths = 12;
+                if (joinDate > legacyEndDate) legacyMonths = 0;
+
+                const legacyExpected = (legacyMonthly * legacyMonths) + legacyOneTime;
+                const legacyNet = legacyExpected - totalLegacyPaid;
+
+                if (legacyNet > 0) {
+                    carryForwardDues = legacyNet;
+                    structureDetails.monthly.unshift({ label: 'PREVIOUS SESSION DUES', amount: legacyNet }); 
+                } else if (legacyNet < 0) {
+                    carryForwardAdvance = Math.abs(legacyNet);
+                }
+            }
+        }
+
+        // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
+        const totalTargetMonthly = (monthlyUnit * monthsElapsed) + carryForwardDues;
+        const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidCurrentSession);
+        let surplusAfterOneTime = Math.max(0, totalPaidCurrentSession - oneTimeFixed);
+        
+        let totalAvailableForMonthly = surplusAfterOneTime + carryForwardAdvance;
+
+        let remainingMonthly = Math.max(0, totalTargetMonthly - totalAvailableForMonthly);
+        let finalAdvance = Math.max(0, totalAvailableForMonthly - totalTargetMonthly);
 
         const groupedHistory = verifiedPayments.reduce((acc, pay) => {
             const key = `${pay.month} ${pay.year}`;
@@ -740,7 +963,6 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
             if (rawRemarks.toUpperCase().includes("PURPOSE:")) {
                 displayCategory = rawRemarks.split(":")[1].trim();
             }
-
             acc[key].push({
                 id: pay._id, amount: pay.amountPaid, category: displayCategory.toUpperCase(), date: pay.date, mode: pay.paymentMode
             });
@@ -765,6 +987,7 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
             structureDetails,
             history: groupedHistory,
             targetSession, // Frontend ke liye
+            isActiveSession: !isPastSession, // 🔥 YEH LINE ADD KAR DE 🔥
             status: (remainingMonthly + remainingOneTime) <= 0 ? 'COMPLETED' : 'PENDING'
         });
 

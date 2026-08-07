@@ -336,7 +336,12 @@ const StudentFees = () => {
 
                         {/* --- SMART BUTTON LOGIC --- */}
                         <div className="relative z-10 pt-2">
-                            {summary.pendingSignal ? (
+                            {summary.isActiveSession === false ? (
+                                /* 🔥 THE LOCK: Past session ke liye payments block kar do 🔥 */
+                                <div className="w-full py-4 bg-slate-100 text-slate-400 rounded-[2rem] text-[13px] font-black flex items-center justify-center gap-2 border border-slate-200 uppercase tracking-widest">
+                                    <AlertCircle size={18} /> Payments locked for archived sessions
+                                </div>
+                            ) : summary.pendingSignal ? (
                                 /* PENDING BUTTON (Jab screenshot bhej diya ho) */
                                 <button
                                     onClick={() => setShowPendingModal(true)}

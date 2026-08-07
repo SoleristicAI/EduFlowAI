@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart'; // 🔥 Date formatting ke liye required
 import '../../../core/network/api_client.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../shared/widgets/custom_loader.dart';
@@ -28,7 +29,8 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
     if (!isRefresh && mounted) setState(() => isLoading = true);
 
     try {
-      final res = await ApiClient.dio.get('/users/finance/receipt/${widget.receiptId}');
+      // 🔥 FIX 1: API Route '/fees/receipt/' hota hai, '/users/finance/' nahi 🔥
+      final res = await ApiClient.dio.get('/fees/receipt/${widget.receiptId}');
       if (mounted) setState(() => receipt = res.data);
     } catch (e) {
       _showToast("Receipt load error", isError: true);
@@ -81,6 +83,16 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
     String shortId = widget.receiptId.length > 8 
         ? widget.receiptId.substring(widget.receiptId.length - 8).toUpperCase() 
         : widget.receiptId.toUpperCase();
+
+    // 🔥 FIX 2: Real date parsing logic 🔥
+    String formattedDate = "N/A";
+    if (receipt!['date'] != null) {
+      try {
+        formattedDate = DateFormat('dd/MM/yyyy').format(DateTime.parse(receipt!['date']));
+      } catch (e) {
+        formattedDate = "Invalid Date";
+      }
+    }
 
     return PopScope(
       canPop: false,
@@ -157,7 +169,8 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                           child: Column(
                             children: [
                               Text(
-                                receipt!['displaySchoolName']?.toString().toUpperCase() ?? "SCHOOL NAME", 
+                                // 🔥 FIX 3: Real Database Field Mapping 🔥
+                                receipt!['schoolId']?['schoolName']?.toString().toUpperCase() ?? "EDUFLOWAI INSTITUTION", 
                                 textAlign: TextAlign.center,
                                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: textColorPrimary, letterSpacing: -0.5)
                               ),
@@ -167,7 +180,13 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                                 children: [
                                   const Icon(Icons.location_on, size: 12, color: Color(0xFF42A5F5)),
                                   const SizedBox(width: 4),
-                                  Expanded(child: Text(receipt!['schoolId']?['address'] ?? "N/A", textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textColorPrimary, letterSpacing: 0.5))),
+                                  Expanded(
+                                    child: Text(
+                                      receipt!['schoolId']?['schoolAddress'] ?? "Digital Campus", 
+                                      textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, 
+                                      style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textColorPrimary, letterSpacing: 0.5)
+                                    )
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 4),
@@ -176,7 +195,10 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                                 children: [
                                   Icon(Icons.phone, size: 12, color: textColorPrimary),
                                   const SizedBox(width: 4),
-                                  Text("CONTACT: ${receipt!['displayContact'] ?? "N/A"}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textColorPrimary, letterSpacing: 0.5)),
+                                  Text(
+                                    "CONTACT: ${receipt!['schoolId']?['schoolContact'] ?? "N/A"}", 
+                                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textColorPrimary, letterSpacing: 0.5)
+                                  ),
                                 ],
                               ),
                             ],
@@ -211,7 +233,10 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                     decoration: BoxDecoration(color: subtleBg, borderRadius: BorderRadius.circular(12), border: Border.all(color: borderColor)),
-                                    child: Text(receipt!['formattedIssuedDate'] ?? "N/A", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textColorPrimary, fontFamily: 'monospace')),
+                                    child: Text(
+                                      formattedDate, // 🔥 FIX: Updated mapped variable
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textColorPrimary, fontFamily: 'monospace')
+                                    ),
                                   )
                                 ],
                               )
@@ -249,6 +274,7 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                                         children: [
                                           Text("CLASS / GRADE", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textColorSecondary, letterSpacing: 1.5)),
                                           const SizedBox(height: 4),
+                                          // 🔥 Yahan 9-A, 10-B apne aap snapshot se aayega!
                                           Text(receipt!['student']?['grade']?.toString().toUpperCase() ?? "N/A", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textColorPrimary)),
                                         ],
                                       ),
@@ -291,7 +317,11 @@ class _FinanceFeeReceiptState extends ConsumerState<FinanceFeeReceipt> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(receipt!['displayPurpose']?.toString().toUpperCase() ?? "FEE PAYMENT", style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
+                                        Text(
+                                          // 🔥 FIX 4: Real fee purpose/category mapping 🔥
+                                          receipt!['feeCategory']?.toString().toUpperCase() ?? "GENERAL FEES", 
+                                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)
+                                        ),
                                         const SizedBox(height: 6),
                                         Text("Billing cycle: ${receipt!['month'] ?? ''} ${receipt!['year'] ?? ''}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColorSecondary)),
                                       ],

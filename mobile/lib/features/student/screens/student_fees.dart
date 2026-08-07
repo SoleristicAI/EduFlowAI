@@ -1021,9 +1021,29 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
                                   ],
                                 ),
                                 const SizedBox(height: 20),
-                                summary?['pendingSignal'] != null
+                                // --- SMART BUTTON LOGIC ---
+                                summary?['isActiveSession'] == false 
+                                ? Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 18),
+                                    decoration: BoxDecoration(
+                                        color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(30),
+                                        border: Border.all(color: borderColor)
+                                    ),
+                                    child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                            Icon(Icons.lock, color: Colors.grey, size: 16),
+                                            SizedBox(width: 8),
+                                            Text("PAYMENTS LOCKED FOR PAST SESSIONS", 
+                                                style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.grey, letterSpacing: 1)),
+                                        ],
+                                    ),
+                                  )
+                                : summary?['pendingSignal'] != null
                                     ? GestureDetector(
-                                        onTap: () => _showPendingModal(isDarkMode), // 🔥 Pass theme state
+                                        onTap: () => _showPendingModal(isDarkMode), 
                                         child: Container(
                                           width: double.infinity,
                                           padding: const EdgeInsets.symmetric(
@@ -1061,6 +1081,7 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
                                         ),
                                       )
                                     : GestureDetector(
+                                        // ... BAQI TERA RESOLVE TOTAL BALANCE NOW WALA BUTTON SAME RAHEGA ...
                                         onTap: () => context.push(
                                             '/student/checkout'), // Next part ka route
                                         child: Container(
