@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT
 import '../../../core/theme/theme_provider.dart'; // 🔥 APNA THEME PROVIDER
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/network/api_client.dart';
 
 // 🔥 ConsumerStatefulWidget for Global Theme
 class StudentHome extends ConsumerStatefulWidget {
@@ -18,6 +20,41 @@ class StudentHome extends ConsumerStatefulWidget {
 
 class _StudentHomeState extends ConsumerState<StudentHome> {
   bool isExpanded = false;
+  
+  // 👇🔥 1. NAYA STATE UNREAD COUNT KE LIYE 🔥👇
+  int unreadERPCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUnreadNoticesCount(); // App khulte hi check karega
+  }
+
+  // 👇🔥 2. UNREAD NOTICES COUNT NIKALNE WALA METHOD 🔥👇
+  Future<void> _fetchUnreadNoticesCount() async {
+    try {
+      final response = await ApiClient.dio.get('/fee-notices/view');
+      final fetchedNotices = (response.data['notices'] as List<dynamic>?) ?? [];
+      
+      if (fetchedNotices.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        // Mobile wale route mein humne SharedPreferences mein 'read_erp_notices_mobile' save kiya tha
+        List<String> readIds = prefs.getStringList('read_erp_notices_mobile') ?? [];
+        
+        // Jo notice IDs read list mein nahi hain, unko count kar lo
+        int unreadCount = fetchedNotices.where((n) => !readIds.contains(n['_id'].toString())).length;
+        
+        if (mounted) {
+          setState(() {
+            unreadERPCount = unreadCount;
+          });
+        }
+      }
+    } catch (e) {
+      print("Unread count fetch error: $e");
+    }
+  }
+  
 
   // --- DATA MODELS ---
   final topRowModules = [
@@ -552,24 +589,66 @@ class _StudentHomeState extends ConsumerState<StudentHome> {
     );
   }
 
-  Widget _buildSubModuleItem(Map<String, dynamic> sm, Color textColor, Color bg, Color border, Color iconColor) {
+ Widget _buildSubModuleItem(Map<String, dynamic> sm, Color textColor, Color bg, Color border, Color iconColor) {
     String formattedTitle = (sm['title'] as String).replaceFirst(' ', '\n');
+    
+    // 🔥 CHECK KAR RAHE HAIN KI YE ERP NOTICES WALA ITEM HAI YA NAHI 🔥
+    bool isErpNotices = sm['title'] == 'ERP Notices';
 
     return GestureDetector(
-      onTap: () => context.go(sm['path']),
+      onTap: () async {
+        // Jab student ERP Notices par click karke andar jayega, tab wapas aate hi count 0 karne ke liye state update kar denge
+        await context.push(sm['path']);
+        if (isErpNotices) {
+          _fetchUnreadNoticesCount(); // Wapas aate hi badge gayab karne ke liye dubara count fetch hoga
+        }
+      },
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 400),
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: border),
-            ),
-            child: Icon(sm['icon'], color: iconColor, size: 20),
+          Stack( // 🔥 Stack lagaya hai taaki icon ke upar badge chipk sake
+            clipBehavior: Clip.none,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: bg,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: border),
+                ),
+                child: Icon(sm['icon'], color: iconColor, size: 20),
+              ),
+              
+              // 👇🔥 RED BADGE UI 🔥👇
+              if (isErpNotices && unreadERPCount > 0)
+                Positioned(
+                  top: -4,
+                  right: -4,
+                  child: Container(
+                    padding: const EdgeInsets.all(5),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child: Text(
+                      '$unreadERPCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1, 1), end: const Offset(1.15, 1.15), duration: 600.ms),
+                ),
+              // 👆👆👆👆👆👆👆👆👆👆
+            ],
           ),
           const SizedBox(height: 4),
           Expanded(

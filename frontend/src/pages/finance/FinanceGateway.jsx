@@ -5,7 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
 
-const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+// --- DYNAMIC DUAL-ENVIRONMENT BASE URL FIX ---
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+
+const BASE_URL = rawApiUrl 
+    ? rawApiUrl.replace('/api', '') 
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000' 
+        : 'https://eduflowai-3a47.onrender.com');
 
 const FinanceGateway = () => {
     const [settings, setSettings] = useState({ upiId: '', merchantName: '' });
@@ -122,10 +129,12 @@ const FinanceGateway = () => {
                             {/* Image Section */}
                             <div className="w-full md:w-2/3 bg-slate-50 flex items-center justify-center p-6">
                                 <img
-                                    src={selectedSignal.paymentScreenshot.startsWith('http') ? selectedSignal.paymentScreenshot : `${BASE_URL}${selectedSignal.paymentScreenshot}`}
+                                    src={selectedSignal?.paymentScreenshot?.startsWith('http') || selectedSignal?.paymentScreenshot?.startsWith('data:') ? selectedSignal.paymentScreenshot : `${BASE_URL}${selectedSignal?.paymentScreenshot}`}
                                     className="max-w-full max-h-full object-contain rounded-3xl shadow-lg border border-slate-200 cursor-zoom-in hover:scale-[1.02] transition-transform"
                                     alt="Payment evidence"
                                     onClick={() => setIsZoomed(true)}
+                                    // 👇 ERROR LOG 👇
+                                    onError={(e) => console.error("❌ IMAGE LOAD FAILED! URL Tries to load:", e.target.src)}
                                 />
                             </div>
 
@@ -486,11 +495,14 @@ const FinanceGateway = () => {
                                 <X size={29} className="bg-white/10 p-1 rounded-full" />
                             </button>
 
-                            <img
-                                src={selectedSignal.paymentScreenshot.startsWith('http') ? selectedSignal.paymentScreenshot : `${BASE_URL}${selectedSignal.paymentScreenshot}`}
+                           <img
+                                src={selectedSignal?.paymentScreenshot?.startsWith('http') || selectedSignal?.paymentScreenshot?.startsWith('data:') ? selectedSignal.paymentScreenshot : `${BASE_URL}${selectedSignal?.paymentScreenshot}`}
                                 className="max-w-[95vw] max-h-[85vh] object-contain rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border-4 border-white/10"
                                 alt="Full View"
+                                // 👇 ERROR LOG 👇
+                                onError={(e) => console.error("❌ ZOOM IMAGE FAILED! URL:", e.target.src)}
                             />
+
                             <p className="text-center text-white/40 font-bold italic mt-4 uppercase text-[11px] tracking-[0.3em]">
                                 Neural View Protocol Active
                             </p>

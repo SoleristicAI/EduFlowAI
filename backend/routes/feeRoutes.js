@@ -142,33 +142,35 @@ router.delete('/settings/gateway', protect, financeOnly, async (req, res) => {
     }
 });
 
-// --- DAY 130: CAPTURE WITH SCREENSHOT (STUDENT SIDE) ---
+// --- DAY 130 & 279: CAPTURE WITH SCREENSHOT (WITH STRICT SESSION TAGGING) ---
 router.post('/capture-with-screenshot', protect, upload.single('screenshot'), async (req, res) => {
     try {
         const { amount } = req.body;
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
 
-        
-
-        // BUG 1 FIX: Sabse pehle check karo ki photo aayi bhi hai ya nahi
-        // Agar photo nahi aayi aur hum req.file.filename use karenge toh server crash ho jayega
         if (!req.file) {
             return res.status(400).json({ message: 'Screenshot upload failed. Signal Lost! 🛡️' });
         }
 
-        // BUG 2 FIX: Tune 'User.findById' likha hai lekin 'User' model require nahi kiya hoga upar
-        // Aur sach bolun toh yahan User fetch karne ki zaroorat hi nahi hai, kyunki tere pass studentId pehle se hai.
+        // 🔥 CURRENT SESSION NIKAL RAHE HAIN 🔥
+        const School = require('../models/School');
+        const schoolData = await School.findById(schoolId).select('activeSession');
 
         await Fee.create({
             schoolId,
             student: studentId,
             recordedGrade: req.user.grade,
             recordedEnrollmentNo: req.user.enrollmentNo,
+
+            // 👇🔥 YE RHA TERA FIX 🔥👇
+            session: schoolData.activeSession || '2027-2028', 
+            // 👆👆👆👆👆👆👆👆👆👆👆👆👆
+
             amountPaid: Number(amount) || 0,
             paymentScreenshot: `/uploads/${req.file.filename}`,
             paymentMode: 'Online',
-            date: new Date(), // Date field add karo taaki calculation sahi rahe
+            date: new Date(), 
             month: new Date().toLocaleString('default', { month: 'long' }),
             year: new Date().getFullYear(),
             remarks: `ONLINE PAYMENT (INCLUDES PENALTY/LATE FEES)`,
@@ -179,7 +181,6 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
         res.json({ success: true, message: "Neural Signal Captured! 📡" });
 
     } catch (error) {
-        // Terminal mein error dekhne ke liye (debugging)
         console.error("CAPTURE_ERROR:", error);
         res.status(500).json({ message: 'Signal Interrupted: ' + error.message });
     }
@@ -391,7 +392,7 @@ router.get('/student-summary', protect, async (req, res) => {
             });
         }
 
-       // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
+      // --- ⏳ TIME-FREEZE CALCULATION LOGIC ⏳ ---
         const joinDate = new Date(student.createdAt);
         let calculationEndDate = new Date(); 
 
@@ -399,7 +400,29 @@ router.get('/student-summary', protect, async (req, res) => {
             calculationEndDate = new Date(schoolData.sessionStartDate); 
         }
 
-        let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
+        let effectiveStartDate = joinDate;
+        let isLegacyStudent = false; // 🔥 Naya jadoo: Bacha naya hai ya purana?
+
+        if (!isPastSession && schoolData.sessionStartDate) {
+            const sStart = new Date(schoolData.sessionStartDate);
+            if (joinDate < sStart) {
+                effectiveStartDate = sStart;
+                isLegacyStudent = true; // Bacha pichle saal se aaya hai!
+            }
+        }
+
+        let monthsElapsed = 0;
+        if (calculationEndDate >= effectiveStartDate) {
+            monthsElapsed = (calculationEndDate.getFullYear() - effectiveStartDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - effectiveStartDate.getMonth());
+            
+            // 🔥 THE DOUBLE-BILLING FIX 🔥
+            // Naye bache ko join karte hi 1st month ki fee lagni chahiye (+1).
+            // Lekin purane bache ki is mahine (August) ki fee ALREADY pichle session (Legacy) mein calculate ho chuki hai!
+            if (!isLegacyStudent) {
+                monthsElapsed += 1; 
+            }
+        }
+        if (monthsElapsed < 0) monthsElapsed = 0;
         if (monthsElapsed > 12) monthsElapsed = 12; 
 
         // 🔥 THE MASTERPLAN: CARRY FORWARD LOGIC 🔥
@@ -439,7 +462,6 @@ router.get('/student-summary', protect, async (req, res) => {
                 const today = new Date();
                 const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
                 
-                // 🔥 THE FIX: YAHAN '+ 1' MISSING THA JISKI WAJAH SE 4 KI JAGAH 3 MAHINE CALCULATE HO RAHE THE! 🔥
                 let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
                 if (legacyMonths > 12) legacyMonths = 12;
                 if (joinDate > legacyEndDate) legacyMonths = 0;
@@ -451,19 +473,24 @@ router.get('/student-summary', protect, async (req, res) => {
                     carryForwardDues = legacyNet;
                     structureDetails.monthly.unshift({ label: 'PREVIOUS SESSION DUES', amount: legacyNet }); 
                 } else if (legacyNet < 0) {
-                    carryForwardAdvance = Math.abs(legacyNet);
+                    carryForwardAdvance = Math.abs(legacyNet); 
                 }
             }
         }
 
         // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
+        // Arjun ke liye: (3600 * 0) + 1200 dues = 1200 EXACT!
         const totalTargetMonthly = (monthlyUnit * monthsElapsed) + carryForwardDues;
         const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
-        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidCurrentSession);
-        let surplusAfterOneTime = Math.max(0, totalPaidCurrentSession - oneTimeFixed);
+        // Bikram (VIP) ka extra paisa pehle One-Time fees ko kam karega
+        const totalCombinedPayment = totalPaidCurrentSession + carryForwardAdvance;
+
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalCombinedPayment);
+        let surplusAfterOneTime = Math.max(0, totalCombinedPayment - oneTimeFixed);
         
-        let totalAvailableForMonthly = surplusAfterOneTime + carryForwardAdvance;
+        // Bacha hua paisa Monthly ko kam karega
+        let totalAvailableForMonthly = surplusAfterOneTime;
 
         let remainingMonthly = Math.max(0, totalTargetMonthly - totalAvailableForMonthly);
         let finalAdvance = Math.max(0, totalAvailableForMonthly - totalTargetMonthly);
@@ -551,12 +578,16 @@ router.get('/receipt/:paymentId', protect, async (req, res) => {
     }
 });
 
-// --- DAY 111: FINALIZE ONLINE PAYMENT (Point 9) ---
+// --- DAY 111 & 279: FINALIZE ONLINE PAYMENT (WITH STRICT SESSION TAGGING) ---
 router.post('/finalize-online-payment', protect, async (req, res) => {
     try {
         const { amount, method, month, year } = req.body;
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
+
+        // 🔥 CURRENT SESSION NIKAL RAHE HAIN 🔥
+        const School = require('../models/School');
+        const schoolData = await School.findById(schoolId).select('activeSession');
 
         // 1. Create Real Fee Record
         const newFee = await Fee.create({
@@ -565,6 +596,11 @@ router.post('/finalize-online-payment', protect, async (req, res) => {
             amountPaid: amount,
             recordedGrade: req.user.grade,
             recordedEnrollmentNo: req.user.enrollmentNo,
+            
+            // 👇🔥 YE RHA TERA SABSE BADA FIX 🔥👇
+            session: schoolData.activeSession || '2027-2028', 
+            // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+
             month: month || new Date().toLocaleString('default', { month: 'long' }),
             year: year || new Date().getFullYear(),
             paymentMode: method || 'UPI',
@@ -886,7 +922,29 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
 
         const currentMonthName = calculationEndDate.toLocaleString('default', { month: 'long' });
 
-        let monthsElapsed = Math.max(1, (calculationEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - joinDate.getMonth()) + 1);
+        // 🔥 FIX 1: "Double Billing" roko (Arjun ka zero month gino agar wo pichle saal se hai) 🔥
+        let effectiveStartDate = joinDate;
+        let isLegacyStudent = false; 
+
+        if (!isPastSession && schoolData.sessionStartDate) {
+            const sStart = new Date(schoolData.sessionStartDate);
+            if (joinDate < sStart) {
+                effectiveStartDate = sStart;
+                isLegacyStudent = true; // Bacha pichle saal se aaya hai!
+            }
+        }
+
+        let monthsElapsed = 0;
+        if (calculationEndDate >= effectiveStartDate) {
+            monthsElapsed = (calculationEndDate.getFullYear() - effectiveStartDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - effectiveStartDate.getMonth());
+            
+            // Naye bache ko join karte hi pehle mahine ki fee lagegi
+            // Lekin purane bache ki overlap month fee pichle session mein lag chuki hai
+            if (!isLegacyStudent) {
+                monthsElapsed += 1; 
+            }
+        }
+        if (monthsElapsed < 0) monthsElapsed = 0;
         if (monthsElapsed > 12) monthsElapsed = 12; // Cap at 12 months per session
 
         // 🔥 THE MASTERPLAN: CARRY FORWARD LOGIC FOR ADMIN 🔥
@@ -926,7 +984,6 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
                 const today = new Date();
                 const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
                 
-                // 🔥 THE FIX: YAHAN '+ 1' LAGA DIYA HAI TAARI 4 KI JAGAH 3 MAHINE NA GINE 🔥
                 let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
                 if (legacyMonths > 12) legacyMonths = 12;
                 if (joinDate > legacyEndDate) legacyMonths = 0;
@@ -944,13 +1001,19 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         }
 
         // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
+        
+        // 1. Purana Dues monthly bill mein add hoga
         const totalTargetMonthly = (monthlyUnit * monthsElapsed) + carryForwardDues;
         const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
 
-        let remainingOneTime = Math.max(0, oneTimeFixed - totalPaidCurrentSession);
-        let surplusAfterOneTime = Math.max(0, totalPaidCurrentSession - oneTimeFixed);
+        // 2. Purana Advance One-Time bill ko discount karega
+        const totalCombinedPayment = totalPaidCurrentSession + carryForwardAdvance;
+
+        let remainingOneTime = Math.max(0, oneTimeFixed - totalCombinedPayment);
+        let surplusAfterOneTime = Math.max(0, totalCombinedPayment - oneTimeFixed);
         
-        let totalAvailableForMonthly = surplusAfterOneTime + carryForwardAdvance;
+        // Agar uske baad bhi advance bacha hai, tabhi monthly bill kam hoga
+        let totalAvailableForMonthly = surplusAfterOneTime;
 
         let remainingMonthly = Math.max(0, totalTargetMonthly - totalAvailableForMonthly);
         let finalAdvance = Math.max(0, totalAvailableForMonthly - totalTargetMonthly);

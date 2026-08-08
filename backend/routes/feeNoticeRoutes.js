@@ -37,58 +37,147 @@ router.get('/view', protect, async (req, res) => {
 });
 
 // =========================================================================
-// 🔥 FIXED: FETCH CLASSES HAVING STUDENTS WITH PENDING FEES (FRESH PIPELINE)
+// 🔥 FIXED: FETCH CLASSES HAVING STUDENTS WITH PENDING FEES (FAANG CARRY-FORWARD PIPELINE)
 // =========================================================================
 router.get('/pending-by-classes', protect, financeOnly, async (req, res) => {
     try {
         const User = require('../models/User');
         const FeeStructure = require('../models/FeeStructure');
         const Fee = require('../models/Fee');
+        const School = require('../models/School'); // 🔥 School data zaroori hai time freeze ke liye
 
         const schoolId = req.user.schoolId;
-        const today = new Date();
+        const schoolData = await School.findById(schoolId);
+        const targetSession = schoolData?.activeSession || '2026-2027';
 
-        // 1. Iss school ke saare active students fetch karo
-        const students = await User.find({ schoolId, role: 'student' }).select('name grade createdAt');
+        // 1. Iss school ke saare active students fetch karo (Alumni/Left hata do)
+        const students = await User.find({ 
+            schoolId, 
+            role: 'student',
+            status: { $nin: ['Left', 'Alumni'] }
+        }).select('name grade createdAt');
 
         let classLedgerMap = {};
 
         for (let student of students) {
             if (!student.grade) continue;
 
-            const numericPart = student.grade.match(/\d+/);
-            const classMatch = numericPart ? `Class ${numericPart[0]}` : student.grade;
+            const rawGrade = student.grade;
+            const numericPart = rawGrade.match(/\d+/);
+            const classMatch = numericPart ? `Class ${numericPart[0]}` : rawGrade;
             
             const structure = await FeeStructure.findOne({ schoolId, className: classMatch });
-            if (!structure || !structure.fees) continue;
+            
+            let monthlyUnit = 0;
+            let oneTimeFixed = 0;
 
-            // 2. Logic: Calculate Monthly vs One-Time Total
-            let monthlyRate = 0;
-            let oneTimeRate = 0;
+            if (structure && structure.fees) {
+                Object.keys(structure.fees).forEach(k => {
+                    const feeItem = structure.fees[k];
+                    if (feeItem && !feeItem.isNone && feeItem.amount > 0) {
+                        if (feeItem.billingCycle === 'monthly') monthlyUnit += Number(feeItem.amount);
+                        else oneTimeFixed += Number(feeItem.amount);
+                    }
+                });
+            }
 
-            Object.keys(structure.fees).forEach(k => {
-                const feeItem = structure.fees[k];
-                if (feeItem && !feeItem.isNone && feeItem.amount > 0) {
-                    if (feeItem.billingCycle === 'monthly') {
-                        monthlyRate += Number(feeItem.amount);
-                    } else {
-                        oneTimeRate += Number(feeItem.amount);
+            // --- ⏳ TIME-FREEZE & CARRY FORWARD LOGIC (Same as Student Summary) ⏳ ---
+            const joinDate = new Date(student.createdAt);
+            let calculationEndDate = new Date(); 
+
+            let effectiveStartDate = joinDate;
+            let isLegacyStudent = false;
+
+            if (schoolData.sessionStartDate) {
+                const sStart = new Date(schoolData.sessionStartDate);
+                if (joinDate < sStart) {
+                    effectiveStartDate = sStart;
+                    isLegacyStudent = true; // Pichle saal ka bacha
+                }
+            }
+
+            let monthsElapsed = 0;
+            if (calculationEndDate >= effectiveStartDate) {
+                monthsElapsed = (calculationEndDate.getFullYear() - effectiveStartDate.getFullYear()) * 12 + (calculationEndDate.getMonth() - effectiveStartDate.getMonth());
+                if (!isLegacyStudent) {
+                    monthsElapsed += 1; 
+                }
+            }
+            if (monthsElapsed < 0) monthsElapsed = 0;
+            if (monthsElapsed > 12) monthsElapsed = 12;
+
+            let carryForwardDues = 0;
+            let carryForwardAdvance = 0;
+
+            if (schoolData.activeSession !== '2026-2027') {
+                const legacyPayments = await Fee.find({
+                    student: student._id, schoolId, status: 'Verified',
+                    $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
+                });
+                const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+                
+                let prevClassMatch = classMatch;
+                let altPrevClassMatch = rawGrade;
+                if (numericPart && parseInt(numericPart[0]) > 1) {
+                    const prevNum = parseInt(numericPart[0]) - 1;
+                    prevClassMatch = `Class ${prevNum}`;
+                    altPrevClassMatch = rawGrade.replace(numericPart[0], prevNum); 
+                }
+
+                const legacyStructure = await FeeStructure.findOne({ 
+                    schoolId, 
+                    $or: [{ className: prevClassMatch }, { className: altPrevClassMatch }] 
+                });
+
+                if (legacyStructure && legacyStructure.fees) {
+                    let legacyMonthly = 0, legacyOneTime = 0;
+                    Object.keys(legacyStructure.fees).forEach(k => {
+                        if (legacyStructure.fees[k] && !legacyStructure.fees[k].isNone && legacyStructure.fees[k].amount > 0) {
+                            if (legacyStructure.fees[k].billingCycle === 'monthly') legacyMonthly += legacyStructure.fees[k].amount;
+                            else legacyOneTime += legacyStructure.fees[k].amount;
+                        }
+                    });
+                    
+                    const today = new Date();
+                    const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
+                    
+                    let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
+                    if (legacyMonths > 12) legacyMonths = 12;
+                    if (joinDate > legacyEndDate) legacyMonths = 0;
+
+                    const legacyExpected = (legacyMonthly * legacyMonths) + legacyOneTime;
+                    const legacyNet = legacyExpected - totalLegacyPaid;
+
+                    if (legacyNet > 0) {
+                        carryForwardDues = legacyNet;
+                    } else if (legacyNet < 0) {
+                        carryForwardAdvance = Math.abs(legacyNet);
                     }
                 }
+            }
+
+            // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
+            const sessionFilter = targetSession === '2026-2027' 
+                ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+                : { session: targetSession };
+
+            const verifiedPayments = await Fee.find({
+                student: student._id, schoolId, status: 'Verified', ...sessionFilter
             });
 
-            // Duration Math
-            const joinDate = new Date(student.createdAt);
-            const monthsElapsed = Math.max(1, (today.getFullYear() - joinDate.getFullYear()) * 12 + (today.getMonth() - joinDate.getMonth()) + 1);
+            const totalTargetMonthly = (monthlyUnit * monthsElapsed) + carryForwardDues;
+            const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+            const totalCombinedPayment = totalPaidCurrentSession + carryForwardAdvance;
+
+            let remainingOneTime = Math.max(0, oneTimeFixed - totalCombinedPayment);
+            let surplusAfterOneTime = Math.max(0, totalCombinedPayment - oneTimeFixed);
             
-            const totalExpected = (monthlyRate * monthsElapsed) + oneTimeRate;
-
-            // 3. Paid Math (Strictly checking cycle tag agar tune implementation kiya hai, 
-            // ya simply total paid)
-            const payments = await Fee.find({ student: student._id, schoolId, status: 'Verified' });
-            const totalPaid = payments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
-
-            const netOutstanding = totalExpected - totalPaid;
+            let totalAvailableForMonthly = surplusAfterOneTime;
+            let remainingMonthly = Math.max(0, totalTargetMonthly - totalAvailableForMonthly);
+            
+            // 🎯 FINAL NET OUTSTANDING (ONE-TIME + MONTHLY)
+            const netOutstanding = remainingMonthly + remainingOneTime;
 
             if (netOutstanding > 0) {
                 if (!classLedgerMap[student.grade]) {
@@ -96,11 +185,12 @@ router.get('/pending-by-classes', protect, financeOnly, async (req, res) => {
                 }
                 classLedgerMap[student.grade].push({
                     name: student.name,
-                    totalPending: netOutstanding
+                    totalPending: netOutstanding // Frontend ko exact balance bhej diya!
                 });
             }
         }
 
+        // Object map to sorted array
         const formatOutput = Object.keys(classLedgerMap).map(gradeName => ({
             className: gradeName,
             students: classLedgerMap[gradeName]

@@ -18,6 +18,34 @@ const StudentHome = ({ user, searchQuery }) => {
     y: window.innerHeight - 180
   });
 
+  const [unreadERP, setUnreadERP] = useState(0);
+
+useEffect(() => {
+    const fetchUnreadNotices = async () => {
+      if (!user?.enrollmentNo) return;
+      try {
+        const { data } = await API.get('/fee-notices/view'); 
+        if (data && data.notices) {
+          const readNotices = JSON.parse(localStorage.getItem(`read_erp_notices_${user?.enrollmentNo}`) || "[]");
+          const newNotices = data.notices.filter(n => !readNotices.includes(n._id));
+          setUnreadERP(newNotices.length);
+        }
+      } catch (err) { console.log("Notice fetch error", err); }
+    };
+    
+    // Page load hone pe fetch karo
+    fetchUnreadNotices();
+
+    // Jab notice page se back dabake wapas aaye, tab dobara check karo aur badge hata do
+    const handleFocus = () => {
+        fetchUnreadNotices();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+
+  }, [user]);
+
   // const [dragging, setDragging] = useState(false);
 
   // --- SCREEN BOUNDARY FIX ---
@@ -264,11 +292,18 @@ const StudentHome = ({ user, searchQuery }) => {
         ) : (
           <div className="grid grid-cols-4 lg:grid-cols-6 gap-y-4 gap-x-4">
 
-            {filteredSub.map((sm, i) => (
-              <Link to={sm.path} key={i} className="flex flex-col items-center gap-4 group">
+           {filteredSub.map((sm, i) => (
+              // Link mein 'relative' class zaroor add kar dena
+              <Link to={sm.path} key={i} className="flex flex-col items-center gap-4 group relative">
 
-                <div className="w-12 h-12 lg:w-20 lg:h-20 flex items-center justify-center rounded-[2rem] bg-[#E3F2FD] text-[#2196F3] group-hover:bg-[#2196F3] group-hover:text-white transition-all active:scale-90 border border-blue-50">
+                <div className="relative w-12 h-12 lg:w-20 lg:h-20 flex items-center justify-center rounded-[2rem] bg-[#E3F2FD] text-[#2196F3] group-hover:bg-[#2196F3] group-hover:text-white transition-all active:scale-90 border border-blue-50">
                   {sm.icon}
+                  {sm.title === 'ERP Notices' && unreadERP > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] lg:text-[11px] font-black px-2 py-0.5 rounded-full border-2 border-white shadow-md animate-bounce">
+                      {unreadERP}
+                    </span>
+                  )}
+                  
                 </div>
 
                 <span className="text-xs lg:text-sm font-bold text-slate-600 text-center leading-tight">

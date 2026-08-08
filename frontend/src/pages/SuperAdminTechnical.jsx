@@ -3,7 +3,20 @@ import { ShieldAlert, Clock, CheckCircle2, User, School, ExternalLink, ArrowLeft
 import API from '../api';
 import { useNavigate } from 'react-router-dom';
 
-const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+const rawApiUrl = import.meta.env.VITE_API_URL || '';
+
+const BASE_URL = rawApiUrl 
+    ? rawApiUrl.replace('/api', '') 
+    : (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:5000' 
+        : 'https://eduflowai-3a47.onrender.com');
+
+const getImageUrl = (path) => {
+    if (!path) return 'https://via.placeholder.com/400?text=No+Signal';
+    if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('//')) return path;
+    const cleanPath = path.startsWith('/') ? path : `/${path}`;
+    return `${BASE_URL}${cleanPath}`;
+};
 
 const SuperAdminTechnical = () => {
     const navigate = useNavigate();
@@ -118,12 +131,15 @@ const SuperAdminTechnical = () => {
                                 {issue.screenshot ? (
                                     <div
                                         className="relative group cursor-zoom-in rounded-[2rem] overflow-hidden border-2 border-slate-100 h-64"
-                                        onClick={() => setZoomImg(issue.screenshot.startsWith('http') ? issue.screenshot : `${BASE_URL}${issue.screenshot}`)}
+                                        // 🔥 FIX 1: Zoom State ko naye URL function se set kiya 🔥
+                                        onClick={() => setZoomImg(getImageUrl(issue.screenshot))}
                                     >
                                         <img
-                                            src={issue.screenshot.startsWith('http') ? issue.screenshot : `${BASE_URL}${issue.screenshot}`}
+                                            // 🔥 FIX 2: Image ko naye URL function se load kiya 🔥
+                                            src={getImageUrl(issue.screenshot)}
                                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                                             alt="Evidence"
+                                            onError={(e) => console.error("❌ IMAGE LOAD FAILED:", e.target.src)}
                                         />
                                         <div className="absolute inset-0 bg-indigo-600/20 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
                                             <div className="bg-white p-4 rounded-full shadow-2xl text-indigo-600 animate-bounce">

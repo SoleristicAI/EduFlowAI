@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
 import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
+import 'package:shared_preferences/shared_preferences.dart';
 
 // 🔥 ConsumerStatefulWidget so it listens to theme changes
 class StudentErpNotices extends ConsumerStatefulWidget {
@@ -25,16 +26,24 @@ class _StudentErpNoticesState extends ConsumerState<StudentErpNotices> {
     _fetchErpNotices();
   }
 
-  Future<void> _fetchErpNotices() async {
+Future<void> _fetchErpNotices() async {
     try {
       final response = await ApiClient.dio.get('/fee-notices/view');
       
       if (mounted) {
+        final fetchedNotices = (response.data['notices'] as List<dynamic>?) ?? [];
+        
         setState(() {
-          // Backend structure: { "success": true, "notices": [...] }
-          noticeList = (response.data['notices'] as List<dynamic>?) ?? [];
+          noticeList = fetchedNotices;
           loading = false;
         });
+        if (fetchedNotices.isNotEmpty) {
+          final prefs = await SharedPreferences.getInstance();
+          // Saare fetched notices ki IDs nikal lo
+          List<String> noticeIds = fetchedNotices.map((n) => n['_id'].toString()).toList();
+          // SharedPreferences mein save kar do
+          await prefs.setStringList('read_erp_notices_mobile', noticeIds);
+        }
       }
     } catch (e) {
       if (mounted) {

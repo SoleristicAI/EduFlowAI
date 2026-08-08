@@ -308,37 +308,44 @@ router.get('/finance/students-ledger/:grade', protect, async (req, res) => {
     }
 });
 
-// --- DAY 119: ADD PAYMENT BY ENROLLMENT NO & FEE CATEGORY ---
+// --- DAY 119 & 279: ADD PAYMENT BY ENROLLMENT NO (WITH STRICT SESSION TAGGING) ---
 router.post('/finance/add-payment', protect, async (req, res) => {
-    // 1. Ab hum 'studentId' ki jagah frontend se 'enrollmentNo' aur 'feeCategory' mangwa rahe hain
     const { enrollmentNo, amountPaid, month, year, paymentMode, remarks, feeCategory } = req.body;
 
     try {
-        // 2. Enrollment Number se database mein student ko dhoondo
         const student = await User.findOne({
             enrollmentNo: enrollmentNo,
             schoolId: req.user.schoolId,
             role: 'student'
         });
 
-        // 3. Agar bacha nahi milta toh error do
         if (!student) {
             return res.status(404).json({ message: "Student Identity Not Found! Check Enrollment No. ❌" });
         }
 
-        // userRoutes.js mein add-payment route ke andar Fee.create wala hissa:
+        // 🔥 CURRENT SESSION NIKAL RAHE HAIN 🔥
+        const School = require('../models/School');
+        const schoolData = await School.findById(req.user.schoolId).select('activeSession');
+
+        // 🔥 NAYI PAYMENT BANA RAHE HAIN (WITH SNAPSHOT & SESSION) 🔥
         const feeRecord = await Fee.create({
             schoolId: req.user.schoolId,
             student: student._id,
             amountPaid: Number(amountPaid),
+            
+            // 👇🔥 YE RAHA TERA MASTER FIX 🔥👇
+            session: schoolData.activeSession || '2027-2028',
+            recordedGrade: student.grade,
+            recordedEnrollmentNo: student.enrollmentNo,
+            // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+
             month,
             year: Number(year),
             paymentMode,
-            // Strict Labeling: Isse history mein kabhi General Fee nahi aayega
             remarks: `PURPOSE: ${feeCategory}`,
             feeCategory: feeCategory,
             date: new Date()
-        });;
+        });
 
         res.status(201).json({
             message: `Payment Linked to ${student.name} Successfully! ✅`,

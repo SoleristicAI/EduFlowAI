@@ -10,13 +10,22 @@ const Notifications = () => {
   const [loading, setLoading] = useState(true);
   const [noticeList, setNoticeList] = useState([]);
 
-  useEffect(() => {
+ useEffect(() => {
     const fetchErpNotices = async () => {
       try {
         setLoading(true);
-        // Naye clean and fresh route se data pull kiya
         const { data } = await API.get('/fee-notices/view');
         setNoticeList(data.notices || []);
+        // Jaise hi data aaye, local storage mein IDs save kar do taaki home page unhe unread na maane
+        if (data.notices && data.notices.length > 0) {
+          const userStr = localStorage.getItem('user'); // User uthaya local storage se
+          if (userStr) {
+            const parsedUser = JSON.parse(userStr);
+            const noticeIds = data.notices.map(n => n._id);
+            localStorage.setItem(`read_erp_notices_${parsedUser.enrollmentNo}`, JSON.stringify(noticeIds));
+          }
+        }
+
       } catch (err) {
         console.error("Centralized ERP Notice Feed Link Severed");
       } finally {
