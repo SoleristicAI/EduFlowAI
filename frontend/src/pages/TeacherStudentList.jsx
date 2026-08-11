@@ -16,10 +16,16 @@ const TeacherStudentList = ({ user }) => {
     // TeacherStudentList.jsx ke useEffect ke andar change karo
     useEffect(() => {
         const fetchStudents = async () => {
+            // 👇🔥 MASTER FIX: Agar class assign nahi hai, toh API call karo hi mat! 🔥👇
+            if (!user?.assignedClass) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 // Path hamesha backend routes se match karna chahiye
                 const { data } = await API.get('/attendance/my-class-list');
-                setStudents(data.students);
+                setStudents(data.students || []);
                 setAssignedClass(data.className);
             } catch (err) {
                 console.error("Error fetching class list", err);
@@ -27,8 +33,11 @@ const TeacherStudentList = ({ user }) => {
                 setLoading(false);
             }
         };
-        fetchStudents();
-    }, []);
+        
+        if (user) {
+            fetchStudents();
+        }
+    }, [user]); // 🔥 user dependency zaroori hai
 
     const filteredStudents = students.filter(s =>
         s.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

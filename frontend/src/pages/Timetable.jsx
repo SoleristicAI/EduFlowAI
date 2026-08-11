@@ -39,6 +39,20 @@ const Timetable = ({ user }) => {
 
   const currentSchedule = timetable?.schedule?.find(d => d.day === activeDay);
 
+  // 👇🔥 TIME SORTING LOGIC ADD KARO 🔥👇
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr || !timeStr.includes(':')) return 0;
+    const [time, modifier] = timeStr.split(' ');
+    let [hours, minutes] = time.split(':').map(Number);
+    if (modifier === 'PM' && hours !== 12) hours += 12;
+    if (modifier === 'AM' && hours === 12) hours = 0;
+    return (hours * 60) + (minutes || 0);
+  };
+
+  const sortedPeriods = currentSchedule?.periods
+    ? [...currentSchedule.periods].sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime))
+    : [];
+
   if (loading) return <Loader />;
 
   return (
@@ -97,8 +111,8 @@ const Timetable = ({ user }) => {
       </div>
 
       <div className="px-5 -mt-10 space-y-4 relative z-20">
-        {currentSchedule && currentSchedule.periods.length > 0 ? (
-          currentSchedule.periods.map((item, index) => (
+        {sortedPeriods.length > 0 ? (
+          sortedPeriods.map((item, index) => (
             <div key={index} className="bg-white p-5 rounded-[2.5rem] border border-[#DDE3EA] flex gap-5 active:scale-[0.98] transition-all italic shadow-sm group">
               {/* Time Block */}
               <div className="flex flex-col items-center justify-center border-r border-[#DDE3EA] pr-5 min-w-[100px]">

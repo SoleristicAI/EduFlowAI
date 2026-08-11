@@ -73,7 +73,7 @@ class _StudentTimetableState extends ConsumerState<StudentTimetable> {
     }
   }
 
-  @override
+ @override
   Widget build(BuildContext context) {
     if (loading) return const CustomLoader();
 
@@ -86,9 +86,38 @@ class _StudentTimetableState extends ConsumerState<StudentTimetable> {
         orElse: () => null,
       );
       if (todaySchedule != null && todaySchedule['periods'] != null) {
-        currentPeriods = todaySchedule['periods'];
+        // 🔥 DART FIX: Isko List.from se mutable (changeable) banaya taaki sort kar sakein
+        currentPeriods = List.from(todaySchedule['periods']);
       }
     }
+
+    // 👇🔥 DART TIME SORTING ALGORITHM 🔥👇
+    int parseTimeToMinutes(String? timeStr) {
+      if (timeStr == null || !timeStr.contains(':')) return 0;
+      try {
+        final parts = timeStr.split(' ');
+        final timeParts = parts[0].split(':');
+        int hours = int.parse(timeParts[0]);
+        int minutes = int.parse(timeParts[1]);
+        String modifier = parts.length > 1 ? parts[1].toUpperCase() : '';
+
+        if (modifier == 'PM' && hours != 12) hours += 12;
+        if (modifier == 'AM' && hours == 12) hours = 0;
+
+        return (hours * 60) + minutes;
+      } catch (e) {
+        return 0;
+      }
+    }
+
+    if (currentPeriods.isNotEmpty) {
+      currentPeriods.sort((a, b) {
+        final timeA = parseTimeToMinutes(a['startTime']);
+        final timeB = parseTimeToMinutes(b['startTime']);
+        return timeA.compareTo(timeB); // Chote time se bada time (Ascending Order)
+      });
+    }
+    
 
     // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);

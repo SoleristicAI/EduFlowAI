@@ -51,7 +51,7 @@ router.post('/add-teacher', protect, adminOnly, async (req, res) => {
     }
 });
 
-// Admin adds a student (STU001 sequence SEPARATE for each Grade + DAY 78 Extended Fields)
+// Admin adds a student (STRICT AUTO ENROLLMENT NO. + DOB LOGS)
 router.post('/add-student', protect, adminOnly, async (req, res) => {
     const {
         name, email, password, grade,
@@ -60,11 +60,16 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
     } = req.body;
 
     try {
+        console.log("📥 INCOMING NEW STUDENT DATA:", { name, grade, dob, admissionNo });
+
         const userExists = await User.findOne({ email });
         if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-        // 🔥 THE GAP-FILLER ALGORITHM 🔥
-        // 1. Class ke saare ACTIVE bacchon ke roll number nikalo
+        // 🔥 EXPECTED FORMAT CALCULATION (e.g., STU10A) 🔥
+        const classCode = grade ? grade.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() : "GEN";
+        const expectedPrefix = `STU${classCode}`;
+
+        // 1. Class ke saare bacchon ke enrollment number nikaalo
         const activeStudents = await User.find({
             schoolId: req.user.schoolId,
             role: 'student',
@@ -72,29 +77,33 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
             status: { $nin: ['Alumni', 'Left'] }
         }).select('enrollmentNo');
 
-        // 2. Unme se sirf number extract karke ascending order me sort karo
+        console.log("🔍 EXISTING ENROLLMENT NUMBERS IN DB:", activeStudents.map(s => s.enrollmentNo));
+
+        // 2. Strict Extraction: Sirf unko padho jo current class ke pattern (STU10A) se shuru hote hain!
         const usedNumbers = activeStudents
             .map(s => {
-                if (s.enrollmentNo) {
-                    const match = s.enrollmentNo.match(/\d+$/);
-                    return match ? parseInt(match[0], 10) : null;
+                if (s.enrollmentNo && s.enrollmentNo.startsWith(expectedPrefix)) {
+                    const numStr = s.enrollmentNo.replace(expectedPrefix, ''); // Prefix hatao
+                    return numStr ? parseInt(numStr, 10) : null; // Number nikaalo
                 }
                 return null;
             })
-            .filter(n => n !== null)
-            .sort((a, b) => a - b);
+            .filter(n => n !== null && !isNaN(n)) // Kachra aur null hatao
+            .sort((a, b) => a - b); // Ascending order mein sort karo
 
-        // 3. 1 se shuru karke pehla khali number dhoondo
+        console.log("📊 CLEANED & SORTED NUMBERS:", usedNumbers);
+
+        // 3. Exact Gap Filler Logic
         let nextNo = 1;
         for (let num of usedNumbers) {
             if (num === nextNo) {
-                nextNo++; // Agar number used hai, toh aage badho
+                nextNo++;
             }
         }
         
-        // 4. Clean format banake assign kar do
-        const classCode = grade ? grade.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() : "GEN";
-        const nextEnrollNo = `STU${classCode}${nextNo.toString().padStart(3, '0')}`;
+        // 4. Generate Solid Enrollment No
+        const nextEnrollNo = `${expectedPrefix}${nextNo.toString().padStart(3, '0')}`;
+        console.log("✅ FINALLY GENERATED ID:", nextEnrollNo);
 
         const student = await User.create({
             schoolId: req.user.schoolId,
@@ -106,19 +115,20 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
             grade,
             fatherName,
             motherName,
-            dob,
+            dob, // 🔥 DOB SAVED HERE 🔥
             gender,
             religion,
-            admissionNo,
+            admissionNo, 
             phone,
-            address // day 78 address object
+            address 
         });
+        
         res.status(201).json({ message: `Student enrolled in ${grade} with ID: ${nextEnrollNo}`, student });
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        console.error("❌ ADD_STUDENT_CRITICAL_ERROR:", error);
+        res.status(500).json({ message: 'Server Error during student creation' });
     }
 });
-
 
 router.get('/students/:grade', protect, async (req, res) => {
     try {
@@ -497,21 +507,58 @@ router.get('/my-mentor', protect, async (req, res) => {
 });
 
 
-// 🔥 NAYI API: Har role (Student/Teacher) ko asli session batane ke liye 🔥
+// 🔥 NAYI API: Har role (Student/Teacher/Admin) ko unki aukaat aur history ke hisaab se session dikhane ke liye 🔥
 router.get('/general/session-info', protect, async (req, res) => {
     try {
-        const school = await require('../models/School').findById(req.user.schoolId).select('activeSession');
+        const school = await require('../models/School').findById(req.user.schoolId).select('activeSession sessionStartDate');
         const active = school?.activeSession || '2026-2027';
         
-        const historySessions = await User.distinct('academicHistory.session', { schoolId: req.user.schoolId });
-        const allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
+        let historySessions = [];
         
+        // 1. Agar student hai, toh sirf uski khud ki pass hui classes ki history nikalo
+        if (req.user.role === 'student') {
+            const user = await require('../models/User').findById(req.user._id).select('academicHistory');
+            if (user && user.academicHistory) {
+                historySessions = user.academicHistory.map(h => h.session);
+            }
+        } 
+        // 2. Admin, Finance aur Teacher ke liye poore school ki history uthao
+        else {
+            historySessions = await require('../models/User').distinct('academicHistory.session', { schoolId: req.user.schoolId });
+        }
+        
+        // Pehle saare sessions ko mila kar ek list bana lo
+        let allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
+        
+        // 🔥 THE MASTER FIX: TEACHER TIMELINE FILTER 🔥
+        // Agar role teacher hai, toh uske aane se pehle ke saare sessions array se uda do!
+        if (req.user.role === 'teacher') {
+            const teacherData = await require('../models/User').findById(req.user._id).select('createdAt');
+            const joinDate = new Date(teacherData.createdAt);
+            
+            // Session kis mahine shuru hota hai (Default April = Month Index 3)
+            const sessionStartMonth = school?.sessionStartDate ? new Date(school.sessionStartDate).getMonth() : 3;
+            
+            let joinSessionStartYear = joinDate.getFullYear();
+            // Agar teacher session start hone se pehle (e.g. Jan-March) join hua tha, toh wo pichle session ka hissa hai
+            if (joinDate.getMonth() < sessionStartMonth) {
+                joinSessionStartYear -= 1; 
+            }
+
+            // Filter kardo: Wahi session dikhao jiska Starting Year teacher ke Joining Year ke barabar ya usse bada ho
+            allAvailableSessions = allAvailableSessions.filter(session => {
+                if (!session || !session.includes('-')) return true; 
+                const sessionStartYear = parseInt(session.split('-')[0], 10);
+                return sessionStartYear >= joinSessionStartYear;
+            });
+        }
+
         res.json({ activeSession: active, allAvailableSessions });
     } catch (error) {
+        console.error("Session Info Error:", error);
         res.status(500).json({ message: "Failed to fetch session info" });
     }
 });
-
 
 // ==========================================================
 // --- DAY 264: SESSION CONFIGURATION & LOCKING SYSTEM ---

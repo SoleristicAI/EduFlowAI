@@ -459,23 +459,28 @@ router.get('/student-summary', protect, async (req, res) => {
                     }
                 });
                 
-                const today = new Date();
-                const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
-                
-                let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
-                if (legacyMonths > 12) legacyMonths = 12;
-                if (joinDate > legacyEndDate) legacyMonths = 0;
+               const today = new Date();
+                    const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(today.getFullYear(), 3, 1);
+                    
+                    // 👇🔥 MASTER FIX: Agar baccha session start hone ke BAAD aaya hai, toh legacy zero kar do! 🔥👇
+                    if (joinDate > legacyEndDate) {
+                        carryForwardDues = 0;
+                        carryForwardAdvance = 0;
+                    } else {
+                        // Purane baccho ke liye normal calculation
+                        let legacyMonths = Math.max(1, (legacyEndDate.getFullYear() - joinDate.getFullYear()) * 12 + (legacyEndDate.getMonth() - joinDate.getMonth()) + 1);
+                        if (legacyMonths > 12) legacyMonths = 12;
+                        
+                        const legacyExpected = (legacyMonthly * legacyMonths) + legacyOneTime;
+                        const legacyNet = legacyExpected - totalLegacyPaid;
 
-                const legacyExpected = (legacyMonthly * legacyMonths) + legacyOneTime;
-                const legacyNet = legacyExpected - totalLegacyPaid;
-
-                if (legacyNet > 0) {
-                    carryForwardDues = legacyNet;
-                    structureDetails.monthly.unshift({ label: 'PREVIOUS SESSION DUES', amount: legacyNet }); 
-                } else if (legacyNet < 0) {
-                    carryForwardAdvance = Math.abs(legacyNet); 
+                        if (legacyNet > 0) {
+                            carryForwardDues = legacyNet;
+                        } else if (legacyNet < 0) {
+                            carryForwardAdvance = Math.abs(legacyNet);
+                        }
+                    }
                 }
-            }
         }
 
         // 🔥 CALCULATE NEW SESSION OUTSTANDING 🔥
@@ -993,7 +998,7 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
 
                 if (legacyNet > 0) {
                     carryForwardDues = legacyNet;
-                    structureDetails.monthly.unshift({ label: 'PREVIOUS SESSION DUES', amount: legacyNet }); 
+                    // 🔥 FIX: 'unshift' wali line hata di taaki UI list mein fake item add na ho 🔥
                 } else if (legacyNet < 0) {
                     carryForwardAdvance = Math.abs(legacyNet);
                 }

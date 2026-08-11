@@ -23,14 +23,14 @@ const Settings = () => {
             color: 'text-yellow-500', 
             bg: 'bg-yellow-50',
         },
-        { 
-            title: 'Appearance',
-            subtitle: 'Dark and light mode settings',
-            icon: isDarkMode ? <Sun size={22}/> : <Moon size={22}/>, 
-            color: isDarkMode ? 'text-yellow-500' : 'text-slate-700', 
-            bg: isDarkMode ? 'bg-yellow-50' : 'bg-slate-50',
-            isTheme: true
-        },
+        // { 
+        //     title: 'Appearance',
+        //     subtitle: 'Dark and light mode settings',
+        //     icon: isDarkMode ? <Sun size={22}/> : <Moon size={22}/>, 
+        //     color: isDarkMode ? 'text-yellow-500' : 'text-slate-700', 
+        //     bg: isDarkMode ? 'bg-yellow-50' : 'bg-slate-50',
+        //     isTheme: true
+        // },
         { 
             title: 'Language',
             subtitle: 'Select your preferred language',
