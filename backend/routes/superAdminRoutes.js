@@ -45,7 +45,7 @@ router.post('/onboard-school', protect, superAdminOnly, upload.single('logo'), a
             religion: adminInfo.religion || 'Global',
             
             address: {
-                fullAddress: schoolInfo.address, // School ka address hi admin ka permanent address
+                fullAddress: schoolInfo.address, 
                 state: schoolInfo.state || 'N/A',
                 district: schoolInfo.district || 'N/A',
                 pincode: schoolInfo.pincode || 'N/A',
@@ -145,20 +145,26 @@ router.get('/login-as-school/:id', protect, superAdminOnly, async (req, res) => 
 
 router.put('/update-school/:id', protect, superAdminOnly, async (req, res) => {
     try {
-        // DAY 78: SuperAdmin can now update ALL details of a school
         const updatedSchool = await School.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-        // Agar school admin ki details badli hain, toh User document bhi update karna hoga
+        // 🔥 NAYA: School ke sath-sath Admin ke address fields ko bhi forcibly update karo
+        const updatePayload = {};
         if (req.body.adminDetails) {
-            await User.findOneAndUpdate(
-                { schoolId: req.params.id, role: 'admin' },
-                {
-                    name: req.body.adminDetails.fullName,
-                    email: req.body.adminDetails.email,
-                    phone: req.body.adminDetails.mobile
-                }
-            );
+            updatePayload.name = req.body.adminDetails.fullName;
+            updatePayload.email = req.body.adminDetails.email;
+            updatePayload.phone = req.body.adminDetails.mobile;
         }
+        
+        // Address parameters push
+        updatePayload['address.fullAddress'] = req.body.address;
+        updatePayload['address.pincode'] = req.body.pincode;
+        updatePayload['address.district'] = req.body.district;
+        updatePayload['address.state'] = req.body.state;
+
+        await User.findOneAndUpdate(
+            { schoolId: req.params.id, role: 'admin' },
+            { $set: updatePayload }
+        );
 
         res.json(updatedSchool);
     } catch (error) {
@@ -183,14 +189,18 @@ router.get('/stats', protect, superAdminOnly, async (req, res) => {
         const schoolsWithStats = await Promise.all(visibleSchools.map(async (school) => {
             const studentCount = await User.countDocuments({ schoolId: school._id, role: 'student' });
             const teacherCount = await User.countDocuments({ 
-    schoolId: school._id, 
-    role: { $in: ['teacher', 'finance'] } 
-});
+                schoolId: school._id, 
+                role: { $in: ['teacher', 'finance'] } 
+            });
+
+            // 🔥 NAYA: Admin ki asli detailed address nikal kar bhej rahe hain
+            const adminData = await User.findOne({ schoolId: school._id, role: 'admin' }).select('address');
 
             return {
                 ...school._doc,
                 studentCount,
-                teacherCount
+                teacherCount,
+                adminAddress: adminData ? adminData.address : {} // Frontend ko bhejo
             };
         }));
 

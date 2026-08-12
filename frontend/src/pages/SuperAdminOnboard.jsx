@@ -11,8 +11,8 @@ const SuperAdminOnboard = () => {
     const [logoFile, setLogoFile] = useState(null);
     const [showPassword, setShowPassword] = useState(false);
 
-    const [formData, setFormData] = useState({
-        schoolInfo: { schoolName: '', address: '', affiliationNo: '', logo: '' },
+   const [formData, setFormData] = useState({
+        schoolInfo: { schoolName: '', address: '', pincode: '', district: '', state: '', affiliationNo: '', logo: '' },
         adminInfo: { fullName: '', mobile: '', email: '', designation: 'Principal', fatherName: 'Institutional Root', motherName: 'System Core', gender: 'Other', religion: 'Global' },
         subscription: { monthlyFee: 0, totalPaid: 0 },
         tempPassword: '',
@@ -104,10 +104,27 @@ const SuperAdminOnboard = () => {
                             <input type="text" placeholder="School full name" className="bg-transparent font-bold text-lg text-slate-700 outline-none w-full"
                                 onChange={(e) => setFormData({ ...formData, schoolInfo: { ...formData.schoolInfo, schoolName: e.target.value } })} required />
                         </div>
-                        <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
-                            <MapPin size={20} className="text-slate-300 mr-4" />
-                            <input type="text" placeholder="Address(City, State, Pincode)" className="bg-transparent font-bold text-lg text-slate-700 outline-none w-full"
+                       {/* 1. Full Address Text Area */}
+                        <div className="flex items-start bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
+                            <MapPin size={20} className="text-slate-300 mr-4 mt-1" />
+                            <textarea placeholder="House No, Street, Landmark..." className="bg-transparent font-bold text-lg text-slate-700 outline-none w-full h-24 resize-none"
                                 onChange={(e) => setFormData({ ...formData, schoolInfo: { ...formData.schoolInfo, address: e.target.value } })} required />
+                        </div>
+                        
+                        {/* 2. Pincode, District, State */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
+                                <input type="text" placeholder="6 Digit Pincode" maxLength="6" className="bg-transparent font-bold text-[16px] text-slate-700 outline-none w-full uppercase"
+                                    onChange={(e) => setFormData({ ...formData, schoolInfo: { ...formData.schoolInfo, pincode: e.target.value.replace(/\D/g, "") } })} required />
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
+                                <input type="text" placeholder="District" className="bg-transparent font-bold text-[16px] text-slate-700 outline-none w-full uppercase"
+                                    onChange={(e) => setFormData({ ...formData, schoolInfo: { ...formData.schoolInfo, district: e.target.value } })} required />
+                            </div>
+                            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
+                                <input type="text" placeholder="State" className="bg-transparent font-bold text-[16px] text-slate-700 outline-none w-full uppercase"
+                                    onChange={(e) => setFormData({ ...formData, schoolInfo: { ...formData.schoolInfo, state: e.target.value } })} required />
+                            </div>
                         </div>
                         <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-5 focus-within:border-indigo-400 transition-all">
                             <Hash size={20} className="text-slate-300 mr-4" />

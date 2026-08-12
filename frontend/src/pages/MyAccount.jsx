@@ -10,9 +10,18 @@ const MyAccount = ({ user }) => {
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     // Vercel par automatically tera live URL uthayega, localhost par local!
-    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com";
+    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000";
+
+    // 👇🔥 YEH NAYA FUNCTION ADD KAR 🔥👇
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `${BASE_URL}${path}`;
+    };
+
+    // 👇 ISKO BHI UPDATE KAR DE NAYE FUNCTION KE SAATH 👇
     const [preview, setPreview] = useState(
-        user?.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`) : null
+        user?.avatar ? getImageUrl(user.avatar) : null
     );
     const isEditable = user?.role === 'superadmin';
 
@@ -61,8 +70,8 @@ const MyAccount = ({ user }) => {
 
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            // Check karega ki Cloudinary ka link hai ya local disk ka
-            setPreview(data.avatar.startsWith('http') ? data.avatar : `${BASE_URL}${data.avatar}`);
+// 👇🔥 ISE UPDATE KAR DE 🔥👇
+            setPreview(getImageUrl(data.avatar));
             setToast({ show: true, message: "Profile Photo Updated! 🧬", type: 'success' });
             setTimeout(() => window.location.reload(), 2000);
         } catch (err) {

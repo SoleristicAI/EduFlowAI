@@ -25,8 +25,14 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
     const [showConfirm, setShowConfirm] = useState(false);
     // if (!isOpen) return null;
 
-    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://eduflowai-3a47.onrender.com"; // Apna asli Render backend URL daal dena
+   const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000"; 
 
+    // 👇🔥 YEH NAYA FUNCTION ADD KAR 🔥👇
+    const getImageUrl = (path) => {
+        if (!path) return null;
+        if (path.startsWith('http')) return path;
+        return `${BASE_URL}${path}`;
+    };
 
     const handleLogout = () => {
         const backup = localStorage.getItem('superadmin_backup');
@@ -157,9 +163,10 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                 <div className="flex items-center gap-4 mb-6">
                                     <div className="w-15 h-15 bg-white p-1 rounded-full shadow-xl">
                                         <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                                            {/* 👇🔥 YAHAN MASTER FIX LAG GAYA 🔥👇 */}
                                             {user?.avatar ? (
                                                 <img
-                                                    src={user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`}
+                                                    src={getImageUrl(user.avatar)}
                                                     alt="profile"
                                                     className="w-full h-full object-cover"
                                                 />

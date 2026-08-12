@@ -160,14 +160,28 @@ const registerUser = async (req, res) => {
 
 const authUser = async (req, res) => {
     const { email, password } = req.body;
+    // user ke sath schoolId ki details pehle se populate ho rahi hain
     const user = await User.findOne({ email }).populate('schoolId');
 
     if (user && (await require('bcryptjs').compare(password, user.password))) {
+        
+        // 👇🔥 THE IRON GATE: SCHOOL TERMINATION CHECK 🔥👇
+        // Agar user superadmin nahi hai, aur uske school ka status 'Terminated' hai, toh Access Denied!
+        if (user.role !== 'superadmin' && user.schoolId) {
+            if (user.schoolId.subscription?.status === 'Terminated' || user.schoolId.isDeleted === true) {
+                return res.status(403).json({ 
+                    message: "Access Denied 🛑: Your institution's node is currently Terminated/Inactive. Contact administration." 
+                });
+            }
+        }
+        // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
+
         if (user.status === 'Alumni' || user.status === 'Left') {
             return res.status(403).json({ 
                 message: "Account Archived 🎓: Alumni or Ex-Students cannot access the portal." 
             });
         }
+        
         res.json({
             _id: user._id,
             name: user.name,

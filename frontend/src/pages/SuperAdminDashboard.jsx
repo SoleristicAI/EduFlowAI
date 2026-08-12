@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Plus, IndianRupee, TrendingUp, Trash2, Edit3, X, Save, RotateCcw, Users, Bot, Loader2,School, Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Globe, Plus, IndianRupee, Trash2, Edit3, X, Save, School, Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Loader from '../components/Loader';
+import { Loader2 } from 'lucide-react'; // Loader2 import zaroori tha
 
 const SuperAdminDashboard = () => {
     const navigate = useNavigate();
@@ -26,14 +27,10 @@ const SuperAdminDashboard = () => {
     const fetchStats = async () => {
         try {
             setLoading(true);
-            // Backend se stats mangwao
             const { data } = await API.get('/superadmin/stats');
-
-            // Agar bache ne issue dala hai, toh backend se stats.pendingIssues aur stats.issueCount aana chahiye
             setStats(data);
         } catch (err) {
             console.error("Stats Fetch Error:", err);
-            // Auth error check...
         } finally {
             setLoading(false);
         }
@@ -77,21 +74,32 @@ const SuperAdminDashboard = () => {
 
     useEffect(() => {
         if (editingSchool) {
-            document.body.style.overflow = 'hidden'; // Background pause (Scroll disable)
+            document.body.style.overflow = 'hidden'; 
         } else {
-            document.body.style.overflow = 'unset'; // Background normal
+            document.body.style.overflow = 'unset'; 
         }
-        return () => { document.body.style.overflow = 'unset'; }; // Cleanup
+        return () => { document.body.style.overflow = 'unset'; }; 
     }, [editingSchool]);
 
-   if (loading) {
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
-      <Loader2 className="w-12 h-12 animate-spin text-[#42A5F5]" />
-      <p className="text-slate-500 font-bold italic">Loading...</p>
-    </div>
-  );
-}
+    // 🔥 THE MASTER FIX: DYNAMIC IMAGE RESOLVER 🔥
+    // Ye function apne aap detect karega ki app local pe hai ya live pe
+    const getImageUrl = (path) => {
+        if (!path) return 'https://via.placeholder.com/60';
+        if (path.startsWith('http')) return path;
+        
+        // API.defaults.baseURL usually 'http://localhost:5000/api' hota hai, humein sirf base URL chahiye
+        const backendUrl = API.defaults.baseURL ? API.defaults.baseURL.replace(/\/api\/?$/, '') : 'http://localhost:5000';
+        return `${backendUrl}${path}`;
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F8FAFC]">
+                <Loader2 className="w-12 h-12 animate-spin text-[#42A5F5]" />
+                <p className="text-slate-500 font-bold italic">Loading...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#F1F5F9] p-8 font-sans">
@@ -114,7 +122,6 @@ const SuperAdminDashboard = () => {
                 {[
                     { label: 'Active institutions', value: stats?.activeSchools || 0, icon: <Globe />, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                     { label: 'Total network revenue', value: `₹${stats?.totalRevenue?.toLocaleString() || 0}`, icon: <IndianRupee />, color: 'text-violet-600', bg: 'bg-violet-50' },
-                    // 🔥 YAHAN ISSUE COUNT: Agar backend se issueCount aa raha hai toh wo dikhega
                     { label: 'Technical Issues', value: stats?.issueCount || 0, icon: <ShieldAlert />, color: 'text-rose-600', bg: 'bg-rose-50' }
                 ].map((s, i) => (
                     <div key={i} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex items-center gap-6 hover:shadow-md transition-shadow">
@@ -126,7 +133,8 @@ const SuperAdminDashboard = () => {
                     </div>
                 ))}
             </div>
-            // 3. Technical Support Terminal Card (Action required badge fix)
+
+            {/* Technical Support Terminal Card */}
             <div
                 onClick={() => navigate('/superadmin/technical')}
                 className="mb-10 p-8 bg-white border border-slate-100 rounded-[3rem] shadow-sm flex flex-col md:flex-row items-center justify-between cursor-pointer hover:shadow-md transition-all group border-l-8 border-l-rose-500"
@@ -137,7 +145,6 @@ const SuperAdminDashboard = () => {
                     </div>
                     <div>
                         <h3 className="text-2xl font-extrabold text-slate-800 tracking-tight">Technical support terminal</h3>
-                        {/* 🔥 YAHAN DYNAMIC COUNT: stats?.pendingIssues backend se aana chahiye */}
                         <p className="text-lg font-medium text-slate-500 italic">
                             {stats?.pendingIssues > 0
                                 ? `Detecting ${stats.pendingIssues} unresolved anomalies in the network`
@@ -147,7 +154,6 @@ const SuperAdminDashboard = () => {
                 </div>
 
                 <div className="mt-6 md:mt-0 flex items-center gap-4">
-                    {/* 🔥 ACTION REQUIRED BADGE: Jab tak backend se data 0 se bada nahi hoga, ye nahi dikhega */}
                     {stats?.pendingIssues > 0 && (
                         <span className="bg-rose-500 text-white px-4 py-1.5 rounded-full text-xs font-black animate-pulse shadow-lg shadow-rose-200 uppercase">
                             {stats.pendingIssues} Action required
@@ -158,6 +164,7 @@ const SuperAdminDashboard = () => {
                     </div>
                 </div>
             </div>
+
             {/* Main Inventory Table */}
             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-3 mb-10">
@@ -184,11 +191,13 @@ const SuperAdminDashboard = () => {
                                 <tr key={i} className="group hover:bg-slate-50 transition-all rounded-3xl shadow-sm cursor-pointer">
                                     <td className="py-6 px-6 bg-white border-y border-l border-slate-100 first:rounded-l-[2rem]" onClick={() => handleGhostLogin(school._id)}>
                                         <div className="flex items-center gap-5">
+                                            {/* 👇🔥 MASTER FIX APPLIED HERE 🔥👇 */}
                                             <img
-                                                src={school.logo ? `http://localhost:5000${school.logo}` : 'https://via.placeholder.com/60'}
-                                                className="w-14 h-14 rounded-2xl object-cover border border-slate-100 shadow-sm"
+                                                src={getImageUrl(school.logo)}
+                                                className="w-14 h-14 rounded-2xl object-cover border border-slate-100 shadow-sm bg-white"
                                                 alt="logo"
                                             />
+                                            {/* 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆 */}
                                             <div>
                                                 <p className="font-extrabold text-slate-700 text-lg group-hover:text-indigo-600 transition-colors">{school.schoolName}</p>
                                                 <p className="text-xs font-bold text-slate-400 tracking-wider">Ref: {school.affiliationNo}</p>
@@ -215,8 +224,19 @@ const SuperAdminDashboard = () => {
                                     </td>
                                     <td className="py-6 px-6 bg-white border-y border-r border-slate-100 last:rounded-r-[2rem]">
                                         <div className="flex gap-3 justify-center">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setEditingSchool(school); setEditData(school); }}
+                                           <button
+                                                onClick={(e) => { 
+                                                    e.stopPropagation(); 
+                                                    setEditingSchool(school); 
+                                                    // 🔥 FAANG BINDING: Admin address ko form se connect kiya
+                                                    setEditData({
+                                                        ...school,
+                                                        address: school.address || school.adminAddress?.fullAddress || '',
+                                                        pincode: school.adminAddress?.pincode || '',
+                                                        district: school.adminAddress?.district || '',
+                                                        state: school.adminAddress?.state || ''
+                                                    }); 
+                                                }}
                                                 className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:text-indigo-600 hover:bg-indigo-50 transition-all"
                                             >
                                                 <Edit3 size={20} />
@@ -239,13 +259,9 @@ const SuperAdminDashboard = () => {
             {/* Edit Modal */}
             {editingSchool && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
-                    {/* 1. Backdrop (Piche ka kala hissa jo click karne par band nahi hoga, logic fix) */}
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" />
-
-                    {/* 2. Modal Container (Center mein lock) */}
                     <div className="relative bg-white w-full max-w-2xl rounded-[3.5rem] p-10 shadow-2xl animate-in zoom-in-95 duration-200 italic max-h-[90vh] overflow-y-auto custom-scrollbar">
 
-                        {/* Header */}
                         <div className="flex justify-between items-center mb-8 border-b border-slate-100 pb-6">
                             <div>
                                 <h3 className="text-3xl font-extrabold text-slate-800 tracking-tight">Re-configure node</h3>
@@ -259,7 +275,6 @@ const SuperAdminDashboard = () => {
                             </button>
                         </div>
 
-                        {/* Form Fields */}
                         <div className="space-y-8">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
@@ -278,11 +293,27 @@ const SuperAdminDashboard = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-slate-500 ml-2">Deployment address</label>
-                                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-2xl p-4 focus-within:border-indigo-400 transition-colors">
-                                    <MapPin size={20} className="text-slate-300 mr-3" />
-                                    <input className="bg-transparent font-bold text-slate-700 outline-none w-full uppercase" value={editData.address} onChange={(e) => setEditData({ ...editData, address: e.target.value })} />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-slate-500 ml-2">Deployment address</label>
+                                    <div className="flex items-start bg-slate-50 border border-slate-200 rounded-2xl p-4 focus-within:border-indigo-400 transition-colors">
+                                        <MapPin size={20} className="text-slate-300 mr-3 mt-1" />
+                                        <textarea className="bg-transparent font-bold text-slate-700 outline-none w-full uppercase resize-none h-20" value={editData.address || ''} onChange={(e) => setEditData({ ...editData, address: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-500 ml-2">Pincode</label>
+                                        <input type="text" maxLength="6" className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-bold text-slate-700 outline-none focus:border-indigo-400 uppercase" value={editData.pincode || ''} onChange={(e) => setEditData({ ...editData, pincode: e.target.value.replace(/\D/g, "") })} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-500 ml-2">District</label>
+                                        <input type="text" className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-bold text-slate-700 outline-none focus:border-indigo-400 uppercase" value={editData.district || ''} onChange={(e) => setEditData({ ...editData, district: e.target.value })} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-500 ml-2">State</label>
+                                        <input type="text" className="w-full p-4 bg-slate-50 rounded-2xl border border-slate-200 font-bold text-slate-700 outline-none focus:border-indigo-400 uppercase" value={editData.state || ''} onChange={(e) => setEditData({ ...editData, state: e.target.value })} />
+                                    </div>
                                 </div>
                             </div>
 
