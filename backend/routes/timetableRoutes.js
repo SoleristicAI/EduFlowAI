@@ -17,12 +17,12 @@ router.get('/teachers-list', protect, adminOnly, async (req, res) => {
     }
 });
 
-// POST: Create or Update Timetable with Conflict Detection
+// POST: Create or Update Timetable with Advanced OVERLAP Detection (BULLETPROOF)
 router.post('/upload', protect, adminOnly, async (req, res) => {
     const { grade, schedule } = req.body;
     const schoolId = req.user.schoolId;
 
-    if (!grade || !schedule || schedule.length === 0) {
+    if (!grade || !schedule || !Array.isArray(schedule) || schedule.length === 0) {
         return res.status(400).json({ message: "Invalid Matrix Data: Grade and Schedule required." });
     }
 
@@ -30,67 +30,80 @@ router.post('/upload', protect, adminOnly, async (req, res) => {
         const newDayData = schedule[0];
         const targetDay = newDayData.day;
 
-        // --- NEURAL CONFLICT CHECK START ---
-        // Pura school ka timetable uthao (Sirf is grade ko chhod kar jo hum upload kar rahe hain)
+        // 🔥 BULLETPROOF TIME PARSER 🔥
+        const parseTimeToMinutes = (timeStr) => {
+            if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+            const [time, modifier] = timeStr.split(' ');
+            if (!time) return 0;
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return (hours * 60) + (minutes || 0);
+        };
+
         const otherTimetables = await Timetable.find({ 
             schoolId, 
             grade: { $ne: grade.toUpperCase() } 
         });
 
-        // Har ek period ko check karo conflict ke liye
-        for (let i = 0; i < newDayData.periods.length; i++) {
-            const period = newDayData.periods[i];
-            const slotNum = i + 1; // 1-based Slot number for display
+        // --- NEURAL CONFLICT CHECK START ---
+        if (newDayData.periods && Array.isArray(newDayData.periods)) {
+            for (let i = 0; i < newDayData.periods.length; i++) {
+                const period = newDayData.periods[i];
+                const slotNum = i + 1; 
 
-            for (const otherDoc of otherTimetables) {
-                // Check karo agar doosri class ka us din ka schedule exist karta hai
-                const dayMatch = otherDoc.schedule.find(s => s.day === targetDay);
-                
-                if (dayMatch) {
-                    // 1. TEACHER CONFLICT: Kya ye teacher us time kisi aur class mein hai?
-                    const teacherConflict = dayMatch.periods.find(p =>
-                        p.teacherEmpId === period.teacherEmpId &&
-                        p.startTime === period.startTime
-                    );
+                const reqStart = parseTimeToMinutes(period.startTime);
+                const reqEnd = parseTimeToMinutes(period.endTime);
 
-                    if (teacherConflict) {
-                        return res.status(400).json({
-                            message: `This teacher is already assigned in Slot ${slotNum} to Class ${otherDoc.grade}! ⚠️`
-                        });
-                    }
+                if(reqStart === 0 || reqEnd === 0) continue; // Skip invalid times
 
-                    // 2. ROOM CONFLICT: Kya ye room us time occupied hai?
-                    const roomConflict = dayMatch.periods.find(p =>
-                        p.room !== "N/A" && 
-                        p.room.trim().toUpperCase() === period.room.trim().toUpperCase() &&
-                        p.startTime === period.startTime
-                    );
+                for (const otherDoc of otherTimetables) {
+                    // Safety: Agar doosri class ka schedule array missing hai toh aage badho
+                    if (!otherDoc.schedule || !Array.isArray(otherDoc.schedule)) continue;
 
-                    if (roomConflict) {
-                        return res.status(400).json({
-                            message: `This room is already assigned in Slot ${slotNum} to Class ${otherDoc.grade}! ⚠️`
-                        });
+                    const dayMatch = otherDoc.schedule.find(s => s.day === targetDay);
+                    
+                    if (dayMatch && dayMatch.periods && Array.isArray(dayMatch.periods)) {
+                        for (const p of dayMatch.periods) {
+                            const pStart = parseTimeToMinutes(p.startTime);
+                            const pEnd = parseTimeToMinutes(p.endTime);
+
+                            // 🔥 INTERVAL OVERLAP CONDITION 🔥
+                            if (reqStart < pEnd && pStart < reqEnd) {
+                                // 1. TEACHER CONFLICT
+                                if (p.teacherEmpId && period.teacherEmpId && p.teacherEmpId === period.teacherEmpId) {
+                                    return res.status(400).json({
+                                        message: `Overlap Error: Teacher is already assigned to Class ${otherDoc.grade} between ${p.startTime}-${p.endTime}! ⚠️`
+                                    });
+                                }
+
+                                // 2. ROOM CONFLICT
+                                if (p.room && period.room && p.room !== "N/A" && p.room.trim().toUpperCase() === period.room.trim().toUpperCase()) {
+                                    return res.status(400).json({
+                                        message: `Overlap Error: Room ${period.room} is occupied by Class ${otherDoc.grade} between ${p.startTime}-${p.endTime}! ⚠️`
+                                    });
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
         // --- NEURAL CONFLICT CHECK END ---
 
-        // Agar koi conflict nahi mila, toh save/update karo
         let timetable = await Timetable.findOne({ grade: grade.toUpperCase(), schoolId });
 
         if (timetable) {
             const dayIndex = timetable.schedule.findIndex(s => s.day === targetDay);
             if (dayIndex !== -1) {
-                // Agar din pehle se hai, toh periods replace karo
                 timetable.schedule[dayIndex].periods = newDayData.periods;
             } else {
-                // Naya din add karo
                 timetable.schedule.push(newDayData);
             }
+            // 🔥 MAJOR FIX: Force Mongoose to recognize array mutation
+            timetable.markModified('schedule'); 
             await timetable.save();
         } else {
-            // Nayi class ka naya document banao
             timetable = await Timetable.create({ 
                 schoolId, 
                 grade: grade.toUpperCase(), 
@@ -100,7 +113,68 @@ router.post('/upload', protect, adminOnly, async (req, res) => {
 
         res.status(201).json({ message: 'Matrix Synchronized!', timetable });
     } catch (error) {
+        console.error("TIMETABLE_UPLOAD_CRASH:", error);
         res.status(500).json({ message: "Sync Failed: " + error.message });
+    }
+});
+
+
+// POST: Live Dropdown checking API (BULLETPROOF)
+router.post('/meta/available-resources', protect, adminOnly, async (req, res) => {
+    try {
+        const { day, startTime, endTime, excludeGrade } = req.body;
+        const schoolId = req.user.schoolId;
+
+        // 🔥 TIME PARSER 🔥
+        const parseTimeToMinutes = (timeStr) => {
+            if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+            const [time, modifier] = timeStr.split(' ');
+            if (!time) return 0;
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return (hours * 60) + (minutes || 0);
+        };
+
+        const reqStart = parseTimeToMinutes(startTime);
+        const reqEnd = parseTimeToMinutes(endTime);
+
+        const allTimetables = await Timetable.find({ schoolId });
+
+        let teacherStatuses = {}; 
+        let occupiedRooms = [];
+
+        if (reqStart > 0 && reqEnd > 0) {
+            allTimetables.forEach(t => {
+                if (t.grade === excludeGrade?.toUpperCase()) return;
+                
+                // Safety Checks
+                if (!t.schedule || !Array.isArray(t.schedule)) return;
+
+                const dayMatch = t.schedule.find(s => s.day === day);
+                if (dayMatch && dayMatch.periods && Array.isArray(dayMatch.periods)) {
+                    dayMatch.periods.forEach(p => {
+                        const pStart = parseTimeToMinutes(p.startTime);
+                        const pEnd = parseTimeToMinutes(p.endTime);
+
+                        // 🔥 CHECK INTERVAL OVERLAP 🔥
+                        if (reqStart < pEnd && pStart < reqEnd) {
+                            if (p.teacherEmpId) {
+                                teacherStatuses[p.teacherEmpId] = `In ${t.grade}`; 
+                            }
+                            if (p.room && p.room !== "N/A") {
+                                occupiedRooms.push(p.room);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        res.json({ teacherStatuses, occupiedRooms });
+    } catch (error) {
+        console.error("RESOURCE_SYNC_CRASH:", error);
+        res.status(500).json({ message: 'Resource sync failed' });
     }
 });
 
@@ -165,42 +239,6 @@ router.get('/meta/student-grades', protect, adminOnly, async (req, res) => {
         res.json(grades.sort()); 
     } catch (error) {
         res.status(500).json({ message: 'Error fetching student grades' });
-    }
-});
-
-router.post('/meta/available-resources', protect, adminOnly, async (req, res) => {
-    try {
-        const { day, startTime, excludeGrade } = req.body;
-        const schoolId = req.user.schoolId;
-
-        const allTimetables = await Timetable.find({ schoolId });
-
-        let occupiedTeachers = [];
-        let occupiedRooms = [];
-
-        allTimetables.forEach(t => {
-            if (t.grade === excludeGrade?.toUpperCase()) return;
-
-            const dayMatch = t.schedule.find(s => s.day === day);
-            if (dayMatch) {
-                dayMatch.periods.forEach(p => {
-                    if (p.startTime === startTime) {
-                        occupiedTeachers.push(p.teacherEmpId);
-                        occupiedRooms.push(p.room);
-                    }
-                });
-            }
-        });
-
-        const availableTeachers = await User.find({
-            schoolId,
-            role: 'teacher',
-            employeeId: { $nin: occupiedTeachers }
-        }).select('employeeId name subjects');
-
-        res.json({ availableTeachers, occupiedRooms });
-    } catch (error) {
-        res.status(500).json({ message: 'Resource sync failed' });
     }
 });
 
@@ -330,6 +368,71 @@ router.post('/bulk-upload', protect, adminOnly, async (req, res) => {
         res.status(201).json({ message: `Master Matrix for ${day} Synchronized Successfully! ⚡` });
     } catch (error) {
         res.status(500).json({ message: "Bulk Sync Failed: " + error.message });
+    }
+});
+
+// =====================================================================
+// 🔥 NEW: ADMIN FETCHING SPECIFIC TEACHER'S SCHEDULE (GOD'S EYE VIEW)
+// =====================================================================
+router.get('/admin/teacher-schedule/:empId', protect, adminOnly, async (req, res) => {
+    try {
+        const schoolId = req.user.schoolId;
+        const targetEmpId = req.params.empId;
+
+        // Pura school ka timetable uthao
+        const allGradesTimetable = await Timetable.find({ schoolId });
+
+        let personalSchedule = [
+            { day: 'Monday', periods: [] },
+            { day: 'Tuesday', periods: [] },
+            { day: 'Wednesday', periods: [] },
+            { day: 'Thursday', periods: [] },
+            { day: 'Friday', periods: [] },
+            { day: 'Saturday', periods: [] }
+        ];
+
+        // Har class aur har din ke periods check karo jahan ye EMP ID ho
+        allGradesTimetable.forEach(t => {
+            if (!t.schedule || !Array.isArray(t.schedule)) return;
+
+            t.schedule.forEach(dayNode => {
+                if (!dayNode.periods || !Array.isArray(dayNode.periods)) return;
+
+                const myPeriods = dayNode.periods.filter(p => p.teacherEmpId === targetEmpId);
+                if (myPeriods.length > 0) {
+                    const targetDay = personalSchedule.find(d => d.day === dayNode.day);
+                    if (targetDay) {
+                        myPeriods.forEach(mp => {
+                            targetDay.periods.push({
+                                ...mp.toObject(),
+                                grade: t.grade // 🔥 Admin ko class dikhani zaroori hai
+                            });
+                        });
+                    }
+                }
+            });
+        });
+
+        // 🔥 TIME PARSER: Time ko minutes mein convert karke strictly sort karo
+        const parseTimeToMinutes = (timeStr) => {
+            if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+            const [time, modifier] = timeStr.split(' ');
+            if (!time) return 0;
+            let [hours, minutes] = time.split(':').map(Number);
+            if (modifier === 'PM' && hours !== 12) hours += 12;
+            if (modifier === 'AM' && hours === 12) hours = 0;
+            return (hours * 60) + (minutes || 0);
+        };
+
+        // Har din ke periods ko subah se shaam tak sort kar do
+        personalSchedule.forEach(day => {
+            day.periods.sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+        });
+
+        res.json({ schedule: personalSchedule });
+    } catch (error) {
+        console.error("ADMIN_TEACHER_SCHEDULE_ERROR:", error);
+        res.status(500).json({ message: 'Neural Link Failure: ' + error.message });
     }
 });
 

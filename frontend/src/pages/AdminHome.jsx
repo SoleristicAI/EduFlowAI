@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, CreditCard, Megaphone, PlusCircle, Database, X , MessageSquare , Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Users, CreditCard, Megaphone, PlusCircle, Database, X , MessageSquare, UserCheck , Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Toast from '../components/Toast';
@@ -156,19 +156,25 @@ const AdminHome = ({ searchQuery }) => {
         {
             label: 'Total students',
             value: liveStats.students.toLocaleString(),
-            icon: <Users size={20} />
+            icon: <Users size={20} />,
+            // Mobile: 2nd Number pe, Desktop: 1st Number pe (With right border)
+            layoutClass: 'order-2 md:order-1 py-6 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 px-2'
         },
         {
             label: 'Total teachers',
             value: liveStats.teachers.toLocaleString(),
-            icon: <Bot size={20} />
+            icon: <Bot size={20} />,
+            // Mobile: 3rd Number pe, Desktop: 2nd Number pe (With right border)
+            layoutClass: 'order-3 md:order-2 pt-6 md:pt-0 border-b-0 md:border-r border-slate-100 px-2'
         },
         {
             label: 'Fees collected',
             value: `₹${liveStats.fees >= 100000
                 ? (liveStats.fees / 100000).toFixed(1) + 'L'
                 : liveStats.fees.toLocaleString()}`,
-            icon: <Activity size={20} />
+            icon: <Activity size={20} />,
+            // Mobile: 1st Number pe (Top), Desktop: 3rd Number pe (No right border)
+            layoutClass: 'order-1 md:order-3 pb-6 md:pb-0 border-b md:border-b-0 border-slate-100 px-2'
         },
     ];
 
@@ -180,6 +186,7 @@ const AdminHome = ({ searchQuery }) => {
         { id: 'notice-feed', title: 'Notice archive', icon: <ClipboardList size={24} />, desc: 'Manage & delete notices', color: 'bg-rose-50 text-rose-500 border-rose-100' },
         { id: 'timetable', title: 'Timetable', icon: <Database size={24} />, desc: 'Schedule all classes', color: 'bg-blue-50 text-[#42A5F5] border-blue-100' },
         { id: 'edit-timetable', title: 'Edit timetable', icon: <Database size={24} />, desc: 'Modify existing schedules', color: 'bg-rose-50 text-rose-500 border-rose-100' },
+        { id: 'faculty-tracking',title: 'Faculty schedule', icon: <UserCheck size={24} />, desc: "View Teacher Schedules",color: 'bg-emerald-50 text-emerald-500 border-emerald-100' },
         { id: 'datesheet-engine', title: 'Generate datesheet', icon: <Calendar size={24} />, desc: 'Exam scheduler', color: 'bg-violet-50 text-violet-500 border-violet-100' },
         { id: 'admit-card', title: 'Publish Admit Card ', icon: <ClipboardCheck size={24} />, desc: 'Exam hall tickets', color: 'bg-indigo-50 text-indigo-500 border-indigo-100' },
         { id: 'academic-calendar', title: 'Academic Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', color: 'bg-rose-50 text-rose-500 border-rose-100' },
@@ -253,9 +260,9 @@ const AdminHome = ({ searchQuery }) => {
             </div> */}
 
             {/* Stats */}
-            <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-2xl grid grid-cols-3 gap-4 ring-1 ring-slate-100">
+            <div className="bg-white border border-slate-100 rounded-[3rem] p-8 shadow-2xl grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-4 ring-1 ring-slate-100">
                 {adminStats.map((stat, i) => (
-                    <div key={i} className="text-center border-r last:border-0 border-slate-100 px-2">
+                    <div key={i} className={`text-center flex flex-col justify-center ${stat.layoutClass}`}>
                         <div className="flex justify-center text-[#42A5F5] mb-2">{stat.icon}</div>
                         <p className="text-[26px] font-black text-slate-800 leading-none tracking-tighter">
                             {stat.value}
@@ -301,6 +308,7 @@ const AdminHome = ({ searchQuery }) => {
                             if (m.id === 'add-student') navigate('/admin/add-student');
                             if (m.id === 'add-staff') navigate('/admin/add-teacher');
                             if (m.id === 'timetable') navigate('/admin/timetable');
+                            if (m.id === 'faculty-tracking') navigate('/admin/faculty-tracking');
                             if (m.id === 'fees') navigate('/admin/fees');
                             if (m.id === 'attendance-report') navigate('/admin/attendance-report');
                             if (m.id === 'notice') navigate('/admin/global-notice');

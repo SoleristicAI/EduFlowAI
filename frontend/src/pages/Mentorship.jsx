@@ -17,7 +17,14 @@ const Mentorship = () => {
         const fetchMentor = async () => {
             try {
                 const { data } = await API.get('/users/my-mentor');
-                setMentor(data);
+                
+                // 🔥 NAYA LOGIC: Agar backend ne bola ki mentor nahi hai, toh seedha error set karo (Bina console crash ke)
+                if (data.noMentor) {
+                    setError(data.message);
+                } else {
+                    setMentor(data);
+                }
+                
             } catch (err) {
                 setError(err.response?.data?.message || "Mentor connection failed");
             } finally {

@@ -496,8 +496,8 @@ router.get('/my-mentor', protect, async (req, res) => {
             assignedClass: studentGrade.toUpperCase()
         }).select('name phone avatar subjects');
 
-        if (!mentor) {
-            return res.status(404).json({ message: "Class Teacher not assigned to this grade yet." });
+       if (!mentor) {
+            return res.status(200).json({ noMentor: true, message: "Class Teacher not assigned to this grade yet." });
         }
 
         res.json(mentor);

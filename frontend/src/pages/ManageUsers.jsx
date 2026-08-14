@@ -329,44 +329,45 @@ const ManageUsers = () => {
                                         onChange={(e) => setEditingUser({ ...editingUser, motherName: e.target.value })} placeholder="Mother's name" />
                                 </div>
 
-                                <div className="space-y-2">
+                                {/* 🔥 DOB SECTION (Bigger & Premium) 🔥 */}
+                                <div className="space-y-2 md:col-span-2">
                                     <label className="text-[20px] font-black text-slate-600 ml-4 uppercase tracking-wider italic">Date Of Birth</label>
-                                    <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-[2rem] border border-slate-100 shadow-inner">
+                                    <div className="grid grid-cols-3 gap-5 bg-slate-50 p-5 rounded-[2.5rem] border border-slate-100 shadow-inner">
                                         {/* Day Input */}
                                         <div className="flex flex-col items-center">
                                             <input
                                                 type="number" placeholder="DD"
-                                                className="w-full p-4 bg-white rounded-2xl border border-slate-200 text-center text-[18px] font-black text-[#42A5F5] outline-none"
+                                                className="w-full py-5 bg-white rounded-3xl border border-slate-200 text-center text-[22px] font-black text-[#42A5F5] outline-none focus:border-[#42A5F5] focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
                                                 // Smart Value Check: Agar 00 hai toh khali dikhao
                                                 value={(editingUser.dob?.split('T')[0].split('-')[2] === '00') ? '' : editingUser.dob?.split('T')[0].split('-')[2]}
                                                 onInput={(e) => e.target.value = e.target.value.slice(0, 2)}
                                                 onChange={(e) => handleDobChange('day', e.target.value)}
                                             />
-                                            <span className="text-[15px] font-black text-slate-500 uppercase mt-1">Day</span>
+                                            <span className="text-[14px] font-black text-slate-400 uppercase mt-3 tracking-widest">Day</span>
                                         </div>
 
                                         {/* Month Input */}
                                         <div className="flex flex-col items-center">
                                             <input
                                                 type="number" placeholder="MM"
-                                                className="w-full p-4 bg-white rounded-2xl border border-slate-200 text-center text-[18px] font-black text-[#42A5F5] outline-none"
+                                                className="w-full py-5 bg-white rounded-3xl border border-slate-200 text-center text-[22px] font-black text-[#42A5F5] outline-none focus:border-[#42A5F5] focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
                                                 value={(editingUser.dob?.split('T')[0].split('-')[1] === '00') ? '' : editingUser.dob?.split('T')[0].split('-')[1]}
                                                 onInput={(e) => e.target.value = e.target.value.slice(0, 2)}
                                                 onChange={(e) => handleDobChange('month', e.target.value)}
                                             />
-                                            <span className="text-[15px] font-black text-slate-500 uppercase mt-1">Month</span>
+                                            <span className="text-[14px] font-black text-slate-400 uppercase mt-3 tracking-widest">Month</span>
                                         </div>
 
                                         {/* Year Input */}
                                         <div className="flex flex-col items-center">
                                             <input
                                                 type="number" placeholder="YYYY"
-                                                className="w-full p-4 bg-white rounded-2xl border border-slate-200 text-center text-[18px] font-black text-[#42A5F5] outline-none"
+                                                className="w-full py-5 bg-white rounded-3xl border border-slate-200 text-center text-[22px] font-black text-[#42A5F5] outline-none focus:border-[#42A5F5] focus:ring-4 focus:ring-blue-50 transition-all shadow-sm"
                                                 value={(editingUser.dob?.split('T')[0].split('-')[0] === '0000') ? '' : editingUser.dob?.split('T')[0].split('-')[0]}
                                                 onInput={(e) => e.target.value = e.target.value.slice(0, 4)}
                                                 onChange={(e) => handleDobChange('year', e.target.value)}
                                             />
-                                            <span className="text-[15px] font-black text-slate-500 uppercase mt-1">Year</span>
+                                            <span className="text-[14px] font-black text-slate-400 uppercase mt-3 tracking-widest">Year</span>
                                         </div>
                                     </div>
                                 </div>

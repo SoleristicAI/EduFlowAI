@@ -57,9 +57,9 @@ import AdminAttendance from './pages/AdminAttendance';
 import AdminGlobalNotice from './pages/AdminGlobalNotice';
 import ManageUsers from './pages/ManageUsers';
 import AdminEditTimetable from './pages/AdminEditTimetable';
-import StudentDetail from './pages/StudentDetail'; 
+import StudentDetail from './pages/StudentDetail';
 import StudentLeaveHistory from './pages/StudentLeaveHistory';
-import MySubjects from './pages/student/MySubjects'; 
+import MySubjects from './pages/student/MySubjects';
 import StudentAcademicCalendar from './pages/student/StudentAcademicCalendar';
 import AdminDatesheet from './pages/admin/AdminDatesheet';
 import AdminManageDatesheets from './pages/admin/AdminManageDatesheets';
@@ -69,6 +69,8 @@ import AdminAdmitCard from './pages/admin/AdminAdmitCard';
 import AdminManageAdmitCards from './pages/admin/AdminManageAdmitCards';
 import AdminAcademicCalendar from './pages/admin/AdminAcademicCalendar';
 import AdminFeedback from './pages/admin/AdminFeedback';
+import FacultyTracking from './pages/FacultyTracking';
+import FacultyScheduleView from './pages/FacultyScheduleView';
 
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 // import StudentsFees from './pages/finance/StudentsFees';
@@ -467,6 +469,8 @@ function App() {
           <Route path="/admin/academic-calendar" element={<AdminAcademicCalendar />} />
           <Route path="/admin/feedback" element={<AdminFeedback />} />
           <Route path="/admin/session-upgrade" element={<SessionPromotion />} />
+          <Route path="/admin/faculty-tracking" element={<FacultyTracking />} />
+          <Route path="/admin/faculty-schedule/:empId" element={<FacultyScheduleView />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
