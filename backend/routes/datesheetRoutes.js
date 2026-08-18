@@ -17,25 +17,34 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
         const classSubjectsMap = {};
 
         for (let cls of classes) {
-            const timetable = await Timetable.findOne({ 
+            // 🔥 NAYA FIX: findOne ki jagah find() lagaya taaki A, B, C sab sections cover ho jayein 🔥
+            const timetables = await Timetable.find({ 
                 grade: new RegExp(`^${cls}(-[A-Za-z])?$`, 'i'), 
                 schoolId 
             });
             
             const subjectsSet = new Set();
-            if (timetable) {
-                timetable.schedule.forEach(day => {
-                    day.periods.forEach(p => {
-                        if (p.subject && p.subject !== 'Break') subjectsSet.add(p.subject);
+            
+            if (timetables && timetables.length > 0) {
+                // Har section (10-A, 10-B) ke andar ghuso
+                timetables.forEach(timetable => {
+                    timetable.schedule.forEach(day => {
+                        day.periods.forEach(p => {
+                            if (p.subject && p.subject.toLowerCase() !== 'break') {
+                                // UpperCase mein convert karke Set mein dalo taaki case-sensitive duplicates na bane
+                                subjectsSet.add(p.subject.trim().toUpperCase());
+                            }
+                        });
                     });
                 });
             }
 
             let subjectsArray = Array.from(subjectsSet);
             if (subjectsArray.length === 0) {
-                subjectsArray = ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi'];
+                subjectsArray = ['ENGLISH', 'MATHEMATICS', 'SCIENCE', 'SOCIAL SCIENCE', 'HINDI'];
             }
             
+            // Subjects ko shuffle (randomize) kardo
             subjectsArray = subjectsArray.sort(() => Math.random() - 0.5);
             classSubjectsMap[cls] = subjectsArray;
         }
@@ -47,7 +56,7 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
         const gaps = gapDays ? parseInt(gapDays) : 0;
 
         for (let i = 0; i < maxSubjects; i++) {
-            while (currentDate.getDay() === 0) {
+            while (currentDate.getDay() === 0) { // Sunday skip
                 currentDate.setDate(currentDate.getDate() + 1); 
             }
 
@@ -78,23 +87,31 @@ router.post('/generate-preview', protect, adminOnly, async (req, res) => {
 router.get('/class-subjects/:baseClass', protect, adminOnly, async (req, res) => {
     try {
         const baseClass = req.params.baseClass;
-        const timetable = await Timetable.findOne({
+        
+        // 🔥 NAYA FIX: Yahan bhi find() lagaya taaki Manual Datesheet mein bhi saare subjects aayein 🔥
+        const timetables = await Timetable.find({
             schoolId: req.user.schoolId,
             grade: new RegExp(`^${baseClass}(-[A-Za-z])?$`, 'i')
         });
 
         const subjectsSet = new Set();
-        if (timetable) {
-            timetable.schedule.forEach(day => {
-                day.periods.forEach(p => {
-                    if (p.subject && p.subject !== 'Break') subjectsSet.add(p.subject);
+        if (timetables && timetables.length > 0) {
+            timetables.forEach(timetable => {
+                timetable.schedule.forEach(day => {
+                    day.periods.forEach(p => {
+                        if (p.subject && p.subject.toLowerCase() !== 'break') {
+                            subjectsSet.add(p.subject.trim().toUpperCase());
+                        }
+                    });
                 });
             });
         }
+        
         let subjectsArray = Array.from(subjectsSet);
         if (subjectsArray.length === 0) {
-            subjectsArray = ['English', 'Mathematics', 'Science', 'Social Science', 'Hindi'];
+            subjectsArray = ['ENGLISH', 'MATHEMATICS', 'SCIENCE', 'SOCIAL SCIENCE', 'HINDI'];
         }
+        
         res.json(subjectsArray);
     } catch (error) {
         res.status(500).json({ message: "Failed to fetch subjects." });

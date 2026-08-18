@@ -40,12 +40,19 @@ const TeacherAttendance = ({ user }) => {
             try {
                 setLoading(true);
                 setShowList(false);
-                
+
                 // Fetch students and existing records
                 const { data: resp } = await API.get(`/attendance/my-students?date=${selectedDate}`);
                 const { data: existing } = await API.get(`/attendance/view?grade=${assignedClass}&date=${selectedDate}`);
 
-                const stdList = resp.students;
+                const stdList = [...resp.students].sort((a, b) => {
+                    return a.enrollmentNo.localeCompare(
+                        b.enrollmentNo,
+                        undefined,
+                        { numeric: true, sensitivity: 'base' }
+                    );
+                });
+
                 setSessionStartDate(resp.sessionStartDate);
 
                 if (existing && existing.records && existing.records.length > 0) {
@@ -53,7 +60,7 @@ const TeacherAttendance = ({ user }) => {
                         const record = existing.records.find(r => r.studentId === s._id || r.student === s._id);
                         // Smart Check: Agar backend se aaj leave true aayi hai ya pehle se record me onLeave true tha
                         const isOnLeave = s.onLeave || (record && record.onLeave) || false;
-                        
+
                         return {
                             id: s._id,
                             name: s.name,
@@ -196,7 +203,7 @@ const TeacherAttendance = ({ user }) => {
                         <Calendar size={24} />
                     </div>
                 </div>
-               <div className="bg-white mt-6 p-6 rounded-[3rem] border border-[#DDE3EA] shadow-lg italic relative z-10">
+                <div className="bg-white mt-6 p-6 rounded-[3rem] border border-[#DDE3EA] shadow-lg italic relative z-10">
                     <div className="flex justify-between items-center px-2">
                         <div>
                             <h2 className="font-black text-xl text-[#42A5F5] italic uppercase tracking-tighter">
@@ -414,7 +421,7 @@ const TeacherAttendance = ({ user }) => {
                                                 className={`flex items-center gap-2 px-6 py-4 rounded-2xl font-black text-[11px] uppercase transition-all shadow-sm ${student.status === 'Present'
                                                     ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                                                     : 'bg-rose-500 text-white shadow-lg shadow-rose-100'
-                                                }`}
+                                                    }`}
                                             >
                                                 {student.status === 'Present' ? <CheckCircle2 size={16} /> : <XCircle size={16} />}
                                                 {student.status}
@@ -428,10 +435,10 @@ const TeacherAttendance = ({ user }) => {
                                 s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                                 s.roll.toString().includes(searchQuery)
                             ).length === 0 && (
-                                <div className="text-center py-10 opacity-20 italic font-black uppercase text-[19px] tracking-widest">
-                                    No matching student found
-                                </div>
-                            )}
+                                    <div className="text-center py-10 opacity-20 italic font-black uppercase text-[19px] tracking-widest">
+                                        No matching student found
+                                    </div>
+                                )}
                         </div>
 
                         <div className="pt-10 pb-20 w-full px-4 z-30 italic">

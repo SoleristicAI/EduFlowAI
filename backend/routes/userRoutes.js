@@ -100,7 +100,7 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
                 nextNo++;
             }
         }
-        
+
         // 4. Generate Solid Enrollment No
         const nextEnrollNo = `${expectedPrefix}${nextNo.toString().padStart(3, '0')}`;
         console.log("✅ FINALLY GENERATED ID:", nextEnrollNo);
@@ -118,11 +118,11 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
             dob, // 🔥 DOB SAVED HERE 🔥
             gender,
             religion,
-            admissionNo, 
+            admissionNo,
             phone,
-            address 
+            address
         });
-        
+
         res.status(201).json({ message: `Student enrolled in ${grade} with ID: ${nextEnrollNo}`, student });
     } catch (error) {
         console.error("❌ ADD_STUDENT_CRITICAL_ERROR:", error);
@@ -137,8 +137,8 @@ router.get('/students/:grade', protect, async (req, res) => {
             grade: req.params.grade,
             schoolId: req.user.schoolId,
             status: { $nin: ['Alumni', 'Left'] }
-        }).select('name email enrollmentNo grade fatherName motherName dob gender religion admissionNo phone address avatar'); 
-      
+        }).select('name email enrollmentNo grade fatherName motherName dob gender religion admissionNo phone address avatar');
+
 
         res.json(students);
     } catch (error) {
@@ -175,27 +175,27 @@ router.put('/update/:id', protect, adminOnly, async (req, res) => {
         if (user.role === 'teacher' && req.body.assignedClass) {
             // String mein convert karke trim aur uppercase karenge taaki crash na ho
             const assignedClassStr = String(req.body.assignedClass).trim().toUpperCase();
-            
+
             const classTaken = await User.findOne({
                 role: 'teacher',
                 assignedClass: assignedClassStr,
                 schoolId: req.user.schoolId,
                 _id: { $ne: req.params.id } // Khud ko chhod kar
             });
-            
+
             if (classTaken) {
                 return res.status(400).json({
                     message: `CONFLICT: Class ${assignedClassStr} is already assigned to EMP: ${classTaken.employeeId}!`
                 });
             }
-            
+
             // Backend update ke liye body ko clean karo
-            req.body.assignedClass = assignedClassStr; 
+            req.body.assignedClass = assignedClassStr;
         }
 
         // Update fields safely
         Object.assign(user, req.body);
-        
+
         await user.save();
         res.json({ message: 'User updated successfully', user });
     } catch (error) {
@@ -239,18 +239,18 @@ router.get('/finance/stats', protect, async (req, res) => {
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
         // 1. Fetch Today's Payments
-        const todayFees = await Fee.find({ 
-            schoolId, 
+        const todayFees = await Fee.find({
+            schoolId,
             date: { $gte: today },
-            status: 'Verified' 
+            status: 'Verified'
         });
         const collectedToday = todayFees.reduce((sum, f) => sum + f.amountPaid, 0);
 
         // 2. Fetch Monthly Payments
-        const monthFees = await Fee.find({ 
-            schoolId, 
+        const monthFees = await Fee.find({
+            schoolId,
             date: { $gte: startOfMonth },
-            status: 'Verified' 
+            status: 'Verified'
         });
         const collectedMonth = monthFees.reduce((sum, f) => sum + f.amountPaid, 0);
 
@@ -260,15 +260,15 @@ router.get('/finance/stats', protect, async (req, res) => {
             .reduce((sum, f) => sum + f.amountPaid, 0);
 
         // 4. Recent Payments
-        const recentPayments = await Fee.find({ 
+        const recentPayments = await Fee.find({
             schoolId,
-            status: 'Verified' 
+            status: 'Verified'
         })
             .sort({ date: -1 })
             .limit(10)
             .populate('student', 'name grade enrollmentNo');
 
-            // --- ADDED FOR NOTIFICATION BADGE START ---
+        // --- ADDED FOR NOTIFICATION BADGE START ---
         const pendingOnlineCount = await Fee.countDocuments({
             schoolId,
             status: 'Pending',
@@ -342,7 +342,7 @@ router.post('/finance/add-payment', protect, async (req, res) => {
             schoolId: req.user.schoolId,
             student: student._id,
             amountPaid: Number(amountPaid),
-            
+
             // 👇🔥 YE RAHA TERA MASTER FIX 🔥👇
             session: schoolData.activeSession || '2027-2028',
             recordedGrade: student.grade,
@@ -371,9 +371,9 @@ router.get('/finance/receipt/:feeId', protect, async (req, res) => {
     try {
         const fee = await Fee.findById(req.params.feeId)
             .populate('student', 'name enrollmentNo grade phone fatherName')
-            .populate({ 
-                path: 'schoolId', 
-                select: 'schoolName name address phone schoolContact logo' 
+            .populate({
+                path: 'schoolId',
+                select: 'schoolName name address phone schoolContact logo'
             });
 
         if (!fee) return res.status(404).json({ message: 'Receipt not found' });
@@ -397,7 +397,7 @@ router.get('/finance/receipt/:feeId', protect, async (req, res) => {
         enhancedFee.displayPurpose = cleanPurpose;
         enhancedFee.formattedIssuedDate = formattedDate;
         enhancedFee.displaySchoolName = fee.schoolId?.schoolName || fee.schoolId?.name || "EDUFLOWAI INSTITUTION";
-        
+
         // Contact Priority Logic: schoolContact -> phone -> fallback
         enhancedFee.displayContact = fee.schoolId?.schoolContact || fee.schoolId?.phone || "9874637875"; // Defaulting to your backend phone for now
 
@@ -411,11 +411,11 @@ router.get('/finance/receipt/:feeId', protect, async (req, res) => {
 // Check if finance teacher already exists in THIS school
 router.get('/check-finance-exists', protect, adminOnly, async (req, res) => {
     try {
-        const financeTeacher = await User.findOne({ 
-            schoolId: req.user.schoolId, 
-            role: 'finance' 
+        const financeTeacher = await User.findOne({
+            schoolId: req.user.schoolId,
+            role: 'finance'
         });
-        
+
         // Agar mil gaya toh true, warna false
         res.json({ exists: !!financeTeacher });
     } catch (error) {
@@ -428,16 +428,16 @@ router.get('/available-classes', protect, adminOnly, async (req, res) => {
         const schoolId = req.user.schoolId;
 
         // 1. School mein jitni total classes (grades) hain wo nikalo
-        const totalClasses = await User.distinct('grade', { 
-            schoolId, 
-            role: 'student' 
+        const totalClasses = await User.distinct('grade', {
+            schoolId,
+            role: 'student'
         });
 
         // 2. Un classes ko nikalo jo already kisi teacher ko mil chuki hain
-        const assignedClasses = await User.distinct('assignedClass', { 
-            schoolId, 
+        const assignedClasses = await User.distinct('assignedClass', {
+            schoolId,
             role: 'teacher',
-            assignedClass: { $ne: null } 
+            assignedClass: { $ne: null }
         });
 
         // 3. Filter: Sirf wo classes jo assigned nahi hain
@@ -458,9 +458,9 @@ router.get('/admin/live-stats', protect, async (req, res) => {
         const totalStudents = await User.countDocuments({ schoolId, role: 'student' });
 
         // 2. Total Teachers counting (Teacher + Finance dono ko jod kar)
-        const totalTeachers = await User.countDocuments({ 
-            schoolId, 
-            role: { $in: ['teacher', 'finance'] } 
+        const totalTeachers = await User.countDocuments({
+            schoolId,
+            role: { $in: ['teacher', 'finance'] }
         });
 
         // 3. Total Fees Collected (Verified payments only)
@@ -496,7 +496,7 @@ router.get('/my-mentor', protect, async (req, res) => {
             assignedClass: studentGrade.toUpperCase()
         }).select('name phone avatar subjects');
 
-       if (!mentor) {
+        if (!mentor) {
             return res.status(200).json({ noMentor: true, message: "Class Teacher not assigned to this grade yet." });
         }
 
@@ -512,42 +512,42 @@ router.get('/general/session-info', protect, async (req, res) => {
     try {
         const school = await require('../models/School').findById(req.user.schoolId).select('activeSession sessionStartDate');
         const active = school?.activeSession || '2026-2027';
-        
+
         let historySessions = [];
-        
+
         // 1. Agar student hai, toh sirf uski khud ki pass hui classes ki history nikalo
         if (req.user.role === 'student') {
             const user = await require('../models/User').findById(req.user._id).select('academicHistory');
             if (user && user.academicHistory) {
                 historySessions = user.academicHistory.map(h => h.session);
             }
-        } 
+        }
         // 2. Admin, Finance aur Teacher ke liye poore school ki history uthao
         else {
             historySessions = await require('../models/User').distinct('academicHistory.session', { schoolId: req.user.schoolId });
         }
-        
+
         // Pehle saare sessions ko mila kar ek list bana lo
         let allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
-        
+
         // 🔥 THE MASTER FIX: TEACHER TIMELINE FILTER 🔥
         // Agar role teacher hai, toh uske aane se pehle ke saare sessions array se uda do!
         if (req.user.role === 'teacher') {
             const teacherData = await require('../models/User').findById(req.user._id).select('createdAt');
             const joinDate = new Date(teacherData.createdAt);
-            
+
             // Session kis mahine shuru hota hai (Default April = Month Index 3)
             const sessionStartMonth = school?.sessionStartDate ? new Date(school.sessionStartDate).getMonth() : 3;
-            
+
             let joinSessionStartYear = joinDate.getFullYear();
             // Agar teacher session start hone se pehle (e.g. Jan-March) join hua tha, toh wo pichle session ka hissa hai
             if (joinDate.getMonth() < sessionStartMonth) {
-                joinSessionStartYear -= 1; 
+                joinSessionStartYear -= 1;
             }
 
             // Filter kardo: Wahi session dikhao jiska Starting Year teacher ke Joining Year ke barabar ya usse bada ho
             allAvailableSessions = allAvailableSessions.filter(session => {
-                if (!session || !session.includes('-')) return true; 
+                if (!session || !session.includes('-')) return true;
                 const sessionStartYear = parseInt(session.split('-')[0], 10);
                 return sessionStartYear >= joinSessionStartYear;
             });
@@ -567,15 +567,15 @@ router.get('/admin/session-config', protect, adminOnly, async (req, res) => {
     try {
         const grades = await User.find({ schoolId: req.user.schoolId, role: 'student' }).distinct('grade');
         const school = await require('../models/School').findById(req.user.schoolId).select('activeSession upgradedClasses');
-        
+
         const active = school?.activeSession || '2026-2027';
-        
+
         // 🔥 REAL MAGIC: Sirf is school ki asli history database se nikal rahe hain 🔥
         const historySessions = await User.distinct('academicHistory.session', { schoolId: req.user.schoolId });
-        
+
         // Current session aur purani history ko mila kar ek clean array bana diya
         const allAvailableSessions = [...new Set([...historySessions, active])].sort().reverse();
-        
+
         res.json({
             grades: grades.sort(),
             activeSession: active,
@@ -594,21 +594,21 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
     try {
         const { nextSession } = req.body;
         const school = await require('../models/School').findById(req.user.schoolId);
-        
+
         school.activeSession = nextSession; // Naya saal shuru!
         school.upgradedClasses = []; // Purane locks clear kardo naye saal ke liye
         school.sessionStartDate = new Date(); // Jis din lock hoga, us din se pichli dates block!
-        
+
         await school.save();
 
         // 🔥 THE GLOBAL WIPEOUT PROTOCOL (Clean Slate for New Year) 🔥
         try {
             const Notice = require('../models/Notice');
             const FeeNotice = require('../models/FeeNotice');
-            const Assignment = require('../models/Assignment'); 
-            const Submission = require('../models/Submission'); 
-            const FeedbackSession = require('../models/FeedbackSession'); 
-            const FeedbackResponse = require('../models/FeedbackResponse'); 
+            const Assignment = require('../models/Assignment');
+            const Submission = require('../models/Submission');
+            const FeedbackSession = require('../models/FeedbackSession');
+            const FeedbackResponse = require('../models/FeedbackResponse');
             const Syllabus = require('../models/Syllabus'); // 🔥 NAYA: Syllabus Model
 
             // 1. Wipeout All Notices
@@ -625,12 +625,14 @@ router.post('/admin/finalize-session', protect, adminOnly, async (req, res) => {
 
             // 4. Wipeout All Syllabus Records
             await Syllabus.deleteMany({ schoolId: req.user.schoolId });
+            const Timetable = require('../models/Timetable');
+            await Timetable.deleteMany({ schoolId: req.user.schoolId });
 
-            console.log(`[MASTER RESET] Notices, Assignments, Submissions, Feedbacks & Syllabus CLEARED for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
+            console.log(`[MASTER RESET] Notices, Assignments, Submissions, Feedbacks, Syllabus & TIMETABLES CLEARED for school: ${req.user.schoolId} as session upgraded to ${nextSession}`);
         } catch (wipeErr) {
             console.log("Master Reset failed, but session upgraded.", wipeErr);
         }
-        
+
         res.json({ message: `Session Locked! 🔒 Switched to ${nextSession}. All old tasks, notices, feedbacks & syllabus wiped! ✅` });
     } catch (error) {
         res.status(500).json({ message: "Failed to finalize session." });
@@ -658,7 +660,7 @@ router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
 
             // 1. Archive Current Data
             student.academicHistory.push({
-                session: currentSession, 
+                session: currentSession,
                 gradePassed: oldGrade,
                 promotedTo: update.action === 'PROMOTE' ? update.newGrade : oldGrade,
                 isRepeater: update.action === 'REPEAT'
@@ -667,12 +669,12 @@ router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
             // 2. Process Status & Smart ID Generation
             if (update.action === 'ALUMNI') {
                 student.status = 'Alumni';
-            } 
+            }
             else if (update.action === 'PROMOTE') {
                 student.grade = update.newGrade;
-                
+
                 const cleanGrade = update.newGrade.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-                
+
                 // Gap Filler Algorithm
                 const activeStudentsInNewClass = await User.find({
                     schoolId: student.schoolId,
@@ -696,9 +698,9 @@ router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
                 for (let num of usedNumbers) {
                     if (num === nextNo) nextNo++;
                 }
-                
+
                 student.enrollmentNo = `STU${cleanGrade}${nextNo.toString().padStart(3, '0')}`;
-            } 
+            }
 
             await student.save();
         }

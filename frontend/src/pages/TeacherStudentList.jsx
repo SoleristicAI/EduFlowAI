@@ -23,9 +23,17 @@ const TeacherStudentList = ({ user }) => {
             }
 
             try {
-                // Path hamesha backend routes se match karna chahiye
                 const { data } = await API.get('/attendance/my-class-list');
-                setStudents(data.students || []);
+
+                const sortedStudents = [...(data.students || [])].sort((a, b) => {
+                    return a.enrollmentNo.localeCompare(
+                        b.enrollmentNo,
+                        undefined,
+                        { numeric: true, sensitivity: 'base' }
+                    );
+                });
+
+                setStudents(sortedStudents);
                 setAssignedClass(data.className);
             } catch (err) {
                 console.error("Error fetching class list", err);
@@ -33,7 +41,7 @@ const TeacherStudentList = ({ user }) => {
                 setLoading(false);
             }
         };
-        
+
         if (user) {
             fetchStudents();
         }

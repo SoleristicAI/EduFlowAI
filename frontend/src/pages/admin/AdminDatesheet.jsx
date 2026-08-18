@@ -493,7 +493,7 @@ const AdminDatesheet = () => {
 
                             {/* Timing */}
                             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-200">
-                                <label className="text-[13px] font-black text-slate-500 uppercase mb-4 block tracking-widest flex items-center gap-2"><Clock size={16} className="text-[#42A5F5]" /> School Timing</label>
+                                <label className="text-[13px] font-black text-slate-500 uppercase mb-4 block tracking-widest flex items-center gap-2"><Clock size={16} className="text-[#42A5F5]" /> Exam Timing</label>
                                 <div className="flex flex-col md:flex-row items-center gap-4">
                                     <div className="flex-1 w-full flex items-center gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
                                         <span className="font-bold text-slate-400 pl-2">From</span>
