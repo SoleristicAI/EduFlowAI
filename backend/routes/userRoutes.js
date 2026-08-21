@@ -721,4 +721,38 @@ router.post('/admin/promote-students', protect, adminOnly, async (req, res) => {
     }
 });
 
+// 🔥 NAYA ROUTE: FETCH GRADES WITH STUDENT COUNTS 🔥
+router.get('/grades/with-counts', protect, async (req, res) => {
+    try {
+        const User = require('../models/User');
+        const gradesData = await User.aggregate([
+            { 
+                $match: { 
+                    schoolId: req.user.schoolId, 
+                    role: 'student',
+                    grade: { $ne: null },
+                    status: { $nin: ['Alumni', 'Left'] } // Sirf active bacche count honge
+                } 
+            },
+            { 
+                $group: { 
+                    _id: '$grade', 
+                    count: { $sum: 1 } 
+                } 
+            },
+            { $sort: { _id: 1 } } // Class ke naam se alphabetically sort
+        ]);
+
+        // Clean formatting for frontend
+        const formattedGrades = gradesData.map(g => ({
+            grade: g._id,
+            count: g.count
+        }));
+
+        res.json(formattedGrades);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching grades data' });
+    }
+});
+
 module.exports = router;
