@@ -733,7 +733,7 @@ font-semibold
 
     <p className="text-center text-slate-600 text-lg mb-14 max-w-3xl mx-auto">
       Pay only for the students you manage. Scale your subscription as your
-      school grows.
+      school, college & educational institutions grows.
     </p>
 
     <div className="grid lg:grid-cols-3 gap-8">
@@ -758,24 +758,47 @@ font-semibold
 
         <p className="text-sm text-slate-500">
           One-Time Setup Fee: ₹9,999
-        </p>
+        </p> 
+        <br />
+
+        <h4 className="font-bold">Core Management</h4>
+
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Student Management</li>
+          <li>✓ Teacher Management</li>
+          <li>✓ Attendance Management</li>
+          <li>✓ Timetable Management</li>
+          <li>✓ Homework Management</li>
+          <li>✓ Assignment Management</li>
+          <li>✓ Notices & Events</li>
+          <li>✓ Holidays Planner</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Academic</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Performance & Result Analysis</li>
+          <li>✓ Basic ERP Notification</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Academic</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Parent, Student & Teacher Portal</li>
+          <li>✓ Android & iOS App</li>
+          <li>✓ Web Dashboard</li>
+          <li>✓ Dark & Light Mode</li>
+          <li>✓ Email Support</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Up to 300 Students</h4>
+
 
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
           Book Free Demo
         </button>
 
-        <ul className="mt-8 space-y-3 text-slate-600">
-          <li>✓ Up to 300 Students</li>
-          <li>✓ Student Management</li>
-          <li>✓ Teacher Management</li>
-          <li>✓ Attendance Management</li>
-          <li>✓ Homework Management</li>
-          <li>✓ Timetable</li>
-          <li>✓ Parent, Student & Teacher Portal</li>
-          <li>✓ Android & iOS App</li>
-          <li>✓ Web Dashboard</li>
-          <li>✓ Email Support</li>
-        </ul>
       </div>
 
       {/* Professional */}
@@ -803,23 +826,51 @@ font-semibold
         <p className="text-sm text-slate-500">
           One-Time Setup Fee: ₹24,999
         </p>
+        <br />
+
+        <h2 className="font-bold">Everthing in Starter</h2>
+        <br />
+
+        <h4 className="font-bold">Administration & Finance</h4>
+
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Fee Management</li>
+          <li>✓ Staff Management</li>
+          <li>✓ Advanced ERP Notifications</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Academic & Examination</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Examination Management</li>
+          <li>✓ Library Management</li>
+          <li>✓ Mentorship System</li>
+          <li>✓ Online Teacher Feedback</li>
+          <li>✓ Student ID Card Generator</li>
+          <li>✓ Advanced Performance & Result Analysis</li>
+          <li>✓ Advance Analytics</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Communction & Learning</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Push Notifications</li>
+          <li>✓ Live Classroom Integration</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Support</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Priority Support</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Up to 1,500 Students</h4>
 
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
           Book Free Demo
         </button>
 
-        <ul className="mt-8 space-y-3 text-slate-600">
-          <li>✓ Everything in Starter</li>
-          <li>✓ Up to 1,500 Students</li>
-          <li>✓ Fee Management</li>
-          <li>✓ Exam & Result Management</li>
-          <li>✓ WhatsApp Notifications</li>
-          <li>✓ Push Notifications</li>
-          <li>✓ Staff Management</li>
-          <li>✓ Advanced Analytics</li>
-          <li>✓ School Branding</li>
-          <li>✓ Priority Support</li>
-        </ul>
       </div>
 
       {/* Enterprise */}
@@ -828,7 +879,7 @@ font-semibold
         <h3 className="text-3xl font-bold">Enterprise</h3>
 
         <p className="text-slate-500 mt-2">
-          Tailored for large schools & educational groups.
+          Tailored for large schools, colleges & educational groups.
         </p>
 
         <div className="mt-6">
@@ -838,24 +889,49 @@ font-semibold
         <p className="mt-2 text-sm text-slate-500">
           Custom pricing based on your institution's requirements.
         </p>
+        <br />
+
+        <h2 className="font-bold">Everthing in Professional</h2>
+        <br />
+
+        <h4 className="font-bold">Enterprise Management</h4>
+
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Unlimited Students</li>
+          <li>✓ Multi-Branch Management</li>
+          <li>✓ Advanced Role & Permission Management</li>
+          <li>✓ Transport Management System</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Customization</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Custom Modules</li>
+          <li>✓ Custom Integration</li>
+          <li>✓ Custom Workflow Automation</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Enterprise Support</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Dedicated Account Manager</li>
+          <li>✓ Staff Training & Onboarding</li>
+          <li>✓ Dedicated Support</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Support</h4>
+        <ul className="space-y-3 text-slate-600">
+          <li>✓ Priority Support</li>
+        </ul>
+        <br />
+
+        <h4 className="font-bold">Up to 1,500 Students</h4>
 
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
           Contact Sales
         </button>
 
-        <ul className="mt-8 space-y-3 text-slate-600">
-          <li>✓ Unlimited Students</li>
-          <li>✓ Everything in Professional</li>
-          <li>✓ Multi-Branch Management</li>
-          <li>✓ Dedicated Account Manager</li>
-          <li>✓ Custom Modules</li>
-          <li>✓ API Access</li>
-          <li>✓ Third-Party Integrations</li>
-          <li>✓ White-Label Solution</li>
-          <li>✓ Advanced Security (SSO)</li>
-          <li>✓ Staff Training & Onboarding</li>
-          <li>✓ 24×7 Priority Support</li>
-        </ul>
       </div>
 
     </div>
