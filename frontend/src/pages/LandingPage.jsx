@@ -920,14 +920,6 @@ font-semibold
         </ul>
         <br />
 
-        <h4 className="font-bold">Support</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Priority Support</li>
-        </ul>
-        <br />
-
-        <h4 className="font-bold">Up to 1,500 Students</h4>
-
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
           Contact Sales
         </button>
