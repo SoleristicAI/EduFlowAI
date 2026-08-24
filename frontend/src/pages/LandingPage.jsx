@@ -782,7 +782,7 @@ font-semibold
         </ul>
         <br />
 
-        <h4 className="font-bold">Academic</h4>
+        <h4 className="font-bold">Platform</h4>
         <ul className="space-y-3 text-slate-600">
           <li>✓ Parent, Student & Teacher Portal</li>
           <li>✓ Android & iOS App</li>
@@ -796,7 +796,7 @@ font-semibold
 
 
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
-          Book Free Demo
+          Book Demo
         </button>
 
       </div>
@@ -868,7 +868,7 @@ font-semibold
         <h4 className="font-bold">Up to 1,500 Students</h4>
 
         <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
-          Book Free Demo
+          Book Demo
         </button>
 
       </div>
