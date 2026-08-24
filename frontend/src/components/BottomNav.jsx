@@ -19,12 +19,16 @@ const BottomNav = () => {
   const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "https://tera-backend.onrender.com";
   const studentPhoto = user.avatar ? (user.avatar.startsWith('http') ? user.avatar : `${BASE_URL}${user.avatar}`) : null;
   const studentName = user.name || "Student Name";
+  // 🔥 BOTTOM NAV BIRTHDAY CHECK 🔥
+  const today = new Date();
+  const dobDate = user.dob ? new Date(user.dob) : null;
+  const isBirthday = user.role === 'student' && dobDate && today.getMonth() === dobDate.getMonth() && today.getDate() === dobDate.getDate();
 
   return (
     <>
       {/* Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-10 flex justify-between items-center z-40 rounded-t-[2.5rem] shadow-[0_-15px_40px_rgba(0,0,0,0.06)] h-20 pb-0 font-sans italic text-[15px]">
-        <NavLink to="/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 transition-all ${isActive ? 'text-[#42A5F5]' : 'text-slate-400'}`}>
+        <NavLink to="/dashboard" className={({ isActive }) => `flex flex-col items-center gap-1 transition-all ${isActive ? (isBirthday ? 'text-rose-500' : 'text-[#42A5F5]') : 'text-slate-400'}`}>
           <Home size={20} />
           <span className="text-[10px] font-black uppercase tracking-tighter">Home</span>
         </NavLink>
@@ -32,8 +36,8 @@ const BottomNav = () => {
         {/* Center Node Button */}
         <div className="relative -top-4 flex flex-col items-center">
           <div onClick={() => setShowSchoolModal(true)} className="relative cursor-pointer group">
-            <div className="absolute inset-0 rounded-full bg-[#42A5F5]/40 blur-2xl group-hover:blur-3xl transition-all"></div>
-            <div className="relative bg-[#42A5F5] text-white p-3 rounded-full shadow-[0_15px_30px_rgba(66,165,245,0.4)] border-[4px] border-white active:scale-90 transition-all">
+            <div className={`absolute inset-0 rounded-full ${isBirthday ? 'bg-rose-500/50' : 'bg-[#42A5F5]/40'} blur-2xl group-hover:blur-3xl transition-all`}></div>
+            <div className={`relative ${isBirthday ? 'bg-gradient-to-br from-fuchsia-500 to-rose-500 shadow-[0_15px_30px_rgba(244,63,94,0.4)]' : 'bg-[#42A5F5] shadow-[0_15px_30px_rgba(66,165,245,0.4)]'} text-white p-3 rounded-full border-[4px] border-white active:scale-90 transition-all`}>
               <School size={28} />
             </div>
           </div>

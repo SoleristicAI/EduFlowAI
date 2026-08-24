@@ -315,6 +315,18 @@ class _BottomNavState extends ConsumerState<BottomNav> {
     bool isHome = currentRoute == '/' || currentRoute == '/dashboard';
     bool isFeed = currentRoute.contains('/notice-feed');
 
+    final role = user?['role'] ?? 'student';
+    
+    // 🔥 BOTTOM NAV BIRTHDAY CHECK 🔥
+    final today = DateTime.now();
+    bool isBirthday = false;
+    if (role == 'student' && user?['dob'] != null) {
+      try {
+        final dob = DateTime.parse(user!['dob']);
+        if (dob.month == today.month && dob.day == today.day) isBirthday = true;
+      } catch (e) {}
+    }
+
     // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
@@ -343,7 +355,7 @@ class _BottomNavState extends ConsumerState<BottomNav> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // --- HOME NAV ITEM ---
-          _buildNavItem(Icons.home_filled, "HOME", isHome, isDarkMode, () => context.go('/')),
+         _buildNavItem(Icons.home_filled, "HOME", isHome, isDarkMode, isBirthday, () => context.go('/')),
 
           // --- CENTER FLOATING BUTTON ---
           Transform.translate(
@@ -356,27 +368,32 @@ class _BottomNavState extends ConsumerState<BottomNav> {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
+                      // Glow
                       Container(
                         width: 50, height: 50,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFF42A5F5).withOpacity(0.4),
+                                color: (isBirthday ? const Color(0xFFE11D48) : const Color(0xFF42A5F5)).withOpacity(0.4),
                                 blurRadius: 15,
                                 spreadRadius: 5)
                           ],
                         ),
                       ),
+                      // Button
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF42A5F5),
+                          gradient: isBirthday 
+                              ? const LinearGradient(colors: [Color(0xFFF43F5E), Color(0xFFFB923C)])
+                              : null,
+                          color: isBirthday ? null : const Color(0xFF42A5F5),
                           shape: BoxShape.circle,
-                          border: Border.all(color: navBg, width: 3), // 🔥 Dynamic border match bg
+                          border: Border.all(color: navBg, width: 3),
                           boxShadow: [
                             BoxShadow(
-                                color: const Color(0xFF42A5F5).withOpacity(0.4),
+                                color: (isBirthday ? const Color(0xFFE11D48) : const Color(0xFF42A5F5)).withOpacity(0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 10))
                           ],
@@ -402,31 +419,30 @@ class _BottomNavState extends ConsumerState<BottomNav> {
           ),
 
           // --- FEED NAV ITEM ---
-          _buildNavItem(Icons.campaign, "FEED", isFeed, isDarkMode, () => context.go('/notice-feed')),
+         _buildNavItem(Icons.campaign, "FEED", isFeed, isDarkMode, isBirthday, () => context.go('/notice-feed')),
         ],
       ),
     );
   }
 
-  // 🔥 UPDATE: Added theme colors to nav item
-  Widget _buildNavItem(IconData icon, String label, bool isActive, bool isDarkMode, VoidCallback onTap) {
+// 🔥 UPDATE: Added birthday color support
+  Widget _buildNavItem(IconData icon, String label, bool isActive, bool isDarkMode, bool isBirthday, VoidCallback onTap) {
     final Color inactiveColor = isDarkMode ? const Color(0xFF64748B) : Colors.grey.shade400;
+    final Color activeColor = isBirthday ? const Color(0xFFE11D48) : const Color(0xFF42A5F5); // 🔥 Dynamic Rose/Blue
 
     return GestureDetector(
       onTap: onTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon,
-              size: 24,
-              color: isActive ? const Color(0xFF42A5F5) : inactiveColor),
+          Icon(icon, size: 24, color: isActive ? activeColor : inactiveColor),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w900,
-              color: isActive ? const Color(0xFF42A5F5) : inactiveColor,
+              color: isActive ? activeColor : inactiveColor,
               letterSpacing: -0.5,
             ),
           ),

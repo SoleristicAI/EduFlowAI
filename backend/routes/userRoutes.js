@@ -755,4 +755,70 @@ router.get('/grades/with-counts', protect, async (req, res) => {
     }
 });
 
+// ==========================================================
+// 🔥 PREMIUM BIRTHDAY ENGINE (TIMEZONE LOCKED) 🔥
+// ==========================================================
+router.get('/student/birthday-wish', protect, async (req, res) => {
+    try {
+        // Hamesha fresh data DB se nikalenge
+        const User = require('../models/User');
+        const user = await User.findById(req.user._id);
+
+        if (!user || !user.dob) return res.json({ isBirthday: false });
+
+        // 🔥 TIMEZONE HACK: UTC Time ko strict Indian Standard Time (+05:30) mein convert karna
+        const today = new Date();
+        today.setHours(today.getHours() + 5);
+        today.setMinutes(today.getMinutes() + 30);
+        const currentMonth = today.getUTCMonth();
+        const currentDay = today.getUTCDate();
+
+        // DOB ko bhi IST mein convert karenge taaki koi date peeche shift na ho
+        const dobDate = new Date(user.dob);
+        dobDate.setHours(dobDate.getHours() + 5);
+        dobDate.setMinutes(dobDate.getMinutes() + 30);
+        const dobMonth = dobDate.getUTCMonth();
+        const dobDay = dobDate.getUTCDate();
+
+        // EXACT MATCH
+        if (currentMonth === dobMonth && currentDay === dobDay) {
+            
+            const wishes = [
+                "May your special day be filled with limitless joy and massive success!",
+                "Wishing you a day as brilliant and unique as your potential!",
+                "Another year older, another year of becoming absolutely unstoppable!",
+                "Keep shining, keep growing! Have an extraordinary birthday today!",
+                "May this year bring you closer to all your biggest dreams!",
+                "Happy Birthday! The world is yours to conquer today and always.",
+                "Here is to a brilliant mind and a beautiful soul. Have a blast!",
+                "Celebrate yourself today! You are destined for greatness.",
+                "May your day be painted with colors of joy, success, and fun!",
+                "Wishing you a blockbuster year ahead full of high scores and happiness!",
+                "Happy Birthday! Keep crushing your goals and making everyone proud.",
+                "Dream big, work hard, and enjoy your special day to the fullest!",
+                "A very Happy Birthday! May your journey ahead be incredibly epic.",
+                "Shine bright today! You have got the magic to change the world.",
+                "Sending you the biggest virtual hug on your special day!",
+                "May your birthday be just the start of a year filled with good luck!",
+                "Happy Birthday! Keep learning, keep thriving, keep being amazing.",
+                "Wishing you an adventure-filled year ahead. Enjoy your day!",
+                "Your potential is endless. Have a fantastic and joyful birthday!",
+                "Cheers to you! May today bring everything you have wished for."
+            ];
+
+            // Har saal sirf 1 nayi wish lock hogi
+            const currentYear = today.getUTCFullYear();
+            const seed = (user._id.toString().charCodeAt(0) + currentYear) % wishes.length;
+            const selectedWish = wishes[seed];
+
+            res.json({ isBirthday: true, wish: selectedWish, name: user.name.split(' ')[0] });
+        } else {
+            res.json({ isBirthday: false });
+        }
+    } catch (error) {
+        console.error("Birthday engine error:", error);
+        res.status(500).json({ message: "Birthday engine error." });
+    }
+});
+
 module.exports = router;

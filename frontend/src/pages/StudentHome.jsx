@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import Confetti from 'react-confetti';
 import {
   Calendar, Clock, CreditCard, Bell, Sun, FileText, TrendingUp, FileSearch, ClipboardCheck, Bus, Book, Video, BookOpen, Megaphone, Users, GraduationCap, UserPlus, MessageSquare, Bot, ChevronDown, ChevronUp, ClipboardList, Sparkles, BarChart3
 } from 'lucide-react';
@@ -19,6 +20,49 @@ const StudentHome = ({ user, searchQuery }) => {
   });
 
   const [unreadERP, setUnreadERP] = useState(0);
+  // --- BIRTHDAY ENGINE STATES ---
+  const [bdayData, setBdayData] = useState({ isBirthday: false, wish: '', name: '' });
+  const [showBdayModal, setShowBdayModal] = useState(false);
+  const [bdayPhase, setBdayPhase] = useState(0); // 0: Start, 1: Wish, 2: Closing
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
+
+  // Window size for Confetti
+  useEffect(() => {
+    const handleResize = () => setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Birthday Fetch API
+  useEffect(() => {
+    const checkBirthday = async () => {
+      try {
+        const { data } = await API.get('/users/student/birthday-wish');
+        if (data.isBirthday) {
+          setBdayData(data);
+          
+          // Check if already shown today
+          const todayStr = new Date().toDateString();
+          const shownDate = localStorage.getItem(`bday_shown_${user?.enrollmentNo}`);
+          
+          if (shownDate !== todayStr) {
+            setShowBdayModal(true);
+            // 5 Second baad phase 1 (Wish dikhana)
+            setTimeout(() => setBdayPhase(1), 5000);
+            localStorage.setItem(`bday_shown_${user?.enrollmentNo}`, todayStr);
+          }
+        }
+      } catch (err) { console.error("Birthday check failed"); }
+    };
+    if (user) checkBirthday();
+  }, [user]);
+
+  const handleThankYouClick = () => {
+    setBdayPhase(2); // Show welcome message
+    setTimeout(() => {
+      setShowBdayModal(false); // Close completely after 3 seconds
+    }, 3000);
+  };
 
 useEffect(() => {
     const fetchUnreadNotices = async () => {
@@ -140,22 +184,6 @@ useEffect(() => {
       bgColor: 'bg-[#E8F5E9]',
       iconColor: 'bg-[#C8E6C9] text-[#43A047]'
     },
-    // {
-    //   title: 'Exam Notices',
-    //   icon: <Megaphone size={24} />,
-    //   path: '/exam-notices',
-    //   bgColor: 'bg-[#F3E5F5]',
-    //   iconColor: 'bg-[#E1BEE7] text-[#8E24AA]'
-    // },
-
-
-    // {
-    //   title: 'Exam Registration',
-    //   icon: <UserPlus size={24} />,
-    //   path: '/exam-registration',
-    //   bgColor: 'bg-[#FFF3E0]',
-    //   iconColor: 'bg-[#FFE0B2] text-[#FB8C00]'
-    // },
   ];
 
   const filteredSub = subModules.filter(sm =>
@@ -169,67 +197,7 @@ useEffect(() => {
   const noResults = filteredSub.length === 0 && filteredExtra.length === 0;
 
   return (
-    <div className="px-5 -mt-18 space-y-4 relative z-10 pb-10 md:pb-20 font-sans bg-[#F8FAFC] overflow-x-hidden">
-
-      {/* ---------------- AI FLOATING BUTTON ---------------- */}
-      {/* <motion.div
-
-        dragConstraints={{
-          left: 0,
-          top: 80,
-          right: window.innerWidth - 85,
-          bottom: window.innerHeight - 85
-        }}
-        drag
-        dragListener={true}
-        dragMomentum={false}
-        dragElastic={0}
-        onDragEnd={(event, info) => {
-          const newPos = clampPosition(
-            position.x + info.offset.x,
-            position.y + info.offset.y
-          );
-
-          setPosition(newPos);
-        }}
-        animate={{
-          x: position.x,
-          y: position.y
-        }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 25
-        }}
-
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          zIndex: 1000,
-        }}
-        className="w-[85px] h-[85px] rounded-full cursor-grab active:cursor-grabbing"
-      >
-        <div
-          onClick={() => navigate('/ai-chatbot')}
-          className="relative w-full h-full rounded-full bg-gradient-to-br from-[#42A5F5] via-[#7E57C2] to-[#EC4899] shadow-[0_10px_40px_rgba(66,165,245,0.45)] flex items-center justify-center border-4 border-white active:scale-95 transition-all overflow-hidden group"
-        > */}
-      {/* Glow */}
-      {/* <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-xl"></div> */}
-
-      {/* Pulse Ring */}
-      {/* <div className="absolute w-full h-full rounded-full border-2 border-white/30 animate-ping"></div> */}
-
-      {/* Icon */}
-      {/* <div className="relative z-10 flex flex-col items-center">
-            <Sparkles size={28} className="text-white drop-shadow-lg" />
-            <span className="text-[9px] font-black text-white uppercase tracking-widest mt-1">
-              AI
-            </span>
-          </div>
-        </div>
-      </motion.div> */}
-
+   <div className={`px-5 -mt-18 space-y-4 relative z-10 pb-10 md:pb-20 font-sans overflow-x-hidden min-h-screen transition-all duration-1000 ${bdayData.isBirthday ? 'bg-gradient-to-br from-rose-50 via-fuchsia-50 to-amber-50' : 'bg-[#F8FAFC]'}`}>
       {/* --- MAIN MODULES --- */}
       <div className="space-y-4 pt-4">
 
@@ -393,6 +361,93 @@ useEffect(() => {
 
         </div>
       </div>
+      {/* ========================================================= */}
+      {/* 🔥 THE PREMIUM APPLE-STYLE LIQUID BIRTHDAY MODAL 🔥 */}
+      {/* ========================================================= */}
+      <AnimatePresence>
+        {showBdayModal && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
+            {/* Glassmorphism Background Lock */}
+            <motion.div 
+              initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+              animate={{ opacity: 1, backdropFilter: "blur(20px)" }}
+              exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0 bg-white/40"
+            />
+
+            {/* Confetti Crackers (Only during Phase 0 and 1) */}
+            {bdayPhase < 2 && (
+              <Confetti width={windowSize.width} height={windowSize.height} recycle={bdayPhase === 0} numberOfPieces={bdayPhase === 0 ? 500 : 150} gravity={0.15} />
+            )}
+
+            <div className="relative z-10 text-center px-6 w-full max-w-md">
+              <AnimatePresence mode="wait">
+                
+                {/* PHASE 0: Initial Liquid Greeting */}
+                {bdayPhase === 0 && (
+                  <motion.div
+                    key="phase0"
+                    initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, y: -50, filter: "blur(10px)" }}
+                    transition={{ duration: 1.2, type: "spring" }}
+                  >
+                    <p className="text-xl md:text-2xl font-black text-rose-400 uppercase tracking-[0.3em] mb-4 drop-shadow-md">
+                      Hey {bdayData.name},
+                    </p>
+                    <h1 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400 leading-tight drop-shadow-xl italic">
+                      Happy<br/>Birthday! 🎉
+                    </h1>
+                  </motion.div>
+                )}
+
+                {/* PHASE 1: The Premium Wish & Thank You Button */}
+                {bdayPhase === 1 && (
+                  <motion.div
+                    key="phase1"
+                    initial={{ opacity: 0, scale: 0.9, filter: "blur(15px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                    transition={{ duration: 1.2, type: "spring" }}
+                    className="bg-white/60 backdrop-blur-xl p-8 rounded-[3rem] shadow-[0_20px_60px_rgba(0,0,0,0.1)] border border-white"
+                  >
+                    <div className="w-20 h-20 bg-gradient-to-br from-rose-400 to-fuchsia-500 rounded-full mx-auto flex items-center justify-center shadow-lg mb-6 animate-bounce">
+                      <span className="text-4xl">🎂</span>
+                    </div>
+                    <p className="text-2xl font-black text-slate-800 italic leading-snug mb-8">
+                      "{bdayData.wish}"
+                    </p>
+                    <button 
+                      onClick={handleThankYouClick}
+                      className="w-full py-5 rounded-full bg-gradient-to-r from-rose-500 to-fuchsia-500 text-white font-black text-lg uppercase tracking-widest shadow-xl shadow-rose-200 active:scale-95 transition-all hover:shadow-2xl"
+                    >
+                      Thank You ❤️
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* PHASE 2: The Sweet Closing Liquid Text */}
+                {bdayPhase === 2 && (
+                  <motion.div
+                    key="phase2"
+                    initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+                    animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, filter: "blur(20px)" }}
+                    transition={{ duration: 1 }}
+                  >
+                    <h2 className="text-4xl font-black text-slate-700 italic tracking-tighter drop-shadow-lg">
+                      Welcome back! <br/>
+                      <span className="text-rose-500 text-3xl">Enjoy your special day... ✨</span>
+                    </h2>
+                  </motion.div>
+                )}
+
+              </AnimatePresence>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

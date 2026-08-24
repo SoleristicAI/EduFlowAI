@@ -150,6 +150,16 @@ class _NavbarState extends ConsumerState<Navbar> {
         ? role[0].toUpperCase() + role.substring(1).toLowerCase()
         : '';
 
+        // 🔥 THE SECRET BIRTHDAY CHECK 🔥
+    final today = DateTime.now();
+    bool isBirthday = false;
+    if (role == 'student' && user?['dob'] != null) {
+      try {
+        final dob = DateTime.parse(user!['dob']);
+        if (dob.month == today.month && dob.day == today.day) isBirthday = true;
+      } catch (e) {}
+    }
+
     // 🔥 DYNAMIC TOP PADDING: Notch/Dynamic Island se bachane ke liye 🔥
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
@@ -164,8 +174,17 @@ class _NavbarState extends ConsumerState<Navbar> {
         padding: EdgeInsets.only(
             top: statusBarHeight + 15, left: 20, right: 20, bottom: 20),
         decoration: BoxDecoration(
-          // 🔥 DYNAMIC BACKGROUND: Light mode me Blue, Dark mode me Dark Slate/Blue
-          color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5),
+          // 🔥 BIRTHDAY THEME GRADIENT 🔥
+          gradient: isBirthday
+              ? LinearGradient(
+                  colors: isDarkMode 
+                    ? [const Color(0xFF9F1239), const Color(0xFFE11D48)] 
+                    : [const Color(0xFFF43F5E), const Color(0xFFFB923C)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isBirthday ? null : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5)),
           boxShadow: [
             BoxShadow(
                 color: isDarkMode ? Colors.black54 : Colors.black26,
@@ -318,7 +337,7 @@ class _NavbarState extends ConsumerState<Navbar> {
               TextSpan(
                 children: [
                   TextSpan(
-                      text: "$greetingText $greetingEmoji ",
+                      text: isBirthday ? "Happy Birthday 🎂 " : "$greetingText $greetingEmoji ",
                       style: const TextStyle(
                           color: Colors.white70,
                           fontWeight: FontWeight.bold)),

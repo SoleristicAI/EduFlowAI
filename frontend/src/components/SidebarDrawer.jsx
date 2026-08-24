@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, FileText, PieChart, AlertCircle, Clock, PlusCircle, User, ShieldCheck, HelpCircle, Zap,Settings, LayoutDashboard, Bell, Bus, MessageSquare, ClipboardCheck, Users, X, Cpu, ChevronRight, LogOut, CreditCard, Layers, Check, CheckSquare, CalendarDays, Video, Bot, Megaphone, MessageCircle, Calendar, TrendingUp, GraduationCap, Book, Database, ClipboardList, BarChart3, BookOpen, BookOpenCheck } from 'lucide-react';
+import { Wallet, FileText, PieChart, AlertCircle, Clock, PlusCircle, User, ShieldCheck, HelpCircle, Zap, Settings, LayoutDashboard, Bell, Bus, MessageSquare, ClipboardCheck, Users, X, Cpu, ChevronRight, LogOut, CreditCard, Layers, Check, CheckSquare, CalendarDays, Video, Bot, Megaphone, MessageCircle, Calendar, TrendingUp, GraduationCap, Book, Database, ClipboardList, BarChart3, BookOpen, BookOpenCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../App.css';
@@ -20,9 +20,13 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
         };
     }, [isOpen]);
     const [showConfirm, setShowConfirm] = useState(false);
+    // 🔥 THE SECRET BIRTHDAY CHECK 🔥
+    const today = new Date();
+    const dobDate = user?.dob ? new Date(user.dob) : null;
+    const isBirthday = user?.role === 'student' && dobDate && today.getMonth() === dobDate.getMonth() && today.getDate() === dobDate.getDate();
     // if (!isOpen) return null;
 
-   const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000"; 
+    const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000";
 
     // 👇🔥 YEH NAYA FUNCTION ADD KAR 🔥👇
     const getImageUrl = (path) => {
@@ -150,11 +154,11 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                 damping: 18,
                                 mass: 0.8
                             }}
-                            className="relative w-70 bg-[#F8FAFC] h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden"
+                            className={`relative w-70 h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden transition-all duration-1000 ${isBirthday ? 'bg-gradient-to-br from-rose-50 via-fuchsia-50 to-amber-50' : 'bg-[#F8FAFC]'}`}
                         >
 
-                            {/* --- STEP 1: PREMIUM LIGHT BLUE HEADER (Fixed at Top) --- */}
-                            <div className="p-3 pb-4 bg-gradient-to-br from-[#42A5F5] to-[#1E88E5] rounded-br-[2rem] relative shadow-lg shrink-0">
+                            {/* --- STEP 1: PREMIUM DYNAMIC HEADER (Fixed at Top) --- */}
+                            <div className={`p-3 pb-4 rounded-br-[2rem] relative shadow-lg shrink-0 transition-all duration-1000 ${isBirthday ? 'bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400' : 'bg-gradient-to-br from-[#42A5F5] to-[#1E88E5]'}`}>
                                 <div className="flex items-center gap-4 mb-6">
                                     <div className="w-15 h-15 bg-white p-1 rounded-full shadow-xl">
                                         <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">

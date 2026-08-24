@@ -10,6 +10,10 @@ const Navbar = ({ user, searchQuery, setSearchQuery, onSupportClick }) => {
   const [greeting, setGreeting] = useState({ text: 'Good Morning', emoji: '☀️' });
   const [unreadCount, setUnreadCount] = useState(0);
   const navigate = useNavigate();
+  // 🔥 THE SECRET BIRTHDAY CHECK 🔥
+  const today = new Date();
+  const dobDate = user?.dob ? new Date(user.dob) : null;
+  const isBirthday = user?.role === 'student' && dobDate && today.getMonth() === dobDate.getMonth() && today.getDate() === dobDate.getDate();
   useEffect(() => {
     if (!user || !user.token) return;
 
@@ -76,7 +80,19 @@ const Navbar = ({ user, searchQuery, setSearchQuery, onSupportClick }) => {
 
   return (
     <>
-      <header className="bg-[#42A5F5] text-white px-6 pt-6 pb-8 rounded-b-[2.5rem] shadow-md relative z-50 overflow-hidden">
+      {/* 🔥 DYNAMIC BIRTHDAY HEADER 🔥 */}
+      <header className={`${isBirthday ? 'bg-gradient-to-r from-fuchsia-500 via-rose-500 to-orange-400' : 'bg-[#42A5F5]'} text-white px-6 pt-6 pb-8 rounded-b-[2.5rem] shadow-md relative z-50 overflow-hidden transition-all duration-1000`}>
+        
+        {/* Birthday Balloons Decorations */}
+        {isBirthday && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-40">
+             <div className="absolute top-2 left-4 text-4xl animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}>🎈</div>
+             <div className="absolute -top-4 right-10 text-5xl animate-bounce" style={{ animationDelay: '0.5s', animationDuration: '4s' }}>✨</div>
+             <div className="absolute top-10 right-2 text-3xl animate-bounce" style={{ animationDelay: '1s', animationDuration: '2.5s' }}>🎊</div>
+             <div className="absolute bottom-2 left-1/2 text-4xl animate-bounce" style={{ animationDelay: '0.2s', animationDuration: '3.5s' }}>🎈</div>
+          </div>
+        )}
+
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-neon/60 to-transparent animate-pulse"></div>
         </div>
@@ -146,8 +162,8 @@ const Navbar = ({ user, searchQuery, setSearchQuery, onSupportClick }) => {
           <span className="inline-block mt-0 px-4 py-1 bg-white/20 border border-white/30 rounded-full text-[12px] font-bold tracking-wide text-white">
             {user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).toLowerCase()} Portal
           </span>
-          <h2 className="text-2xl font-bold tracking-tight text-white/90 leading-tight mt-2">
-            {greeting.text} {greeting.emoji}{' '} 
+          <h2 className="text-2xl font-bold tracking-tight text-white/90 leading-tight mt-2 drop-shadow-md">
+            {isBirthday ? 'Happy Birthday 🎂' : `${greeting.text} ${greeting.emoji}`}{' '} 
             <span className="text-white font-black">
               {user?.name?.split(' ')[0].charAt(0).toUpperCase() + user?.name?.split(' ')[0].slice(1).toLowerCase()}
             </span>

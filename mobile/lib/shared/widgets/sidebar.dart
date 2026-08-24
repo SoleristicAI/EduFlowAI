@@ -323,13 +323,26 @@ void _handleLogout() async {
         ? (user?['enrollmentNo'] ?? 'ST-0000')
         : (user?['employeeId'] ?? 'EMP-0000');
 
+        // 🔥 SIDEBAR BIRTHDAY CHECK 🔥
+    final today = DateTime.now();
+    bool isBirthday = false;
+    if (role == 'student' && user?['dob'] != null) {
+      try {
+        final dob = DateTime.parse(user!['dob']);
+        if (dob.month == today.month && dob.day == today.day) isBirthday = true;
+      } catch (e) {}
+    }
+
     // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
-    // 🔥 DYNAMIC COLORS FOR DARK/LIGHT MODE 🔥
-    final Color bgColor =
-        isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    
+
+   // 🔥 UPDATE COLORS BASED ON BIRTHDAY 🔥
+    final Color baseBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color bdayBgColor = isDarkMode ? const Color(0xFF4C0519) : const Color(0xFFFFF1F2);
+    final Color bgColor = isBirthday ? bdayBgColor : baseBgColor;
 
     // 🔥 NAYA CODE: AVATAR URL SANITIZATION VIA APP CONFIG 🔥
     String? avatarUrl;
@@ -391,9 +404,9 @@ void _handleLogout() async {
                     top: 50, left: 20, right: 20, bottom: 20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isDarkMode
-                        ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)]
-                        : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)],
+                    colors: isBirthday 
+                      ? (isDarkMode ? [const Color(0xFF9F1239), const Color(0xFFE11D48)] : [const Color(0xFFF43F5E), const Color(0xFFFB923C)])
+                      : (isDarkMode ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)]),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
