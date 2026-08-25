@@ -172,48 +172,71 @@ router.put('/update-school/:id', protect, superAdminOnly, async (req, res) => {
     }
 });
 
-// Stats Route 
+// ==========================================================
+// 🔥 OPTIMIZED STATS ROUTE (FAANG LEVEL SPEED) 🔥
+// ==========================================================
 router.get('/stats', protect, superAdminOnly, async (req, res) => {
     try {
+        // Step 1: Get all schools
         const allSchools = await School.find();
-        const totalRevenue = allSchools.reduce((acc, curr) => acc + curr.subscription.totalPaid, 0);
+        
+        // Safety check add kiya '?.totalPaid' taaki undefined error na aaye
+        const totalRevenue = allSchools.reduce((acc, curr) => acc + (curr.subscription?.totalPaid || 0), 0);
 
         const visibleSchools = allSchools.filter(s => !s.isDeleted);
-        const activeSchools = visibleSchools.filter(s => s.subscription.status === 'Active').length;
+        const activeSchools = visibleSchools.filter(s => s.subscription?.status === 'Active').length;
 
+        // Step 2: Global Technical Issues count
         const issueCount = await TechnicalIssue.countDocuments(); 
-        // Sirf unka count jo abhi tak resolve nahi huye (Action Required)
         const pendingIssues = await TechnicalIssue.countDocuments({ status: 'Pending' });
 
-        // Step 1: Aggregating analytics for each school
-        const schoolsWithStats = await Promise.all(visibleSchools.map(async (school) => {
-            const studentCount = await User.countDocuments({ schoolId: school._id, role: 'student' });
-            const teacherCount = await User.countDocuments({ 
-                schoolId: school._id, 
-                role: { $in: ['teacher', 'finance'] } 
-            });
+        // Step 3: Extract all School IDs (Master Array)
+        const schoolIds = visibleSchools.map(s => s._id);
 
-            // 🔥 NAYA: Admin ki asli detailed address nikal kar bhej rahe hain
-            const adminData = await User.findOne({ schoolId: school._id, role: 'admin' }).select('address');
+        // 🔥 THE MAGIC: 100 queries ki jagah sirf 1 Aggregation query students ke liye 🔥
+        const studentCounts = await User.aggregate([
+            { $match: { schoolId: { $in: schoolIds }, role: 'student' } },
+            { $group: { _id: '$schoolId', count: { $sum: 1 } } }
+        ]);
+
+        // 🔥 The MAGIC: Sirf 1 Aggregation query teachers ke liye 🔥
+        const teacherCounts = await User.aggregate([
+            { $match: { schoolId: { $in: schoolIds }, role: { $in: ['teacher', 'finance'] } } },
+            { $group: { _id: '$schoolId', count: { $sum: 1 } } }
+        ]);
+
+        // 🔥 Sirf 1 query saare Admins ka address nikalne ke liye 🔥
+        const admins = await User.find({ schoolId: { $in: schoolIds }, role: 'admin' }).select('schoolId address');
+
+        // Step 4: Data ko memory mein map kar do (Super Fast execution)
+        const schoolsWithStats = visibleSchools.map(school => {
+            const sIdStr = school._id.toString();
+
+            // Find matching data from our 3 quick queries
+            const stdData = studentCounts.find(s => s._id && s._id.toString() === sIdStr);
+            const tchData = teacherCounts.find(t => t._id && t._id.toString() === sIdStr);
+            const adminData = admins.find(a => a.schoolId && a.schoolId.toString() === sIdStr);
 
             return {
                 ...school._doc,
-                studentCount,
-                teacherCount,
-                adminAddress: adminData ? adminData.address : {} // Frontend ko bhejo
+                studentCount: stdData ? stdData.count : 0,
+                teacherCount: tchData ? tchData.count : 0,
+                adminAddress: adminData ? adminData.address : {} 
             };
-        }));
+        });
 
-       res.json({
+        res.json({
             totalSchools: visibleSchools.length,
             activeSchools,
             totalRevenue,
-            issueCount,      // 🔥 Dashboard card par dikhega
-            pendingIssues,   // 🔥 Red Alert Badge mein dikhega
+            issueCount,      
+            pendingIssues,   
             schools: schoolsWithStats
         });
+
     } catch (error) {
-        res.status(500).json({ message: 'Stats fetch failed' });
+        console.error("🔥 STATS FETCH CRITICAL ERROR:", error);
+        res.status(500).json({ message: 'Stats fetch failed due to server error' });
     }
 });
 

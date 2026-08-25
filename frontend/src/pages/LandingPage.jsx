@@ -1,7 +1,8 @@
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import LeadCaptureModal from "../components/LeadCaptureModal";
 import Countup from "react-countup";
 import {
   ArrowRight, Bot, Users, GraduationCap, School,
@@ -23,6 +24,12 @@ export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openFAQ, setOpenFAQ] = useState(null);
   const [activeSection, setActiveSection] = useState("");
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [selectedPlanType, setSelectedPlanType] = useState("General");
+  const openLeadModal = (type) => {
+    setSelectedPlanType(type);
+    setIsLeadModalOpen(true);
+  };
 
   const scrollToSection = (id) => {
     document.getElementById(id)?.scrollIntoView({
@@ -89,26 +96,26 @@ export default function LandingPage() {
 
       <div className="relative z-10">
         <nav
-  className="
+          className="
 fixed top-0 w-full z-50
 bg-white/70
 backdrop-blur-xl
 border-b border-white/30
 shadow-[0_8px_30px_rgba(0,0,0,0.04)]
 "
->
-  <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        >
+          <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
 
-    {/* Logo */}
-    <div className="flex items-center gap-3">
-      <img
-        src="/logo.png.jpeg"
-        alt="EduFlowAI"
-        className="w-12 h-12 rounded-full object-cover border-2 border-blue-100 shadow-lg"
-      />
+            {/* Logo */}
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png.jpeg"
+                alt="EduFlowAI"
+                className="w-12 h-12 rounded-full object-cover border-2 border-blue-100 shadow-lg"
+              />
 
-      <h1
-        className="
+              <h1
+                className="
 font-black text-2xl
 bg-gradient-to-r
 from-[#4A90E2]
@@ -117,17 +124,17 @@ to-[#2563EB]
 bg-clip-text
 text-transparent
 "
-      >
-        EduFlowAI
-      </h1>
-    </div>
+              >
+                EduFlowAI
+              </h1>
+            </div>
 
-    {/* Desktop Menu */}
-    <div className="hidden md:flex items-center gap-3">
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-3">
 
-      <button
-        onClick={() => scrollToSection("Home")}
-        className={`
+              <button
+                onClick={() => scrollToSection("Home")}
+                className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
 font-medium
@@ -137,19 +144,18 @@ hover:border-[#4A90E2]
 hover:text-[#4A90E2]
 hover:-translate-y-1
 hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-${
-  activeSection === "Home"
-    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-    : "bg-white/70 border border-blue-100 text-slate-700"
-}
+${activeSection === "Home"
+                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+                    : "bg-white/70 border border-blue-100 text-slate-700"
+                  }
 `}
-      >
-        Home
-      </button>
+              >
+                Home
+              </button>
 
-      <button
-        onClick={() => scrollToSection("services")}
-        className={`
+              <button
+                onClick={() => scrollToSection("services")}
+                className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
 font-medium
@@ -159,19 +165,18 @@ hover:border-[#4A90E2]
 hover:text-[#4A90E2]
 hover:-translate-y-1
 hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-${
-  activeSection === "platform"
-    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-    : "bg-white/70 border border-blue-100 text-slate-700"
-}
+${activeSection === "platform"
+                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+                    : "bg-white/70 border border-blue-100 text-slate-700"
+                  }
 `}
-      >
-        Services
-      </button>
+              >
+                Services
+              </button>
 
-      <button
-        onClick={() => scrollToSection("ai")}
-        className={`
+              <button
+                onClick={() => scrollToSection("ai")}
+                className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
 font-medium
@@ -181,19 +186,18 @@ hover:border-[#4A90E2]
 hover:text-[#4A90E2]
 hover:-translate-y-1
 hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-${
-  activeSection === "ai"
-    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-    : "bg-white/70 border border-blue-100 text-slate-700"
-}
+${activeSection === "ai"
+                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+                    : "bg-white/70 border border-blue-100 text-slate-700"
+                  }
 `}
-      >
-        AI
-      </button>
+              >
+                AI
+              </button>
 
-      <button
-        onClick={() => scrollToSection("pricing")}
-        className={`
+              <button
+                onClick={() => scrollToSection("pricing")}
+                className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
 font-medium
@@ -203,19 +207,18 @@ hover:border-[#4A90E2]
 hover:text-[#4A90E2]
 hover:-translate-y-1
 hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-${
-  activeSection === "pricing"
-    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-    : "bg-white/70 border border-blue-100 text-slate-700"
-}
+${activeSection === "pricing"
+                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+                    : "bg-white/70 border border-blue-100 text-slate-700"
+                  }
 `}
-      >
-        Pricing
-      </button>
+              >
+                Pricing
+              </button>
 
-      <button
-        onClick={() => scrollToSection("faq")}
-        className={`
+              <button
+                onClick={() => scrollToSection("faq")}
+                className={`
 px-4 py-2 rounded-xl
 backdrop-blur-md
 font-medium
@@ -225,24 +228,23 @@ hover:border-[#4A90E2]
 hover:text-[#4A90E2]
 hover:-translate-y-1
 hover:shadow-[0_8px_20px_rgba(74,144,226,0.15)]
-${
-  activeSection === "faq"
-    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
-    : "bg-white/70 border border-blue-100 text-slate-700"
-}
+${activeSection === "faq"
+                    ? "bg-blue-100 text-[#4A90E2] border border-[#4A90E2]"
+                    : "bg-white/70 border border-blue-100 text-slate-700"
+                  }
 `}
-      >
-        FAQ
-      </button>
-    </div>
+              >
+                FAQ
+              </button>
+            </div>
 
-    {/* Right Side */}
-    <div className="flex items-center gap-3">
+            {/* Right Side */}
+            <div className="flex items-center gap-3">
 
-      {/* Desktop Login */}
-      <button
-        onClick={() => navigate("/login")}
-        className="
+              {/* Desktop Login */}
+              <button
+                onClick={() => navigate("/login")}
+                className="
 hidden md:block
 bg-gradient-to-r
 from-[#4A90E2]
@@ -255,82 +257,82 @@ transition-all duration-300
 hover:scale-105
 hover:shadow-[0_15px_35px_rgba(74,144,226,0.35)]
 "
-      >
-        Login
-      </button>
+              >
+                Login
+              </button>
 
-      {/* Mobile Hamburger */}
-      <button
-        className="md:hidden p-2 rounded-lg hover:bg-blue-50"
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      >
-        {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-      </button>
-    </div>
+              {/* Mobile Hamburger */}
+              <button
+                className="md:hidden p-2 rounded-lg hover:bg-blue-50"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              </button>
+            </div>
 
-  </div>
+          </div>
 
-  {/* Mobile Menu */}
-  {mobileMenuOpen && (
-    <div className="md:hidden bg-white border-t border-blue-100 shadow-xl">
-      <div className="flex flex-col p-5 gap-3">
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden bg-white border-t border-blue-100 shadow-xl">
+              <div className="flex flex-col p-5 gap-3">
 
-        <button
-          onClick={() => {
-            scrollToSection("Home");
-            setMobileMenuOpen(false);
-          }}
-          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
-        >
-          Home
-        </button>
+                <button
+                  onClick={() => {
+                    scrollToSection("Home");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+                >
+                  Home
+                </button>
 
-        <button
-          onClick={() => {
-            scrollToSection("services");
-            setMobileMenuOpen(false);
-          }}
-          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
-        >
-          Services
-        </button>
+                <button
+                  onClick={() => {
+                    scrollToSection("services");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+                >
+                  Services
+                </button>
 
-        <button
-          onClick={() => {
-            scrollToSection("ai");
-            setMobileMenuOpen(false);
-          }}
-          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
-        >
-          AI
-        </button>
+                <button
+                  onClick={() => {
+                    scrollToSection("ai");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+                >
+                  AI
+                </button>
 
-        <button
-          onClick={() => {
-            scrollToSection("pricing");
-            setMobileMenuOpen(false);
-          }}
-          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
-        >
-          Pricing
-        </button>
+                <button
+                  onClick={() => {
+                    scrollToSection("pricing");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+                >
+                  Pricing
+                </button>
 
-        <button
-          onClick={() => {
-            scrollToSection("faq");
-            setMobileMenuOpen(false);
-          }}
-          className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
-        >
-          FAQ
-        </button>
+                <button
+                  onClick={() => {
+                    scrollToSection("faq");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-xl hover:bg-blue-50"
+                >
+                  FAQ
+                </button>
 
-        <button
-          onClick={() => {
-            navigate("/login");
-            setMobileMenuOpen(false);
-          }}
-          className="
+                <button
+                  onClick={() => {
+                    navigate("/login");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="
 mt-2
 bg-gradient-to-r
 from-[#4A90E2]
@@ -340,14 +342,14 @@ py-3
 rounded-xl
 font-semibold
 "
-        >
-          Login
-        </button>
+                >
+                  Login
+                </button>
 
-      </div>
-    </div>
-  )}
-</nav>
+              </div>
+            </div>
+          )}
+        </nav>
 
         <section id="Home" className="bg-transparent pt-40 pb-24 px-6">
           <div className="max-w-6xl mx-auto text-center">
@@ -386,6 +388,7 @@ font-semibold
 
             <div className="mt-10 flex justify-center gap-4 flex-wrap">
               <button
+                onClick={() => openLeadModal("General")} // 🔥 ONCLICK ADD KIYA
                 className="bg-[#4A90E2] text-white px-8 py-4 rounded-2xl flex items-center gap-2
              font-bold transition-all duration-300
              hover:bg-[#357ABD]
@@ -618,8 +621,8 @@ font-semibold
                 ["Student Id Card Generation", CheckCircle],
                 ["Support Requests", Shield],
                 ["Dark & Light Mode Toggle", CheckCircle],
-                
-                
+
+
               ].map(([title, Icon], i) => (
                 <div
                   key={i}
@@ -726,224 +729,230 @@ font-semibold
         </section>
 
         <section id="pricing" className="bg-white/70 backdrop-blur-sm py-24 px-6">
-  <div className="max-w-7xl mx-auto">
-    <h2 className="text-center text-5xl font-black mb-4">
-      Simple & Transparent Pricing
-    </h2>
+          <div className="max-w-7xl mx-auto">
+            <h2 className="text-center text-5xl font-black mb-4">
+              Simple & Transparent Pricing
+            </h2>
 
-    <p className="text-center text-slate-600 text-lg mb-14 max-w-3xl mx-auto">
-      Pay only for the students you manage. Scale your subscription as your
-      school, college & educational institutions grows.
-    </p>
+            <p className="text-center text-slate-600 text-lg mb-14 max-w-3xl mx-auto">
+              Pay only for the students you manage. Scale your subscription as your
+              school, college & educational institutions grows.
+            </p>
 
-    <div className="grid lg:grid-cols-3 gap-8">
+            <div className="grid lg:grid-cols-3 gap-8">
 
-      {/* Starter */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+              {/* Starter */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
 
-        <h3 className="text-3xl font-bold">Starter</h3>
+                <h3 className="text-3xl font-bold">Starter</h3>
 
-        <p className="text-slate-500 mt-2">
-          Perfect for small schools & tuition centres.
-        </p>
+                <p className="text-slate-500 mt-2">
+                  Perfect for small schools & tuition centres.
+                </p>
 
-        <div className="mt-6">
-          <span className="text-5xl font-black">₹50</span>
-          <span className="text-slate-500 text-lg"> / student / month</span>
-        </div>
+                <div className="mt-6">
+                  <span className="text-5xl font-black">₹50</span>
+                  <span className="text-slate-500 text-lg"> / student / month</span>
+                </div>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Minimum Billing: ₹2,500/month
-        </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Minimum Billing: ₹2,500/month
+                </p>
 
-        <p className="text-sm text-slate-500">
-          One-Time Setup Fee: ₹9,999
-        </p> 
-        <br />
+                <p className="text-sm text-slate-500">
+                  One-Time Setup Fee: ₹9,999
+                </p>
+                <br />
 
-        <h4 className="font-bold">Core Management</h4>
+                <h4 className="font-bold">Core Management</h4>
 
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Student Management</li>
-          <li>✓ Teacher Management</li>
-          <li>✓ Attendance Management</li>
-          <li>✓ Timetable Management</li>
-          <li>✓ Homework Management</li>
-          <li>✓ Assignment Management</li>
-          <li>✓ Notices & Events</li>
-          <li>✓ Holidays Planner</li>
-        </ul>
-        <br />
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Student Management</li>
+                  <li>✓ Teacher Management</li>
+                  <li>✓ Attendance Management</li>
+                  <li>✓ Timetable Management</li>
+                  <li>✓ Homework Management</li>
+                  <li>✓ Assignment Management</li>
+                  <li>✓ Notices & Events</li>
+                  <li>✓ Holidays Planner</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Academic</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Performance & Result Analysis</li>
-          <li>✓ Basic ERP Notification</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Academic</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Performance & Result Analysis</li>
+                  <li>✓ Basic ERP Notification</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Platform</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Parent, Student & Teacher Portal</li>
-          <li>✓ Android & iOS App</li>
-          <li>✓ Web Dashboard</li>
-          <li>✓ Dark & Light Mode</li>
-          <li>✓ Email Support</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Platform</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Parent, Student & Teacher Portal</li>
+                  <li>✓ Android & iOS App</li>
+                  <li>✓ Web Dashboard</li>
+                  <li>✓ Dark & Light Mode</li>
+                  <li>✓ Email Support</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Up to 300 Students</h4>
+                <h4 className="font-bold">Up to 300 Students</h4>
 
 
-        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
-          Book Demo
-        </button>
+                <button
+                  onClick={() => openLeadModal("Starter")} // 🔥 ONCLICK ADD KIYA
+                  className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+                  Book Demo
+                </button>
 
-      </div>
+              </div>
 
-      {/* Professional */}
-      <div className="rounded-3xl border border-[#4A90E2] bg-white p-8 scale-105 shadow-[0_20px_50px_rgba(74,144,226,0.25)]">
+              {/* Professional */}
+              <div className="rounded-3xl border border-[#4A90E2] bg-white p-8 scale-105 shadow-[0_20px_50px_rgba(74,144,226,0.25)]">
 
-        <span className="inline-block px-3 py-1 bg-blue-100 text-[#4A90E2] rounded-full text-xs font-bold mb-4">
-          MOST POPULAR
-        </span>
+                <span className="inline-block px-3 py-1 bg-blue-100 text-[#4A90E2] rounded-full text-xs font-bold mb-4">
+                  MOST POPULAR
+                </span>
 
-        <h3 className="text-3xl font-bold">Professional</h3>
+                <h3 className="text-3xl font-bold">Professional</h3>
 
-        <p className="text-slate-500 mt-2">
-          Best for growing schools needing complete automation.
-        </p>
+                <p className="text-slate-500 mt-2">
+                  Best for growing schools needing complete automation.
+                </p>
 
-        <div className="mt-6">
-          <span className="text-5xl font-black">₹45</span>
-          <span className="text-slate-500 text-lg"> / student / month</span>
-        </div>
+                <div className="mt-6">
+                  <span className="text-5xl font-black">₹45</span>
+                  <span className="text-slate-500 text-lg"> / student / month</span>
+                </div>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Minimum Billing: ₹10,000/month
-        </p>
+                <p className="mt-2 text-sm text-slate-500">
+                  Minimum Billing: ₹10,000/month
+                </p>
 
-        <p className="text-sm text-slate-500">
-          One-Time Setup Fee: ₹24,999
-        </p>
-        <br />
+                <p className="text-sm text-slate-500">
+                  One-Time Setup Fee: ₹24,999
+                </p>
+                <br />
 
-        <h2 className="font-bold">Everthing in Starter</h2>
-        <br />
+                <h2 className="font-bold">Everthing in Starter</h2>
+                <br />
 
-        <h4 className="font-bold">Administration & Finance</h4>
+                <h4 className="font-bold">Administration & Finance</h4>
 
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Fee Management</li>
-          <li>✓ Staff Management</li>
-          <li>✓ Advanced ERP Notifications</li>
-        </ul>
-        <br />
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Fee Management</li>
+                  <li>✓ Staff Management</li>
+                  <li>✓ Advanced ERP Notifications</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Academic & Examination</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Examination Management</li>
-          <li>✓ Library Management</li>
-          <li>✓ Mentorship System</li>
-          <li>✓ Online Teacher Feedback</li>
-          <li>✓ Student ID Card Generator</li>
-          <li>✓ Advanced Performance & Result Analysis</li>
-          <li>✓ Advance Analytics</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Academic & Examination</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Examination Management</li>
+                  <li>✓ Library Management</li>
+                  <li>✓ Mentorship System</li>
+                  <li>✓ Online Teacher Feedback</li>
+                  <li>✓ Student ID Card Generator</li>
+                  <li>✓ Advanced Performance & Result Analysis</li>
+                  <li>✓ Advance Analytics</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Communction & Learning</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Push Notifications</li>
-          <li>✓ Live Classroom Integration</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Communction & Learning</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Push Notifications</li>
+                  <li>✓ Live Classroom Integration</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Support</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Priority Support</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Support</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Priority Support</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Up to 1,500 Students</h4>
+                <h4 className="font-bold">Up to 1,500 Students</h4>
 
-        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
-          Book Demo
-        </button>
+                <button
+                  onClick={() => openLeadModal("Professional")} // 🔥 ONCLICK ADD KIYA
+                  className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+                  Book Demo
+                </button>
 
-      </div>
+              </div>
 
-      {/* Enterprise */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
+              {/* Enterprise */}
+              <div className="rounded-3xl border border-slate-200 bg-white p-8 hover:-translate-y-2 transition-all duration-300 hover:shadow-xl">
 
-        <h3 className="text-3xl font-bold">Enterprise</h3>
+                <h3 className="text-3xl font-bold">Enterprise</h3>
 
-        <p className="text-slate-500 mt-2">
-          Tailored for large schools, colleges & educational groups.
-        </p>
+                <p className="text-slate-500 mt-2">
+                  Tailored for large schools, colleges & educational groups.
+                </p>
 
-        <div className="mt-6">
-          <span className="text-5xl font-black">Custom</span>
-        </div>
+                <div className="mt-6">
+                  <span className="text-5xl font-black">Custom</span>
+                </div>
 
-        <p className="mt-2 text-sm text-slate-500">
-          Custom pricing based on your institution's requirements.
-        </p>
-        <br />
+                <p className="mt-2 text-sm text-slate-500">
+                  Custom pricing based on your institution's requirements.
+                </p>
+                <br />
 
-        <h2 className="font-bold">Everthing in Professional</h2>
-        <br />
+                <h2 className="font-bold">Everthing in Professional</h2>
+                <br />
 
-        <h4 className="font-bold">Enterprise Management</h4>
+                <h4 className="font-bold">Enterprise Management</h4>
 
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Unlimited Students</li>
-          <li>✓ Multi-Branch Management</li>
-          <li>✓ Advanced Role & Permission Management</li>
-          <li>✓ Transport Management System</li>
-        </ul>
-        <br />
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Unlimited Students</li>
+                  <li>✓ Multi-Branch Management</li>
+                  <li>✓ Advanced Role & Permission Management</li>
+                  <li>✓ Transport Management System</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Customization</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Custom Modules</li>
-          <li>✓ Custom Integration</li>
-          <li>✓ Custom Workflow Automation</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Customization</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Custom Modules</li>
+                  <li>✓ Custom Integration</li>
+                  <li>✓ Custom Workflow Automation</li>
+                </ul>
+                <br />
 
-        <h4 className="font-bold">Enterprise Support</h4>
-        <ul className="space-y-3 text-slate-600">
-          <li>✓ Dedicated Account Manager</li>
-          <li>✓ Staff Training & Onboarding</li>
-          <li>✓ Dedicated Support</li>
-        </ul>
-        <br />
+                <h4 className="font-bold">Enterprise Support</h4>
+                <ul className="space-y-3 text-slate-600">
+                  <li>✓ Dedicated Account Manager</li>
+                  <li>✓ Staff Training & Onboarding</li>
+                  <li>✓ Dedicated Support</li>
+                </ul>
+                <br />
 
-        <button className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
-          Contact Sales
-        </button>
+                <button
+                  onClick={() => openLeadModal("Enterprise")} // 🔥 ONCLICK ADD KIYA
+                  className="w-full mt-8 bg-[#4A90E2] text-white py-3 rounded-xl font-semibold hover:opacity-90">
+                  Contact Sales
+                </button>
 
-      </div>
+              </div>
 
-    </div>
+            </div>
 
-    {/* Bottom Note */}
+            {/* Bottom Note */}
 
-    <div className="mt-14 text-center text-slate-600 max-w-3xl mx-auto">
-      <p className="text-lg font-medium">
-        ✔ long-term contracts available &nbsp; • &nbsp;
-        ✔ onboarding support &nbsp; • &nbsp;
-        ✔ Free product demo
-      </p>
+            <div className="mt-14 text-center text-slate-600 max-w-3xl mx-auto">
+              <p className="text-lg font-medium">
+                ✔ long-term contracts available &nbsp; • &nbsp;
+                ✔ onboarding support &nbsp; • &nbsp;
+                ✔ Free product demo
+              </p>
 
-      <p className="mt-4">
-        <strong>Billing Example:</strong> A school with <strong>500 students</strong> pays{" "}
-        <strong>₹22,500/month</strong> on the Professional plan (₹45 per student).
-      </p>
-    </div>
-  </div>
-</section>
+              <p className="mt-4">
+                <strong>Billing Example:</strong> A school with <strong>500 students</strong> pays{" "}
+                <strong>₹22,500/month</strong> on the Professional plan (₹45 per student).
+              </p>
+            </div>
+          </div>
+        </section>
 
         <section id="faq" className="bg-white/70 backdrop-blur-sm py-24 px-6">
           <div className="max-w-4xl mx-auto">
@@ -1017,7 +1026,9 @@ font-semibold
             <p className="mt-6 text-xl opacity-90">
               Join forward-thinking institutions using AI to simplify operations.
             </p>
-            <button className="mt-10 bg-white text-[#4A90E2] px-8 py-4 rounded-2xl font-bold">
+            <button 
+              onClick={() => openLeadModal("General")} // 🔥 ONCLICK ADD KIYA
+              className="mt-10 bg-white text-[#4A90E2] px-8 py-4 rounded-2xl font-bold">
               Book Personalized Demo
             </button>
 
@@ -1044,6 +1055,17 @@ font-semibold
 
           </div>
         </footer>
+
+        {/* 🔥 TERA PREMIUM LEAD MODAL YAHAN MOUNT HOGA 🔥 */}
+        <AnimatePresence>
+          {isLeadModalOpen && (
+            <LeadCaptureModal 
+              isOpen={isLeadModalOpen} 
+              onClose={() => setIsLeadModalOpen(false)} 
+              planType={selectedPlanType} 
+            />
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

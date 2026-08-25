@@ -1,18 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { Globe, Plus, IndianRupee, Trash2, Edit3, X, Save, School, Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { 
+    Globe, Plus, IndianRupee, Trash2, Edit3, X, Save, School, 
+    Hash, MapPin, ArrowRight, Phone, ShieldCheck, ShieldAlert, 
+    Target, Mail, Briefcase, Users, MessageSquare 
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
-import Loader from '../components/Loader';
-import { Loader2 } from 'lucide-react'; // Loader2 import zaroori tha
+import { Loader2 } from 'lucide-react'; 
 
 const SuperAdminDashboard = () => {
     const navigate = useNavigate();
     const [stats, setStats] = useState(null);
+    const [leads, setLeads] = useState([]); // 🔥 NAYA STATE LEADS KE LIYE
     const [loading, setLoading] = useState(true);
+    
     const [editingSchool, setEditingSchool] = useState(null);
     const [editData, setEditData] = useState({});
+    
+    const [selectedLead, setSelectedLead] = useState(null); // 🔥 NAYA STATE LEAD DETAILS MODAL KE LIYE
 
-    useEffect(() => {
+  useEffect(() => {
         const currentUser = JSON.parse(localStorage.getItem('user'));
         const backupUser = JSON.parse(localStorage.getItem('superadmin_backup'));
 
@@ -20,19 +27,53 @@ const SuperAdminDashboard = () => {
             localStorage.setItem('user', JSON.stringify(backupUser));
             window.location.reload();
         } else {
-            fetchStats();
+            loadDashboardData(); // 🔥 Ek Single Master Function Call
         }
     }, []);
 
-    const fetchStats = async () => {
+   const loadDashboardData = async () => {
         try {
             setLoading(true);
+            
+            // Promise.all dono API ko ek hi time pe fire karta hai (Loading Time halved!)
+            const [statsRes, leadsRes] = await Promise.all([
+                API.get('/superadmin/stats'),
+                API.get('/leads/all').catch(err => {
+                    // Agar leads API fail ho (e.g route add na kiya ho), toh dashboard nahi rukega
+                    console.error("Leads Fetch Error (Skipping):", err);
+                    return { data: [] }; 
+                })
+            ]);
+
+            setStats(statsRes.data);
+            setLeads(leadsRes.data);
+
+        } catch (err) {
+            console.error("Critical Dashboard Load Error:", err);
+            alert("Dashboard failed to load completely. Check server connection.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 🔥 YEH SIRF DELETE/UPDATE KE BAAD STATS REFRESH KARNE KE LIYE HAI 🔥
+    const fetchStats = async () => {
+        try {
             const { data } = await API.get('/superadmin/stats');
             setStats(data);
         } catch (err) {
             console.error("Stats Fetch Error:", err);
-        } finally {
-            setLoading(false);
+        }
+    };
+
+    // 🔥 FETCH LEADS FUNCTION 🔥
+    const fetchLeads = async () => {
+        try {
+            // Check your exact endpoint, adjusting here to '/leads/all' based on our setup
+            const { data } = await API.get('/leads/all'); 
+            setLeads(data);
+        } catch (err) {
+            console.error("Leads Fetch Error:", err);
         }
     };
 
@@ -72,22 +113,19 @@ const SuperAdminDashboard = () => {
         }
     };
 
+    // 🔥 SCROLL LOCK FOR BOTH MODALS 🔥
     useEffect(() => {
-        if (editingSchool) {
+        if (editingSchool || selectedLead) {
             document.body.style.overflow = 'hidden'; 
         } else {
             document.body.style.overflow = 'unset'; 
         }
         return () => { document.body.style.overflow = 'unset'; }; 
-    }, [editingSchool]);
+    }, [editingSchool, selectedLead]);
 
-    // 🔥 THE MASTER FIX: DYNAMIC IMAGE RESOLVER 🔥
-    // Ye function apne aap detect karega ki app local pe hai ya live pe
     const getImageUrl = (path) => {
         if (!path) return 'https://via.placeholder.com/60';
         if (path.startsWith('http')) return path;
-        
-        // API.defaults.baseURL usually 'http://localhost:5000/api' hota hai, humein sirf base URL chahiye
         const backendUrl = API.defaults.baseURL ? API.defaults.baseURL.replace(/\/api\/?$/, '') : 'http://localhost:5000';
         return `${backendUrl}${path}`;
     };
@@ -165,6 +203,52 @@ const SuperAdminDashboard = () => {
                 </div>
             </div>
 
+            {/* ========================================================= */}
+            {/* 🔥 NEW MODULE: INBOUND SALES LEADS 🔥 */}
+            {/* ========================================================= */}
+            <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100 mb-12">
+                <div className="flex items-center gap-3 mb-8">
+                    <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                        <Target size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-slate-800">Inbound Sales Leads</h2>
+                        <p className="text-sm font-bold text-slate-400 italic">Clients requesting demos & plans</p>
+                    </div>
+                </div>
+
+                {leads.length === 0 ? (
+                    <div className="text-center py-10 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
+                        <p className="text-slate-500 font-bold italic">No inbound leads found yet.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {leads.map((lead, i) => (
+                            <div 
+                                key={i} 
+                                onClick={() => setSelectedLead(lead)} 
+                                className="bg-white border border-slate-200 rounded-[2rem] p-6 flex items-center justify-between hover:shadow-lg hover:border-emerald-300 cursor-pointer transition-all duration-300 group"
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className="p-4 bg-slate-50 text-slate-500 rounded-2xl group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors shadow-inner">
+                                        <Briefcase size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-extrabold text-slate-800 leading-tight">{lead.fullName}</h4>
+                                        <p className="text-sm text-slate-500 font-bold max-w-[150px] truncate">{lead.institutionName}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
+                                        {lead.planType}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
             {/* Main Inventory Table */}
             <div className="bg-white rounded-[3rem] p-10 shadow-sm border border-slate-100">
                 <div className="flex items-center gap-3 mb-10">
@@ -191,13 +275,11 @@ const SuperAdminDashboard = () => {
                                 <tr key={i} className="group hover:bg-slate-50 transition-all rounded-3xl shadow-sm cursor-pointer">
                                     <td className="py-6 px-6 bg-white border-y border-l border-slate-100 first:rounded-l-[2rem]" onClick={() => handleGhostLogin(school._id)}>
                                         <div className="flex items-center gap-5">
-                                            {/* 👇🔥 MASTER FIX APPLIED HERE 🔥👇 */}
                                             <img
                                                 src={getImageUrl(school.logo)}
                                                 className="w-14 h-14 rounded-2xl object-cover border border-slate-100 shadow-sm bg-white"
                                                 alt="logo"
                                             />
-                                            {/* 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆 */}
                                             <div>
                                                 <p className="font-extrabold text-slate-700 text-lg group-hover:text-indigo-600 transition-colors">{school.schoolName}</p>
                                                 <p className="text-xs font-bold text-slate-400 tracking-wider">Ref: {school.affiliationNo}</p>
@@ -228,7 +310,6 @@ const SuperAdminDashboard = () => {
                                                 onClick={(e) => { 
                                                     e.stopPropagation(); 
                                                     setEditingSchool(school); 
-                                                    // 🔥 FAANG BINDING: Admin address ko form se connect kiya
                                                     setEditData({
                                                         ...school,
                                                         address: school.address || school.adminAddress?.fullAddress || '',
@@ -256,7 +337,75 @@ const SuperAdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Edit Modal */}
+            {/* ========================================================= */}
+            {/* 🔥 LEAD DETAILS MODAL (CLICK TO CALL / EMAIL) 🔥 */}
+            {/* ========================================================= */}
+            {selectedLead && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm cursor-pointer" onClick={() => setSelectedLead(null)} />
+                    <div className="relative bg-white w-full max-w-3xl rounded-[3rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+                        
+                        <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-6">
+                            <div>
+                                <h3 className="text-3xl font-extrabold text-slate-800 tracking-tight">{selectedLead.fullName}</h3>
+                                <p className="text-slate-500 font-bold text-lg">{selectedLead.institutionName}</p>
+                                <span className="inline-block mt-3 bg-emerald-50 text-emerald-600 border border-emerald-100 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest shadow-sm">
+                                    {selectedLead.planType} Plan Interest
+                                </span>
+                            </div>
+                            <button onClick={() => setSelectedLead(null)} className="p-3 bg-slate-50 rounded-full text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-all">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Role / Job Title</p>
+                                <p className="font-extrabold text-slate-700">{selectedLead.role || selectedLead.jobTitle || 'N/A'}</p>
+                            </div>
+                            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Student Strength</p>
+                                <p className="font-extrabold text-slate-700">{selectedLead.studentCount || 'N/A'}</p>
+                            </div>
+                            
+                            {(selectedLead.biggestChallenge || selectedLead.requirements) && (
+                                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 md:col-span-2">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Requirements / Challenge</p>
+                                    <p className="font-extrabold text-slate-700 italic">{selectedLead.biggestChallenge || selectedLead.requirements}</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Direct Action Buttons */}
+                        <div className="flex flex-col md:flex-row gap-4 pt-4 border-t border-slate-100">
+                            <a 
+                                href={`tel:${selectedLead.phone}`} 
+                                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white py-5 rounded-[2rem] font-black text-lg flex items-center justify-center gap-3 shadow-lg shadow-emerald-200 transition-all active:scale-[0.98]"
+                            >
+                                <Phone size={24} /> Call Prospect
+                            </a>
+                            <a 
+                                href={`mailto:${selectedLead.workEmail}`} 
+                                className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white py-5 rounded-[2rem] font-black text-lg flex items-center justify-center gap-3 shadow-lg shadow-blue-200 transition-all active:scale-[0.98]"
+                            >
+                                <Mail size={24} /> Send Email
+                            </a>
+                        </div>
+
+                        {/* Alternate Contact Fallback */}
+                        {(selectedLead.alternatePhone || selectedLead.alternateEmail) && (
+                            <div className="mt-4 text-center">
+                                <p className="text-xs font-bold text-slate-400">
+                                    Alternate Contact: {selectedLead.alternatePhone || 'N/A'} | {selectedLead.alternateEmail || 'N/A'}
+                                </p>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal (Existing code) */}
             {editingSchool && (
                 <div className="fixed inset-0 z-[999] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" />
