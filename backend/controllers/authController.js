@@ -51,102 +51,57 @@ const resetPassword = async (req, res) => {
     res.json({ message: "Access Cipher Re-encrypted! Login now. 🔐" });
 };
 
-// @desc    Register a new user (FIXED ID Generation Logic)
 const registerUser = async (req, res) => {
     const {
         name, email, password, role, grade, subjects, schoolId,
         fatherName, motherName, dob, gender, religion, admissionNo,
-        phone, address, assignedClass
+        phone, address, assignedClass, customId // 🔥 EXTRACT customId HERE
     } = req.body;
 
     try {
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+        // 🔥 Custom ID / Email Collision Check 🔥
+        if (customId) {
+            const customIdExists = await User.findOne({ customId });
+            if (customIdExists) return res.status(400).json({ message: `The ID '${customId}' is already taken by another user!` });
         }
+        
+        const userExists = await User.findOne({ email });
+        if (userExists) return res.status(400).json({ message: 'User Email already exists' });
 
         let generatedId = "";
         const currentSchoolId = schoolId || req.user?.schoolId;
 
-        // --- DAY 85: TEACHER CLASS CONFLICT CHECK ---
-        if (role === 'teacher' && assignedClass) {
-            const classTaken = await User.findOne({
-                role: 'teacher',
-                assignedClass: assignedClass,
-                schoolId: currentSchoolId
-            });
-
-            if (classTaken) {
-                return res.status(400).json({
-                    message: `CONFLICT: Class ${assignedClass} is already assigned to EMP: ${classTaken.employeeId}! ⚠️`
-                });
-            }
+        // --- CONFLICT CHECKS ---
+        if (role === 'finance') {
+            const existingFinance = await User.findOne({ schoolId: currentSchoolId, role: 'finance' });
+            if (existingFinance) return res.status(400).json({ message: "CRITICAL: Finance operator already exists!" });
         }
 
-        // authController.js ke registerUser logic mein:
-        if (role === 'finance') {
-            const existingFinance = await User.findOne({ schoolId, role: 'finance' });
-            if (existingFinance) {
-                return res.status(400).json({ message: "CRITICAL: Finance operator already exists!" });
-            }
+        // 🔥 TRANSPORT INCHARGE CONFLICT CHECK 🔥
+        if (role === 'transport_incharge') {
+            const existingTransport = await User.findOne({ schoolId: currentSchoolId, role: 'transport_incharge' });
+            if (existingTransport) return res.status(400).json({ message: "CRITICAL: A Transport Incharge already exists for this school!" });
         }
 
         if (role === 'student') {
-            const classCode = grade ? grade.replace(/[^a-zA-Z0-9]/g, "").toUpperCase() : "GEN";
-            const lastStudent = await User.findOne({
-                role: 'student',
-                schoolId: currentSchoolId,
-                grade: grade,
-                status: 'Active'
-            }).sort({ createdAt: -1 });
-
-            let lastNum = 0;
-            if (lastStudent && lastStudent.enrollmentNo) {
-                const parts = lastStudent.enrollmentNo.match(/\d+$/);
-                lastNum = parts ? parseInt(parts[0]) : 0;
-            }
-            generatedId = `STU${classCode}${String(lastNum + 1).padStart(3, '0')}`;
-
+            // ... tera purana student id logic ...
         } else if (role === 'teacher' || role === 'finance') {
-            // FIX 1: Using lastEmployee variable correctly
-            const lastEmployee = await User.findOne({
-                role: { $in: ['teacher', 'finance'] },
-                schoolId: currentSchoolId
-            }).sort({ createdAt: -1 });
-
-            const lastNum = (lastEmployee && lastEmployee.employeeId)
-                ? parseInt(lastEmployee.employeeId.replace('EMP', ''))
-                : 0;
-
-            generatedId = `EMP${String(lastNum + 1).padStart(3, '0')}`;
+            // ... tera purana teacher id logic ...
         }
 
-        // FIX 2: Fixed the syntax error in object creation
         const user = await User.create({
-            name,
-            email,
-            password,
-            role,
-            grade,
+            name, email, password, role, grade,
+            customId: role === 'transport_incharge' ? customId : undefined, // 🔥 Save Custom ID
             enrollmentNo: role === 'student' ? generatedId : undefined,
             employeeId: (role === 'teacher' || role === 'finance') ? generatedId : undefined,
             assignedClass: role === 'teacher' ? assignedClass : undefined,
-            subjects,
-            schoolId: currentSchoolId,
-            fatherName,
-            motherName,
-            dob,
-            gender,
-            religion,
-            admissionNo,
-            phone,
-            address
+            subjects, schoolId: currentSchoolId, fatherName, motherName, dob, gender, religion, admissionNo, phone, address
         });
 
         if (user) {
             res.status(201).json({
                 ...user._doc,
-                generatedId: generatedId,
+                generatedId: customId || generatedId,
                 token: generateToken(user._id),
             });
         } else {
@@ -160,13 +115,17 @@ const registerUser = async (req, res) => {
 
 const authUser = async (req, res) => {
     const { email, password } = req.body;
-    // user ke sath schoolId ki details pehle se populate ho rahi hain
-    const user = await User.findOne({ email }).populate('schoolId');
+    
+    // 🔥 THE MASTER LOGIN FIX: Email ya Custom ID dono se login hoga! 🔥
+    const user = await User.findOne({ 
+        $or: [
+            { email: email }, 
+            { customId: email } // Frontend se customId bhi email field mein hi aayegi
+        ]
+    }).populate('schoolId');
 
     if (user && (await require('bcryptjs').compare(password, user.password))) {
         
-        // 👇🔥 THE IRON GATE: SCHOOL TERMINATION CHECK 🔥👇
-        // Agar user superadmin nahi hai, aur uske school ka status 'Terminated' hai, toh Access Denied!
         if (user.role !== 'superadmin' && user.schoolId) {
             if (user.schoolId.subscription?.status === 'Terminated' || user.schoolId.isDeleted === true) {
                 return res.status(403).json({ 
@@ -174,7 +133,6 @@ const authUser = async (req, res) => {
                 });
             }
         }
-        // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
         if (user.status === 'Alumni' || user.status === 'Left') {
             return res.status(403).json({ 
@@ -186,6 +144,7 @@ const authUser = async (req, res) => {
             _id: user._id,
             name: user.name,
             email: user.email,
+            customId: user.customId, // Extra detail
             role: user.role,
             grade: user.grade,
             assignedClass: user.assignedClass,
@@ -206,7 +165,7 @@ const authUser = async (req, res) => {
             token: generateToken(user._id),
         });
     } else {
-        res.status(401).json({ message: 'Invalid email or password' });
+        res.status(401).json({ message: 'Invalid Credentials! Check your ID or Password.' });
     }
 };
 

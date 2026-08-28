@@ -3,6 +3,30 @@ const router = express.Router();
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 const User = require('../models/User');
 const Fee = require('../models/Fee');
+const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+
+// 🔥 CLOUDINARY SETUP FOR ADMIN ROUTES 🔥
+cloudinary.config({
+    cloud_name: 'raupi6es',
+    api_key: '178392556982554',
+    api_secret: 'Gj9McbEYgGUJ3lTEH26QXVv7II8'
+});
+
+const cloudStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'eduflow_avatars',
+        allowedFormats: ['jpeg', 'png', 'jpg', 'webp'],
+    },
+});
+
+const uploadCloudinary = multer({ 
+    storage: cloudStorage,
+    limits: { fileSize: 5000000 } 
+});
+
 router.post('/add-teacher', protect, adminOnly, async (req, res) => {
     const {
         name, email, password, subjects,
@@ -159,47 +183,70 @@ router.get('/teachers', protect, adminOnly, async (req, res) => {
     }
 });
 
+router.post('/add-transport-incharge', protect, adminOnly, uploadCloudinary.single('avatar'), async (req, res) => {
+    try {
+        const { name, email, customId, password, phone, dob, gender, fullAddress, district, state, pincode } = req.body;
+        
+        const existingUser = await User.findOne({ $or: [{ email }, { customId }] });
+        if (existingUser) return res.status(400).json({ message: 'Email or Custom ID already taken!' });
+
+        const avatarPath = req.file ? req.file.path : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+        const user = await User.create({
+            schoolId: req.user.schoolId,
+            name, email, customId, password, phone, dob, gender,
+            role: 'transport_incharge',
+            avatar: avatarPath,
+            address: { fullAddress, district, state, pincode }
+        });
+
+        res.status(201).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to create operator: ' + error.message });
+    }
+});
+
 // Admin Update User (Fixed 500 Error & Immutable ID Bug)
-router.put('/update/:id', protect, adminOnly, async (req, res) => {
+router.put('/update/:id', protect, adminOnly, uploadCloudinary.single('avatar'), async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
-        // 🔥 HACK: Remove immutable fields before Object.assign so Mongoose doesn't crash 🔥
         if (req.body._id) delete req.body._id;
         if (req.body.schoolId) delete req.body.schoolId;
         if (req.body.createdAt) delete req.body.createdAt;
         if (req.body.updatedAt) delete req.body.updatedAt;
 
-        // --- CONFLICT CHECK FOR TEACHER ASSIGNMENT ---
         if (user.role === 'teacher' && req.body.assignedClass) {
-            // String mein convert karke trim aur uppercase karenge taaki crash na ho
             const assignedClassStr = String(req.body.assignedClass).trim().toUpperCase();
-
             const classTaken = await User.findOne({
-                role: 'teacher',
-                assignedClass: assignedClassStr,
-                schoolId: req.user.schoolId,
-                _id: { $ne: req.params.id } // Khud ko chhod kar
+                role: 'teacher', assignedClass: assignedClassStr, schoolId: req.user.schoolId, _id: { $ne: req.params.id }
             });
-
             if (classTaken) {
-                return res.status(400).json({
-                    message: `CONFLICT: Class ${assignedClassStr} is already assigned to EMP: ${classTaken.employeeId}!`
-                });
+                return res.status(400).json({ message: `CONFLICT: Class ${assignedClassStr} is already assigned!` });
             }
-
-            // Backend update ke liye body ko clean karo
             req.body.assignedClass = assignedClassStr;
         }
 
-        // Update fields safely
-        Object.assign(user, req.body);
+        // If a new photo is uploaded, save its path
+        if (req.file) {
+            user.avatar = req.file.path;
+        }
 
+        // Address nested object update fix
+        if(req.body.fullAddress !== undefined) {
+            user.address = {
+                fullAddress: req.body.fullAddress,
+                district: req.body.district,
+                state: req.body.state,
+                pincode: req.body.pincode
+            };
+        }
+
+        Object.assign(user, req.body);
         await user.save();
         res.json({ message: 'User updated successfully', user });
     } catch (error) {
-        console.error("Update User DB Error:", error);
         res.status(500).json({ message: 'Update failed: ' + error.message });
     }
 });
@@ -420,6 +467,22 @@ router.get('/check-finance-exists', protect, adminOnly, async (req, res) => {
         res.json({ exists: !!financeTeacher });
     } catch (error) {
         res.status(500).json({ message: 'Error checking finance record' });
+    }
+});
+
+// ==========================================================
+// 🔥 TRANSPORT INCHARGE CHECK ENGINE 🔥
+// ==========================================================
+router.get('/check-transport-incharge', protect, adminOnly, async (req, res) => {
+    try {
+        const incharge = await User.findOne({
+            schoolId: req.user.schoolId,
+            role: 'transport_incharge'
+        }).select('-password'); // Pura data bhej rahe hain (name, photo, phone) UI me dikhane ke liye
+
+        res.json({ exists: !!incharge, incharge });
+    } catch (error) {
+        res.status(500).json({ message: 'Error checking transport record' });
     }
 });
 

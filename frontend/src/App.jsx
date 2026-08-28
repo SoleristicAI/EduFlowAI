@@ -69,6 +69,7 @@ import AdminAdmitCard from './pages/admin/AdminAdmitCard';
 import AdminManageAdmitCards from './pages/admin/AdminManageAdmitCards';
 import AdminAcademicCalendar from './pages/admin/AdminAcademicCalendar';
 import AdminFeedback from './pages/admin/AdminFeedback';
+import TransportSetup from './pages/TransportSetup';
 import FacultyTracking from './pages/FacultyTracking';
 import FacultyScheduleView from './pages/FacultyScheduleView';
 
@@ -471,6 +472,7 @@ function App() {
           <Route path="/admin/session-upgrade" element={<SessionPromotion />} />
           <Route path="/admin/faculty-tracking" element={<FacultyTracking />} />
           <Route path="/admin/faculty-schedule/:empId" element={<FacultyScheduleView />} />
+          <Route path="/admin/transport-setup" element={<TransportSetup />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />

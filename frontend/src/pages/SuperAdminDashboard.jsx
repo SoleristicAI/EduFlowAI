@@ -13,6 +13,38 @@ const SuperAdminDashboard = () => {
     const [stats, setStats] = useState(null);
     const [leads, setLeads] = useState([]); // 🔥 NAYA STATE LEADS KE LIYE
     const [loading, setLoading] = useState(true);
+
+    const [transportSearch, setTransportSearch] = useState('');
+
+   const toggleTransportFeature = async (schoolId, currentStatus) => {
+        // 🔥 OPTIMISTIC UPDATE: Button dabte hi UI ko instantly update kar do
+        setStats(prevStats => ({
+            ...prevStats,
+            schools: prevStats.schools.map(school => 
+                school._id === schoolId 
+                    ? { ...school, hasTransportFeature: !currentStatus } 
+                    : school
+            )
+        }));
+
+        try {
+            // Backend ko background mein update hone do (bina wait kiye)
+            await API.put(`/superadmin/toggle-transport/${schoolId}`);
+            // fetchStats() hata diya taaki dashboard hang na ho
+        } catch (err) {
+            console.error("Toggle Error", err);
+            // Agar internet band ho ya API fail ho, toh wapas purani state par le aao
+            setStats(prevStats => ({
+                ...prevStats,
+                schools: prevStats.schools.map(school => 
+                    school._id === schoolId 
+                        ? { ...school, hasTransportFeature: currentStatus } 
+                        : school
+                )
+            }));
+            alert("Failed to toggle feature. Please check your connection.");
+        }
+    };
     
     const [editingSchool, setEditingSchool] = useState(null);
     const [editData, setEditData] = useState({});
@@ -247,6 +279,56 @@ const SuperAdminDashboard = () => {
                         ))}
                     </div>
                 )}
+            </div>
+
+            {/* ========================================================= */}
+            {/* 🔥 PREMIUM FEATURE ACCESS: TRANSPORT ENGINE 🔥 */}
+            {/* ========================================================= */}
+            <div className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl mb-12 relative overflow-hidden">
+                {/* Background Glow */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/20 blur-[80px] rounded-full pointer-events-none"></div>
+
+                <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-amber-500/20 rounded-2xl text-amber-400 border border-amber-500/30">
+                            <Briefcase size={28} /> {/* Ya koi aur icon jaise Bus */}
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-black text-white">Premium Features Control</h2>
+                            <p className="text-sm font-medium text-slate-400 italic">Enable/Disable Transport Module for schools</p>
+                        </div>
+                    </div>
+                    
+                    {/* Search Bar */}
+                    <input 
+                        type="text" 
+                        placeholder="Search school name..." 
+                        value={transportSearch}
+                        onChange={(e) => setTransportSearch(e.target.value)}
+                        className="bg-slate-800/50 border border-slate-700 text-white px-6 py-3 rounded-2xl outline-none focus:border-amber-400 focus:bg-slate-800 transition-all w-full md:w-72"
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
+                    {stats?.schools
+                        .filter(school => school.schoolName.toLowerCase().includes(transportSearch.toLowerCase()))
+                        .map((school, i) => (
+                        <div key={i} className="bg-slate-800/80 border border-slate-700 rounded-[2rem] p-6 flex items-center justify-between hover:border-amber-500/50 transition-all">
+                            <div>
+                                <h4 className="text-white font-bold text-lg leading-tight">{school.schoolName}</h4>
+                                <p className="text-xs text-slate-400 font-medium">Ref: {school.affiliationNo}</p>
+                            </div>
+                            
+                            {/* Toggle Button */}
+                            <button 
+                                onClick={() => toggleTransportFeature(school._id, school.hasTransportFeature)}
+                                className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${school.hasTransportFeature ? 'bg-amber-500' : 'bg-slate-600'}`}
+                            >
+                                <span className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 shadow-md ${school.hasTransportFeature ? 'left-7' : 'left-1'}`}></span>
+                            </button>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Main Inventory Table */}

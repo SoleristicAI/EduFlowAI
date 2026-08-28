@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, CreditCard, Megaphone, PlusCircle, Database, X, MessageSquare, UserCheck, Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Users, CreditCard, Megaphone, PlusCircle, Database, X, MessageSquare, UserCheck, Bot, ClipboardCheck, Activity, BarChart3, ClipboardList, Zap, FileText, Download, Calendar, ArrowRight, ShieldCheck,Bus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../api';
 import Toast from '../components/Toast';
@@ -193,7 +193,25 @@ const AdminHome = ({ searchQuery }) => {
         { id: 'feedback-engine', title: 'Feedback Engine', btnText: 'View Feedback', icon: <MessageSquare size={24} />, desc: 'Request teacher evaluations', iconBg: 'bg-teal-50 text-teal-500', btnColor: 'bg-teal-500 hover:bg-teal-600 shadow-teal-200' },
         { id: 'manage-users', title: 'User Management', btnText: 'Manage Users', icon: <Users size={24} />, desc: 'Edit or Delete personnel', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
         { id: 'session-upgrade', title: 'Session upgrade', btnText: 'Upgrade Now', icon: <Zap size={24} />, desc: 'Promote students to next class', iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' },
+        // { id: 'transport-setup', title: 'Transport Fleet', btnText: 'Manage Transport', icon: <Bus size={24} />, desc: 'Assign Incharge & Buses', iconBg: 'bg-amber-50 text-amber-500', btnColor: 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'},
     ];
+
+    // 🔥 DYNAMIC PREMIUM INJECTION 🔥
+    // LocalStorage se check kar rahe hain ki is school ko transport feature allowed hai ya nahi
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const hasTransportAccess = currentUser?.schoolData?.hasTransportFeature || false;
+
+    if (hasTransportAccess) {
+        managementModules.push({
+            id: 'transport-setup',
+            title: 'Transport Fleet',
+            btnText: 'Manage Transport',
+            icon: <Bus size={24} />, 
+            desc: 'Assign Incharge & Buses',
+            iconBg: 'bg-amber-50 text-amber-500',
+            btnColor: 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
+        });
+    }
 
     return (
         // EXACT TOP MARGIN AS YOUR ORIGINAL CODE
@@ -266,6 +284,7 @@ const AdminHome = ({ searchQuery }) => {
                                 if (m.id === 'academic-calendar') navigate('/admin/academic-calendar');
                                 if (m.id === 'feedback-engine') navigate('/admin/feedback');
                                 if (m.id === 'session-upgrade') navigate('/admin/session-upgrade');
+                                if (m.id === 'transport-setup') navigate('/admin/transport-setup');
                             }} 
                             className="bg-white rounded-[2rem] p-5 border border-slate-100 flex flex-col items-center text-center cursor-pointer group shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >

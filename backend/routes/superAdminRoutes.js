@@ -240,4 +240,25 @@ router.get('/stats', protect, superAdminOnly, async (req, res) => {
     }
 });
 
+// ==========================================================
+// 🔥 PREMIUM FEATURE TOGGLE: TRANSPORT MODULE 🔥
+// ==========================================================
+router.put('/toggle-transport/:id', protect, superAdminOnly, async (req, res) => {
+    try {
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ message: 'School not found' });
+
+        // Status ko flip kar do (True hai toh False, False hai toh True)
+        school.hasTransportFeature = !school.hasTransportFeature;
+        await school.save();
+
+        res.json({ 
+            message: `Transport Feature is now ${school.hasTransportFeature ? 'ON' : 'OFF'} for ${school.schoolName}`, 
+            hasTransportFeature: school.hasTransportFeature 
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to toggle transport feature' });
+    }
+});
+
 module.exports = router;

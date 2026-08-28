@@ -5,6 +5,8 @@ const schoolSchema = new mongoose.Schema({
     address: { type: String, required: true },
     affiliationNo: { type: String, required: true, unique: true },
     logo: { type: String },
+    // 🔥 PREMIUM FEATURE FLAGS 🔥
+    hasTransportFeature: { type: Boolean, default: false },
     adminDetails: {
         fullName: String,
         mobile: String,

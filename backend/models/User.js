@@ -5,21 +5,24 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    
+    // 🔥 NAYA FIELD: Custom Login ID (For Transport Incharge)
+    customId: { type: String, unique: true, sparse: true }, 
+
     role: { 
         type: String, 
-        // DAY 88: 'finance' role officially added
-        enum: ['student', 'teacher', 'admin', 'superadmin', 'finance'], 
+        // 🔥 DAY 283: 'transport_incharge' role officially added
+        enum: ['student', 'teacher', 'admin', 'superadmin', 'finance', 'transport_incharge'], 
         default: 'student' 
     },
     schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School' }, 
     
-    // NEW FIELDS FOR DAY 78
     fatherName: String,
     motherName: String,
     dob: Date,
     gender: { type: String, enum: ['Male', 'Female', 'Other'] },
     religion: String,
-    admissionNo: String, // Manual Admission Number
+    admissionNo: String, 
     
     phone: String,
     address: {
@@ -35,33 +38,31 @@ const userSchema = new mongoose.Schema({
         default: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' 
     },
     
-    // SYSTEM GENERATED IDs
-    enrollmentNo: String, // STU001 Format
-    employeeId: String,   // EMP001 Format
+    enrollmentNo: String, 
+    employeeId: String,   
     
     grade: String, 
-    assignedClass: { type: String, default: null }, // Day 85: Single class assigned to a teacher
+    assignedClass: { type: String, default: null }, 
     subjects: [String],
-    // --- DAY 264: ACADEMIC HISTORY FOR SESSION UPGRADE ---
     status: { 
         type: String, 
         enum: ['Active', 'Alumni', 'Left'], 
         default: 'Active' 
     },
     academicHistory: [{
-        session: String,       // e.g., "2025-2026"
-        gradePassed: String,   // e.g., "9th"
-        promotedTo: String,    // e.g., "10th"
-        isRepeater: Boolean    // If true, student failed and repeated
+        session: String,       
+        gradePassed: String,   
+        promotedTo: String,    
+        isRepeater: Boolean    
     }],
     resetOTP: String,
     otpExpires: Date
 }, { timestamps: true });
 
-// 🔥 BUG FIX: Modern Mongoose Async Hook (No 'next' function error) 🔥
+// 🔥 BUG FIX: Modern Mongoose Async Hook 🔥
 userSchema.pre('save', async function() {
     if (!this.isModified('password')) {
-        return; // Agar password change nahi hua, toh aage badho bina next() ke
+        return; 
     }
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
