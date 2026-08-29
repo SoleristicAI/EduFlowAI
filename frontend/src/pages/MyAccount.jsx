@@ -142,11 +142,17 @@ const MyAccount = ({ user }) => {
 
                         <div className="flex flex-wrap justify-center gap-2 mt-3">
                             <span className="bg-blue-50 text-[#42A5F5] border border-blue-100 px-4 py-1.5 rounded-full text-[15px] font-black italic capitalize tracking-wide">
-                                {user?.role === 'admin' ? 'Master node authorized' : user?.role === 'student' ? `Class: ${user.grade}` : 'Faculty member'}
+                                {user?.role === 'admin' ? 'Master node authorized' : 
+                                 user?.role === 'student' ? `Class: ${user.grade}` : 
+                                 user?.role === 'transport_incharge' ? 'Head of Transport' : 
+                                 'Faculty member'}
                             </span>
+                            
                             {user?.role !== 'admin' && (
-                                <span className="bg-blue-50 text-[#42A5F5] border border-blue-100 px-5 py-2 rounded-full text-[15px] font-black italic tracking-widest uppercase shadow-sm">
-                                    {user?.role === 'student' ? user.enrollmentNo : user.employeeId}
+                                <span className="bg-blue-50 text-[#42A5F5] border border-blue-100 px-5 py-2 rounded-full text-[15px] font-black italic tracking-widest  shadow-sm">
+                                    {user?.role === 'student' ? user.enrollmentNo : 
+                                     user?.role === 'transport_incharge' ? user.customId : 
+                                     user.employeeId}
                                 </span>
                             )}
 
@@ -233,22 +239,28 @@ const MyAccount = ({ user }) => {
                                             </div>
                                         )}
 
-                                        <div className="flex items-center gap-5">
-                                            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><User size={22} /></div>
-                                            <div>
-                                                <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Father's name</p>
-                                                <p className="text-[15px] font-black text-slate-700 capitalize">{user?.fatherName?.toLowerCase() || "unspecified"}</p>
-                                            </div>
-                                        </div>
+                                       {/* 🔥 HIDE FOR TRANSPORT INCHARGE 🔥 */}
+                                        {user?.role !== 'transport_incharge' && (
+                                            <>
+                                                <div className="flex items-center gap-5">
+                                                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><User size={22} /></div>
+                                                    <div>
+                                                        <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Father's name</p>
+                                                        <p className="text-[15px] font-black text-slate-700 capitalize">{user?.fatherName?.toLowerCase() || "unspecified"}</p>
+                                                    </div>
+                                                </div>
 
-                                        <div className="flex items-center gap-5">
-                                            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><Heart size={22} /></div>
-                                            <div>
-                                                <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Mother's name</p>
-                                                <p className="text-[15px] font-black text-slate-700 capitalize">{user?.motherName?.toLowerCase() || "unspecified"}</p>
-                                            </div>
-                                        </div>
-
+                                                <div className="flex items-center gap-5">
+                                                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><Heart size={22} /></div>
+                                                    <div>
+                                                        <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Mother's name</p>
+                                                        <p className="text-[15px] font-black text-slate-700 capitalize">{user?.motherName?.toLowerCase() || "unspecified"}</p>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                        
+                                        {/* DOB aur Gender yahan rahenge... unhe chhedna nahi hai */}
                                         <div className="flex items-center gap-5">
                                             <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><Calendar size={22} /></div>
                                             <div>
@@ -273,48 +285,46 @@ const MyAccount = ({ user }) => {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-5">
-                                            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><ShieldCheck size={22} /></div>
-                                            <div>
-                                                <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Religion</p>
-                                                <p className="text-[15px] font-black text-slate-700 capitalize">{user?.religion?.toLowerCase() || "n/a"}</p>
+                                        {/* 🔥 HIDE RELIGION FOR TRANSPORT INCHARGE 🔥 */}
+                                        {user?.role !== 'transport_incharge' && (
+                                            <div className="flex items-center gap-5">
+                                                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><ShieldCheck size={22} /></div>
+                                                <div>
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Religion</p>
+                                                    <p className="text-[15px] font-black text-slate-700 capitalize">{user?.religion?.toLowerCase() || "n/a"}</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
 
-                                    {/* --- SUBJECTS & EMAIL NODE --- */}
+                                   {/* --- SUBJECTS, EMAIL & CUSTOM ID NODE --- */}
                                     <div className="flex items-center gap-5 bg-blue-50/50 p-5 rounded-[2rem] border border-blue-100">
                                         <div className="bg-white p-3 rounded-xl text-[#42A5F5] shadow-sm">
                                             {user?.role === 'teacher' ? <Fingerprint size={22} /> : <Mail size={22} />}
                                         </div>
                                         <div className="flex-1">
-                                            {/* Agar teacher hai toh subjects dikhao */}
                                             {user?.role === 'teacher' ? (
                                                 <>
-                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                                        Assigned subjects
-                                                    </p>
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Assigned subjects</p>
                                                     <p className="text-[15px] font-black text-slate-700 capitalize italic mb-3">
                                                         {user.subjects?.length > 0 ? user.subjects.join(', ') : 'No subjects assigned'}
                                                     </p>
-
-                                                    {/* Teacher ke liye email yahan niche add kar di */}
-                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                                        Registered email
-                                                    </p>
-                                                    <p className="text-[15px] font-black text-[#42A5F5] lowercase italic">
-                                                        {user?.email}
-                                                    </p>
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Registered email</p>
+                                                    <p className="text-[15px] font-black text-[#42A5F5] lowercase italic">{user?.email}</p>
+                                                </>
+                                            ) : user?.role === 'transport_incharge' ? (
+                                                <>
+                                                    {/* 🔥 TRANSPORT INCHARGE EMAIL & CUSTOM ID 🔥 */}
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Registered email</p>
+                                                    <p className="text-[15px] font-black text-slate-700 lowercase italic mb-3">{user?.email}</p>
+                                                    
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Custom Login ID</p>
+                                                    <p className="text-[15px] font-black text-[#42A5F5] lowercase italic">{user?.customId}</p>
                                                 </>
                                             ) : (
-                                                /* Student ke liye sirf email */
                                                 <>
-                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">
-                                                        Registered email
-                                                    </p>
-                                                    <p className="text-[15px] font-black text-slate-700 lowercase italic">
-                                                        {user?.email}
-                                                    </p>
+                                                    <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Registered email</p>
+                                                    <p className="text-[15px] font-black text-slate-700 lowercase italic">{user?.email}</p>
                                                 </>
                                             )}
                                         </div>

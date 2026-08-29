@@ -72,6 +72,7 @@ import AdminFeedback from './pages/admin/AdminFeedback';
 import TransportSetup from './pages/TransportSetup';
 import FacultyTracking from './pages/FacultyTracking';
 import FacultyScheduleView from './pages/FacultyScheduleView';
+import TransportDashboard from './pages/TransportDashboard';
 
 import FinanceDashboard from './pages/finance/FinanceDashboard';
 // import StudentsFees from './pages/finance/StudentsFees';
@@ -165,6 +166,8 @@ function App() {
         navigate("/superadmin/dashboard");
       } else if (data.role === 'finance') {
         navigate("/finance/dashboard");
+      } else if (data.role === 'transport_incharge') { // 🔥 NAYA REDIRECT
+        navigate("/transport/dashboard");
       } else {
         navigate("/");
       }
@@ -410,7 +413,7 @@ function App() {
     );
   }
 
-  const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard"];
+ const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard", "/transport/dashboard"];
   const isDashboard = dashboardPaths.includes(location.pathname);
 
   return (
@@ -429,11 +432,12 @@ function App() {
       <main className={`relative z-0 pb-32 overflow-x-hidden ${isDashboard ? 'pt-20' : 'pt-6'} bg-[#F8FAFC]`}>
         <Routes>
           {/* Main Dashboard Logic based on Role */}
-          <Route path="/" element={
+         <Route path="/" element={
             user.role === 'superadmin' ? <SuperAdminDashboard /> :
-              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : // <--- Prop Added
-                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : // <--- Prop Added
-                  user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : // <--- Prop Added
+              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : 
+                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : 
+                  user.role === 'transport_incharge' ? <TransportDashboard /> : // 🔥 YE LINE ADD KAR
+                  user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
                     <StudentHome user={user} searchQuery={searchQuery} />
           } />
           <Route path="/dashboard" element={
@@ -473,6 +477,7 @@ function App() {
           <Route path="/admin/faculty-tracking" element={<FacultyTracking />} />
           <Route path="/admin/faculty-schedule/:empId" element={<FacultyScheduleView />} />
           <Route path="/admin/transport-setup" element={<TransportSetup />} />
+          <Route path="/transport/dashboard" element={<TransportDashboard />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
@@ -550,8 +555,8 @@ function App() {
         )}
       </AnimatePresence>
       {/* SuperAdmin, Admin aur Finance ke liye BottomNav nahi dikhega */}
-      <div className="print:hidden fixed bottom-0 left-0 w-full z-40">
-        {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance') && <BottomNav />}
+     <div className="print:hidden fixed bottom-0 left-0 w-full z-40">
+        {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance' && user.role !== 'transport_incharge') && <BottomNav />}
       </div>
     </div>
   );

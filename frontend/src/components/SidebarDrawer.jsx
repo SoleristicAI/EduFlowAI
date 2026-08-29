@@ -25,6 +25,7 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
     const dobDate = user?.dob ? new Date(user.dob) : null;
     const isBirthday = user?.role === 'student' && dobDate && today.getMonth() === dobDate.getMonth() && today.getDate() === dobDate.getDate();
     // if (!isOpen) return null;
+    const hasTransportAccess = user?.schoolData?.hasTransportFeature || false;
 
     const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : "http://localhost:5000";
 
@@ -133,28 +134,24 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
             <AnimatePresence>
                 {isOpen && (
                     <div className="fixed inset-0 z-[100] flex">
-                        {/* Dashboard Overlay / Blur */}
+                        {/* Dashboard Overlay / Blur (Fixed Smooth Fade) */}
                         <motion.div
-                            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
-                            animate={{ opacity: 1, backdropFilter: "blur(12px)" }}
-                            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
-                            transition={{ duration: 0.4, ease: "easeOut" }}
-                            className="absolute inset-0 bg-void/80 backdrop-blur-md"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
                             onClick={onClose}
-                        ></motion.div>
+                        />
 
-                        {/* Sidebar Menu Main Container */}
+                        {/* Sidebar Menu Main Container (Fixed CSS Conflict) */}
                         <motion.div
-                            initial={{ x: -100, opacity: 0, scale: 0.98, filter: "blur(8px)" }}
-                            animate={{ x: 0, opacity: 1, scale: 1, filter: "blur(0px)" }}
-                            exit={{ x: -100, opacity: 0, scale: 0.98, filter: "blur(6px)" }}
-                            transition={{
-                                type: "spring",
-                                stiffness: 120,
-                                damping: 18,
-                                mass: 0.8
-                            }}
-                            className={`relative w-70 h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden transition-all duration-1000 ${isBirthday ? 'bg-gradient-to-br from-rose-50 via-fuchsia-50 to-amber-50' : 'bg-[#F8FAFC]'}`}
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                            // 🔥 FIX: 'transition-all' hata kar 'transition-colors' kar diya taaki slide animation se na lade!
+                            className={`relative w-70 h-full shadow-[20px_0_60px_rgba(0,0,0,0.2)] flex flex-col border-r border-slate-100 italic overflow-hidden transition-colors duration-1000 ${isBirthday ? 'bg-gradient-to-br from-rose-50 via-fuchsia-50 to-amber-50' : 'bg-[#F8FAFC]'}`}
                         >
 
                             {/* --- STEP 1: PREMIUM DYNAMIC HEADER (Fixed at Top) --- */}
@@ -1115,6 +1112,33 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                     </>
                                 )}
 
+
+                                {/* 🔥 TRANSPORT FLEET MODULE (ADMIN) 🔥 */}
+                                        {hasTransportAccess && (
+                                            <div className="mt-4 px-5">
+                                                <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
+                                                    <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
+                                                        <div className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, transparent 0%, #f59e0b 25%, transparent 50%, #f59e0b 75%, transparent 100%)' }} />
+                                                        <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
+                                                    </div>
+
+                                                    <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Premium Modules</p>
+
+                                                    <div className="space-y-3.5 relative z-10">
+                                                        <button onClick={() => handleNavigation('/admin/transport-setup')} className="w-full flex items-center justify-between group/item">
+                                                            <div className="flex items-center gap-4 text-left">
+                                                                <div className="bg-amber-50 text-amber-500 p-3 rounded-2xl border border-amber-100 group-hover/item:scale-110 transition-all">
+                                                                    <Bus size={20} />
+                                                                </div>
+                                                                <span className="font-bold text-slate-700 text-[15px] italic">Transport Fleet</span>
+                                                            </div>
+                                                            <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
                                 {user?.role === 'finance' && (
                                     <>
                                         <div className="mt-4 px-5">
@@ -1246,6 +1270,33 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                                 <ShieldCheck size={20} />
                                                             </div>
                                                             <span className="font-bold text-slate-700 text-[15px] italic">Fee Setup</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                                {/* 🔥 TRANSPORT INCHARGE MODULE 🔥 */}
+                                {user?.role === 'transport_incharge' && (
+                                    <>
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
+                                                    <div className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, transparent 0%, #42A5F5 25%, transparent 50%, #42A5F5 75%, transparent 100%)' }} />
+                                                    <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
+                                                </div>
+
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Fleet Operations</p>
+
+                                                <div className="space-y-3.5 relative z-10">
+                                                    <button onClick={() => handleNavigation('/transport/dashboard')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-blue-50 text-[#42A5F5] p-3 rounded-2xl border border-blue-100 group-hover/item:scale-110 transition-all">
+                                                                <LayoutDashboard size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Live Dashboard</span>
                                                         </div>
                                                         <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
                                                     </button>
