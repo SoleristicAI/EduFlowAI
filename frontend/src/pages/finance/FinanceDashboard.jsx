@@ -235,7 +235,7 @@ const FinanceDashboard = ({ searchQuery }) => {
                                 Update
                             </button>
                         </div>
-                    </motion.div>
+                    </motion.di>
                 )} */}
 
                 {/* Recent Payments Section */}

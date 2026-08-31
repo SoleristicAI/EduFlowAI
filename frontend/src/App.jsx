@@ -69,13 +69,11 @@ import AdminAdmitCard from './pages/admin/AdminAdmitCard';
 import AdminManageAdmitCards from './pages/admin/AdminManageAdmitCards';
 import AdminAcademicCalendar from './pages/admin/AdminAcademicCalendar';
 import AdminFeedback from './pages/admin/AdminFeedback';
-import TransportSetup from './pages/TransportSetup';
+import SessionPromotion from './pages/admin/SessionPromotion';
 import FacultyTracking from './pages/FacultyTracking';
 import FacultyScheduleView from './pages/FacultyScheduleView';
-import TransportDashboard from './pages/TransportDashboard';
 
 import FinanceDashboard from './pages/finance/FinanceDashboard';
-// import StudentsFees from './pages/finance/StudentsFees';
 import FinanceGateway from './pages/finance/FinanceGateway';
 import AddPayment from './pages/finance/AddPayment';
 import FeeReceipt from './pages/finance/FeeReceipt';
@@ -83,26 +81,27 @@ import Installments from './pages/finance/Installments';
 import FeesTracker from './pages/finance/FeesTracker';
 import FeesNoticeManager from './pages/finance/FeesNoticeManager';
 import StudentLedger from './pages/finance/StudentLedger';
-import FeeReports from './pages/finance/FeeReports'; // Naya import
-import FeeSetup from './pages/finance/FeeSetup'; // Day 114: Class Fee Configuration
+import FeeReports from './pages/finance/FeeReports'; 
+import FeeSetup from './pages/finance/FeeSetup'; 
 import TechnicalSupportModal from './components/TechnicalSupportModal';
 
 // Day 64: SuperAdmin Module Imports
 import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminOnboard from './pages/SuperAdminOnboard';
 import SuperAdminAccount from './pages/SuperAdminAccount';
-import SuperAdminTechnical from './pages/SuperAdminTechnical'; // <--- YE ADD KARO (Step 2 wali file)
+import SuperAdminTechnical from './pages/SuperAdminTechnical';
+import StudentCheckout from './pages/student/StudentCheckout'; 
+import PaymentMethods from './pages/student/PaymentMethods'; 
 
-import StudentCheckout from './pages/student/StudentCheckout'; // Day 109: New Invoice Page
-import PaymentMethods from './pages/student/PaymentMethods'; // Day 110: New Payment Methods Page
-
+// Landing page
 import LandingPage from './pages/LandingPage';
 
-import SessionPromotion from './pages/admin/SessionPromotion';
+// Transport Related file path
+import TransportDashboard from './pages/transport/TransportDashboard';
+import TransportSetup from './pages/transport/TransportSetup';
+import ManageFleet from './pages/transport/ManageFleet';
 
-// DAY 76: Theme Integration
 import { useTheme } from './context/ThemeContext';
-// --- NEURAL VISUAL MATRIX COMPONENT ---
 const VisualMatrix = () => {
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-10">
@@ -476,8 +475,11 @@ function App() {
           <Route path="/admin/session-upgrade" element={<SessionPromotion />} />
           <Route path="/admin/faculty-tracking" element={<FacultyTracking />} />
           <Route path="/admin/faculty-schedule/:empId" element={<FacultyScheduleView />} />
+
+          {/* Transport Realted filepath */}
           <Route path="/admin/transport-setup" element={<TransportSetup />} />
           <Route path="/transport/dashboard" element={<TransportDashboard />} />
+          <Route path="/transport/manage" element={<ManageFleet />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />

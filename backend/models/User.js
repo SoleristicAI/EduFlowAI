@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     role: { 
         type: String, 
         // 🔥 DAY 283: 'transport_incharge' role officially added
-        enum: ['student', 'teacher', 'admin', 'superadmin', 'finance', 'transport_incharge'], 
+        enum: ['student', 'teacher', 'admin', 'superadmin', 'finance', 'transport_incharge', 'driver'], 
         default: 'student' 
     },
     schoolId: { type: mongoose.Schema.Types.ObjectId, ref: 'School' }, 

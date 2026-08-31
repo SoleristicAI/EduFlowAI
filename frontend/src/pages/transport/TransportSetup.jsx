@@ -5,9 +5,9 @@ import {
     ChevronDown, Check, Camera, IdCard, ShieldCheck, PhoneCall, Trash2, Edit3, X, Eye, EyeOff, AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import API from '../api';
-import Loader from '../components/Loader';
-import Toast from '../components/Toast';
+import API from '../../api';
+import Loader from '../../components/Loader';
+import Toast from '../../components/Toast';
 
 // --- CUSTOM PREMIUM DROPDOWN (Blue Theme) ---
 const CustomDropdown = ({ options, value, onChange, placeholder, icon: Icon, className="" }) => {

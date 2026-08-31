@@ -1300,6 +1300,17 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                         </div>
                                                         <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
                                                     </button>
+                                                    
+                                                    {/* 👇🔥 NAYA MANAGE FLEET BUTTON YAHAN HAI 🔥👇 */}
+                                                    <button onClick={() => handleNavigation('/transport/manage')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-amber-50 text-amber-500 p-3 rounded-2xl border border-amber-100 group-hover/item:scale-110 transition-all">
+                                                                <Bus size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Manage Routes</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
