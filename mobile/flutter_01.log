@@ -1,0 +1,110 @@
+Flutter crash report.
+Please report a bug at https://github.com/flutter/flutter/issues.
+
+## command
+
+flutter attach
+
+## exception
+
+RPCError: _deleteDevFS: (-32603) Internal error
+_deleteDevFS: Unexpected exception:PathNotFoundException: Deletion failed, path = '/data/user/0/com.example.mobile/code_cache/mobileMMFQXJ/mobile/' (OS Error: No such file or directory, errno = 2)
+#0      _checkForErrorResponse (dart:io/common.dart:58:9)
+#1      _Directory._delete.<anonymous closure> (dart:io/directory_impl.dart:208:7)
+<asynchronous suspension>
+#2      deleteDirCallback (dart:vmservice_io:127:5)
+<asynchronous suspension>
+#3      DevFS._deleteDevFS (dart:_vmservice/devfs.dart:219:5)
+<asynchronous suspension>
+#4      VMService._routeRequestImpl (dart:_vmservice:759:16)
+<asynchronous suspension>
+#5      VMService.routeRequest (dart:_vmservice:726:22)
+<asynchronous suspension>
+#6      WebSocketClient.post (dart:vmservice_io/vmservice_server.dart:64:3)
+<asynchronous suspension>
+
+
+```
+#0      new _OutstandingRequest (package:vm_service/src/vm_service.dart:268:34)
+#1      VmService._call.<anonymous closure> (package:vm_service/src/vm_service.dart:1950:25)
+#2      VmService._call (package:vm_service/src/vm_service.dart:1962:8)
+#3      VmService.callServiceExtension (package:vm_service/src/vm_service.dart:1901:14)
+#4      FlutterVmService._checkedCallServiceExtension (package:flutter_tools/src/vmservice.dart:771:28)
+#5      FlutterVmService.deleteDevFS (package:flutter_tools/src/vmservice.dart:938:11)
+#6      DevFS.destroy (package:flutter_tools/src/devfs.dart:545:22)
+#7      DevFS.create (package:flutter_tools/src/devfs.dart:535:13)
+<asynchronous suspension>
+#8      HotRunner._initDevFS (package:flutter_tools/src/run_hot.dart:488:9)
+<asynchronous suspension>
+#9      HotRunner._attach (package:flutter_tools/src/run_hot.dart:286:35)
+<asynchronous suspension>
+#10     AttachCommand._attach (package:flutter_tools/src/commands/attach.dart:306:24)
+<asynchronous suspension>
+#11     AttachCommand.runCommand (package:flutter_tools/src/commands/attach.dart:266:7)
+<asynchronous suspension>
+#12     FlutterCommand.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command.dart:1630:27)
+<asynchronous suspension>
+#13     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#14     CommandRunner.runCommand (package:args/command_runner.dart:212:13)
+<asynchronous suspension>
+#15     FlutterCommandRunner.runCommand.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:496:9)
+<asynchronous suspension>
+#16     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#17     FlutterCommandRunner.runCommand (package:flutter_tools/src/runner/flutter_command_runner.dart:431:5)
+<asynchronous suspension>
+#18     FlutterCommandRunner.run.<anonymous closure> (package:flutter_tools/src/runner/flutter_command_runner.dart:307:33)
+<asynchronous suspension>
+#19     run.<anonymous closure>.<anonymous closure> (package:flutter_tools/runner.dart:104:11)
+<asynchronous suspension>
+#20     AppContext.run.<anonymous closure> (package:flutter_tools/src/base/context.dart:154:19)
+<asynchronous suspension>
+#21     main (package:flutter_tools/executable.dart:103:3)
+<asynchronous suspension>
+```
+
+## flutter doctor
+
+```
+[32m[✓][39m Flutter (Channel stable, 3.44.4, on Microsoft Windows [Version 10.0.26200.8655], locale en-IN) [428ms]
+    [32m•[39m Flutter version 3.44.4 on channel stable at C:\src\flutter
+    [32m•[39m Upstream repository https://github.com/flutter/flutter.git
+    [32m•[39m Framework revision ad70ec4617 (2 weeks ago), 2026-06-24 11:07:06 -0700
+    [32m•[39m Engine revision a10d8ac38d
+    [32m•[39m Dart version 3.12.2
+    [32m•[39m DevTools version 2.57.0
+    [32m•[39m Feature flags: enable-web, enable-linux-desktop, enable-macos-desktop, enable-windows-desktop,
+      enable-android, enable-ios, cli-animations, enable-native-assets, enable-swift-package-manager,
+      omit-legacy-version-file, enable-lldb-debugging, enable-uiscene-migration
+
+[32m[✓][39m Windows Version (11 Home Single Language 64-bit, 25H2, 2009) [1,991ms]
+
+[31m[✗][39m Android toolchain - develop for Android devices [1,002ms]
+    [32m•[39m Android SDK at C:\Users\BALA DEVI\AppData\Local\Android\sdk
+    [32m•[39m Emulator version 36.6.11.0 (build_id 15507667) (CL:N/A)
+    [31m✗[39m cmdline-tools component is missing.
+      Try installing or updating Android Studio.
+      Alternatively, download the tools from https://developer.android.com/studio#command-line-tools-only and make
+      sure to set the ANDROID_HOME environment variable.
+      See https://developer.android.com/studio/command-line for more details.
+
+[32m[✓][39m Chrome - develop for the web [11ms]
+    [32m•[39m Chrome at C:\Program Files\Google\Chrome\Application\chrome.exe
+
+[31m[✗][39m Visual Studio - develop Windows apps [10ms]
+    [31m✗[39m Visual Studio not installed; this is necessary to develop Windows apps.
+      Download at https://visualstudio.microsoft.com/downloads/.
+      Please install the "Desktop development with C++" workload, including all of its default components
+
+[32m[✓][39m Connected device (4 available) [650ms]
+    [32m•[39m SM A146B (mobile) • 192.0.0.4:5555 • android-arm64  • Android 15 (API 35)
+    [32m•[39m Windows (desktop) • windows        • windows-x64    • Microsoft Windows [Version 10.0.26200.8655]
+    [32m•[39m Chrome (web)      • chrome         • web-javascript • Google Chrome 150.0.7871.101
+    [32m•[39m Edge (web)        • edge           • web-javascript • Microsoft Edge 150.0.4078.65
+
+[32m[✓][39m Network resources [1,193ms]
+    [32m•[39m All expected network resources are available.
+
+[33m![39m Doctor found issues in 2 categories.
+```
