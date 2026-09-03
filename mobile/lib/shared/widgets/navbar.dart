@@ -6,10 +6,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
-import '../widgets/technical_support_modal.dart'; // 🔥 NAYA IMPORT FOR THEME
-import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
+import '../widgets/technical_support_modal.dart';
+import '../../../core/theme/theme_provider.dart';
 
-// 🔥 ConsumerStatefulWidget so it listens to theme changes
 class Navbar extends ConsumerStatefulWidget {
   final String searchQuery;
   final Function(String) onSearchChanged;
@@ -34,45 +33,31 @@ class _NavbarState extends ConsumerState<Navbar> {
   String greetingEmoji = "☀️";
   int unreadCount = 0;
   Timer? _timer;
-  Timer? _badgeTimer; // 🔥 NAYA TIMER
+  Timer? _badgeTimer;
 
   @override
   void initState() {
     super.initState();
     _loadUser();
     _updateGreeting();
-    _timer =
-        Timer.periodic(const Duration(minutes: 15), (_) => _updateGreeting());
-
-    // 🔥 APP START HOTE HI FETCH KAREGA, USKE BAAD HAR 5 SECOND MEIN 🔥
+    _timer = Timer.periodic(const Duration(minutes: 15), (_) => _updateGreeting());
     _fetchUnreadCount();
-    _badgeTimer =
-        Timer.periodic(const Duration(seconds: 5), (_) => _fetchUnreadCount());
+    _badgeTimer = Timer.periodic(const Duration(seconds: 5), (_) => _fetchUnreadCount());
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _badgeTimer?.cancel(); // 🔥 MEMORY LEAK BACHANE KE LIYE TIMER KILL KIYA
+    _badgeTimer?.cancel();
     super.dispose();
   }
 
-  // 🔥 EXTRACT PATH CORRECTION IN NAVBAR 🔥
   Future<void> _fetchUnreadCount() async {
     try {
-      // 🔴 REPLACED UNREAD-COUNT WITH ACTUAL ENDPOINT '/notices/my-notices'
       final response = await ApiClient.dio.get('/notices/my-notices');
-
       if (mounted && response.data != null) {
-        // Response map ke andar se 'unreadCount' key nikal rahe hain
-        final int fetchedCount =
-            int.tryParse(response.data['unreadCount'].toString()) ?? 0;
-
-        if (fetchedCount != unreadCount) {
-          setState(() {
-            unreadCount = fetchedCount;
-          });
-        }
+        final int fetchedCount = int.tryParse(response.data['unreadCount'].toString()) ?? 0;
+        if (fetchedCount != unreadCount) setState(() => unreadCount = fetchedCount);
       }
     } catch (e) {
       debugPrint("Silent Sync Interrupted: $e");
@@ -82,18 +67,14 @@ class _NavbarState extends ConsumerState<Navbar> {
   Future<void> _loadUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
-    if (userStr != null) {
-      setState(() => user = jsonDecode(userStr));
-    }
+    if (userStr != null) setState(() => user = jsonDecode(userStr));
   }
 
-  // 🔥 THE MASTER HACK: SILENT SYNC BINA INFINITE LOOP KE 🔥
   Future<void> _silentUserUpdate() async {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
     if (userStr != null) {
       final parsedUser = jsonDecode(userStr);
-      // Sirf tabhi update karo jab sach mein photo ya naam badla ho
       if (jsonEncode(user) != jsonEncode(parsedUser)) {
         if (mounted) setState(() => user = parsedUser);
       }
@@ -103,54 +84,38 @@ class _NavbarState extends ConsumerState<Navbar> {
   void _updateGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      setState(() {
-        greetingText = "Good Morning";
-        greetingEmoji = "☀️";
-      });
+      setState(() { greetingText = "Good Morning"; greetingEmoji = "☀️"; });
     } else if (hour < 17) {
-      setState(() {
-        greetingText = "Good Afternoon";
-        greetingEmoji = "🌤️";
-      });
+      setState(() { greetingText = "Good Afternoon"; greetingEmoji = "🌤️"; });
     } else if (hour < 21) {
-      setState(() {
-        greetingText = "Good Evening";
-        greetingEmoji = "👋";
-      });
+      setState(() { greetingText = "Good Evening"; greetingEmoji = "👋"; });
     } else {
-      setState(() {
-        greetingText = "Good Night";
-        greetingEmoji = "🌙";
-      });
+      setState(() { greetingText = "Good Night"; greetingEmoji = "🌙"; });
     }
   }
 
   void _handleBellClick() {
     if (user?['role'] == 'superadmin') return;
-    if (user?['role'] != 'admin' && unreadCount > 0) {
-      setState(() => unreadCount = 0);
-    }
+    if (user?['role'] != 'admin' && unreadCount > 0) setState(() => unreadCount = 0);
     context.go('/notice-feed');
   }
 
   @override
   Widget build(BuildContext context) {
     _silentUserUpdate();
-    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
     final role = user?['role'] ?? 'student';
     final name = user?['name'] ?? 'Guest';
     final firstName = name.split(' ')[0];
-    final capitalizedName = firstName.isNotEmpty
-        ? firstName[0].toUpperCase() + firstName.substring(1).toLowerCase()
-        : '';
-    final capitalizedRole = role.isNotEmpty
-        ? role[0].toUpperCase() + role.substring(1).toLowerCase()
-        : '';
+    final capitalizedName = firstName.isNotEmpty ? firstName[0].toUpperCase() + firstName.substring(1).toLowerCase() : '';
+    
+    // 🔥 FIX: Cleaned up Role Display for Transporter 🔥
+    String displayRole = role == 'transport_incharge' 
+        ? 'Transport Manager' 
+        : (role.isNotEmpty ? role[0].toUpperCase() + role.substring(1).toLowerCase() : '');
 
-        // 🔥 THE SECRET BIRTHDAY CHECK 🔥
     final today = DateTime.now();
     bool isBirthday = false;
     if (role == 'student' && user?['dob'] != null) {
@@ -160,39 +125,23 @@ class _NavbarState extends ConsumerState<Navbar> {
       } catch (e) {}
     }
 
-    // 🔥 DYNAMIC TOP PADDING: Notch/Dynamic Island se bachane ke liye 🔥
     final double statusBarHeight = MediaQuery.of(context).padding.top;
 
     return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        bottomLeft: Radius.circular(40),
-        bottomRight: Radius.circular(40),
-      ),
+      borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(40), bottomRight: Radius.circular(40)),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500), // Smooth color transition
-        // 🔥 Yahan humne top padding ko statusBarHeight + 15 kar diya hai 🔥
-        padding: EdgeInsets.only(
-            top: statusBarHeight + 15, left: 20, right: 20, bottom: 20),
+        duration: const Duration(milliseconds: 500),
+        padding: EdgeInsets.only(top: statusBarHeight + 15, left: 20, right: 20, bottom: 20),
         decoration: BoxDecoration(
-          // 🔥 BIRTHDAY THEME GRADIENT 🔥
           gradient: isBirthday
               ? LinearGradient(
-                  colors: isDarkMode 
-                    ? [const Color(0xFF9F1239), const Color(0xFFE11D48)] 
-                    : [const Color(0xFFF43F5E), const Color(0xFFFB923C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                  colors: isDarkMode ? [const Color(0xFF9F1239), const Color(0xFFE11D48)] : [const Color(0xFFF43F5E), const Color(0xFFFB923C)],
+                  begin: Alignment.topLeft, end: Alignment.bottomRight,
                 )
               : null,
           color: isBirthday ? null : (isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5)),
-          boxShadow: [
-            BoxShadow(
-                color: isDarkMode ? Colors.black54 : Colors.black26,
-                blurRadius: 10,
-                offset: const Offset(0, 4)),
-          ],
+          boxShadow: [BoxShadow(color: isDarkMode ? Colors.black54 : Colors.black26, blurRadius: 10, offset: const Offset(0, 4))],
         ),
-        // 🔥 Red line hata di aur direct Column laga diya 🔥
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -204,34 +153,16 @@ class _NavbarState extends ConsumerState<Navbar> {
                   children: [
                     GestureDetector(
                       onTap: widget.onMenuClick,
-                      child: const Icon(Icons.menu, color: Colors.white, size: 26)
-                          .animate()
-                          .fadeIn()
-                          .scale(),
+                      child: const Icon(Icons.menu, color: Colors.white, size: 26).animate().fadeIn().scale(),
                     ),
                     const SizedBox(width: 12),
                     Container(
                       padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.3)),
-                      ),
-                      child: const Icon(Icons.memory,
-                              color: Colors.white, size: 16)
-                          .animate(onPlay: (c) => c.repeat())
-                          .rotate(duration: 4.seconds),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
+                      child: const Icon(Icons.memory, color: Colors.white, size: 16).animate(onPlay: (c) => c.repeat()).rotate(duration: 4.seconds),
                     ),
                     const SizedBox(width: 10),
-                    const Text(
-                      "EduFlowAI v2.0",
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          fontStyle: FontStyle.italic),
-                    ),
+                    const Text("EduFlowAI v2.0", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic)),
                   ],
                 ),
                 Row(
@@ -244,44 +175,17 @@ class _NavbarState extends ConsumerState<Navbar> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.2)),
-                              ),
-                              child: const Icon(Icons.notifications_none,
-                                  color: Colors.white, size: 20),
+                              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
+                              child: const Icon(Icons.notifications_none, color: Colors.white, size: 20),
                             ),
-                            // 🔥 YAHAN AUTO UPDATE HOGA BADGE JAISE HI unreadCount > 0 HOGA 🔥
                             if (role != 'admin' && unreadCount > 0)
                               Positioned(
-                                top: -4,
-                                right: -4,
+                                top: -4, right: -4,
                                 child: Container(
                                   padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                        color: isDarkMode
-                                            ? const Color(0xFF1E293B)
-                                            : const Color(0xFF42A5F5),
-                                        width: 2),
-                                  ),
-                                  child: Text(
-                                    unreadCount.toString(),
-                                    style: const TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.white),
-                                  ),
-                                )
-                                    .animate(
-                                        onPlay: (c) => c.repeat(reverse: true))
-                                    .scale(
-                                        begin: const Offset(1, 1),
-                                        end: const Offset(1.2, 1.2)),
+                                  decoration: BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle, border: Border.all(color: isDarkMode ? const Color(0xFF1E293B) : const Color(0xFF42A5F5), width: 2)),
+                                  child: Text(unreadCount.toString(), style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white)),
+                                ).animate(onPlay: (c) => c.repeat(reverse: true)).scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2)),
                               ),
                           ],
                         ),
@@ -289,24 +193,11 @@ class _NavbarState extends ConsumerState<Navbar> {
                     const SizedBox(width: 12),
                     if (role != 'superadmin')
                       GestureDetector(
-                        onTap: () {
-                          // 🔥 SEEDHA MODAL CALL HO RAHA HAI YAHAN SE 🔥
-                          showDialog(
-                            context: context,
-                            barrierColor: Colors.transparent,
-                            builder: (context) => const TechnicalSupportModal(),
-                          );
-                        },
+                        onTap: () => showDialog(context: context, barrierColor: Colors.transparent, builder: (context) => const TechnicalSupportModal()),
                         child: Container(
                           padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.2)),
-                          ),
-                          child: const Icon(Icons.headset_mic_outlined,
-                              color: Colors.white, size: 20),
+                          decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.2))),
+                          child: const Icon(Icons.headset_mic_outlined, color: Colors.white, size: 20),
                         ),
                       ),
                   ],
@@ -314,49 +205,23 @@ class _NavbarState extends ConsumerState<Navbar> {
               ],
             ),
             const SizedBox(height: 15),
-
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                "$capitalizedRole Portal",
-                style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 1,
-                    fontStyle: FontStyle.italic),
-              ),
+              decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), border: Border.all(color: Colors.white.withValues(alpha: 0.3)), borderRadius: BorderRadius.circular(20)),
+              child: Text("$displayRole Portal", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 1, fontStyle: FontStyle.italic)),
             ),
             const SizedBox(height: 8),
             Text.rich(
               TextSpan(
                 children: [
-                  TextSpan(
-                      text: isBirthday ? "Happy Birthday 🎂 " : "$greetingText $greetingEmoji ",
-                      style: const TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold)),
-                  TextSpan(
-                      text: capitalizedName,
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w900)),
+                  TextSpan(text: isBirthday ? "Happy Birthday 🎂 " : "$greetingText $greetingEmoji ", style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
+                  TextSpan(text: capitalizedName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
                 ],
               ),
               style: const TextStyle(fontSize: 24, fontStyle: FontStyle.italic),
             ),
             const SizedBox(height: 8),
-
-            // FIXED: Animated Search Bar with Clear Button
-            _AnimatedSearchBar(
-              searchQuery: widget.searchQuery,
-              onSearchChanged: widget.onSearchChanged,
-              isDarkMode: isDarkMode, // 🔥 Paasing theme state to search bar
-            ),
+            _AnimatedSearchBar(searchQuery: widget.searchQuery, onSearchChanged: widget.onSearchChanged, isDarkMode: isDarkMode),
           ],
         ),
       ),
@@ -367,13 +232,9 @@ class _NavbarState extends ConsumerState<Navbar> {
 class _AnimatedSearchBar extends StatefulWidget {
   final String searchQuery;
   final Function(String) onSearchChanged;
-  final bool isDarkMode; // 🔥 NAYA THEME STATE
+  final bool isDarkMode;
 
-  const _AnimatedSearchBar({
-    required this.searchQuery,
-    required this.onSearchChanged,
-    required this.isDarkMode,
-  });
+  const _AnimatedSearchBar({required this.searchQuery, required this.onSearchChanged, required this.isDarkMode});
 
   @override
   State<_AnimatedSearchBar> createState() => _AnimatedSearchBarState();
@@ -397,19 +258,15 @@ class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
 
   void _clearSearch() {
     _controller.clear();
-    widget.onSearchChanged(""); // Notify parent
-    FocusScope.of(context).unfocus(); // Close keyboard
+    widget.onSearchChanged("");
+    FocusScope.of(context).unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
-    // 🔥 DYNAMIC COLORS FOR SEARCH BAR 🔥
-    final Color barBg =
-        widget.isDarkMode ? const Color(0xFF0F172A) : Colors.white;
-    final Color textColor =
-        widget.isDarkMode ? Colors.white : const Color(0xFF334155);
-    final Color hintColor =
-        widget.isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
+    final Color barBg = widget.isDarkMode ? const Color(0xFF0F172A) : Colors.white;
+    final Color textColor = widget.isDarkMode ? Colors.white : const Color(0xFF334155);
+    final Color hintColor = widget.isDarkMode ? const Color(0xFF64748B) : const Color(0xFF94A3B8);
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
@@ -422,35 +279,17 @@ class _AnimatedSearchBarState extends State<_AnimatedSearchBar> {
         decoration: BoxDecoration(
           color: barBg,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: _isPressed ? 0.05 : 0.1),
-              blurRadius: _isPressed ? 5 : 15,
-              offset: const Offset(0, 5),
-            )
-          ],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: _isPressed ? 0.05 : 0.1), blurRadius: _isPressed ? 5 : 15, offset: const Offset(0, 5))],
         ),
         child: TextField(
           controller: _controller,
           onChanged: widget.onSearchChanged,
-          style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              color: textColor,
-              fontStyle: FontStyle.italic),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor, fontStyle: FontStyle.italic),
           decoration: InputDecoration(
             hintText: "Search modules...",
             hintStyle: TextStyle(color: hintColor, fontWeight: FontWeight.bold),
             prefixIcon: Icon(Icons.search, color: hintColor, size: 20),
-
-            // FIXED: Clear (Cross) Button Logic
-            suffixIcon: widget.searchQuery.isNotEmpty
-                ? IconButton(
-                    icon: Icon(Icons.close, color: hintColor, size: 20),
-                    onPressed: _clearSearch,
-                  )
-                : null,
-
+            suffixIcon: widget.searchQuery.isNotEmpty ? IconButton(icon: Icon(Icons.close, color: hintColor, size: 20), onPressed: _clearSearch) : null,
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
           ),

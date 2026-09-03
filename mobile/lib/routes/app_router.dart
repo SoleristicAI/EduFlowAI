@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../features/auth/screens/login_screen.dart';
 import '../features/student/screens/student_home.dart';
 import '../features/student/screens/student_attendance.dart';
@@ -55,6 +54,8 @@ import '../features/finance/screens/finance_fees_notice.dart';
 import '../features/finance/screens/finance_fees_tracker.dart';
 import '../features/finance/screens/finance_student_ledger.dart';
 import '../features/finance/screens/finance_gateway.dart';
+import '../features/transporter/transporter_dashboard.dart';
+import '../features/transporter/manage_fleet_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -86,8 +87,8 @@ final appRouter = GoRouter(
       if (isGoingToLogin || isGoingToRoot) {
         if (role == 'superadmin') return '/superadmin/dashboard';
         if (role == 'finance') return '/finance/dashboard';
-        if (role == 'teacher')
-          return '/teacher/home'; // Teacher gaya teacher home pe
+        if (role == 'teacher') return '/teacher/home';
+        if (role == 'transport_incharge') return '/transporter/dashboard'; // 🔥 YE LINE ADD KARNI HAI 🔥
 
         // Agar inme se koi nahi hai toh matlab student hai
         if (isGoingToLogin) return '/'; // Student ko root pe bhej do
@@ -367,6 +368,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/finance/gateway',
       builder: (context, state) => const FinanceGateway(),
+    ),
+
+    GoRoute(
+      path: '/transporter/dashboard',
+      builder: (context, state) {
+        return const LayoutWrapper(
+          role: 'transport_incharge', // 🔥 Is role ki wajah se Bottom Nav automatically HIDE ho jayega
+          child: TransporterDashboard(), // 🔥 Iski wajah se premium Navbar automatically AA jayega
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/transporter/manage',
+      builder: (context, state) => const ManageFleetScreen(),
     ),
 
     GoRoute(

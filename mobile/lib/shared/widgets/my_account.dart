@@ -672,85 +672,38 @@ class _MyAccountState extends ConsumerState<MyAccount> {
                                 ),
                                 const SizedBox(height: 12),
 
-                                // --- BADGES DISAMBIGUATION ---
+                                // --- BADGES DISAMBIGUATION --- (Inside main build method)
                                 Wrap(
-                                  spacing: 8,
-                                  runSpacing: 8,
-                                  alignment: WrapAlignment.center,
+                                  spacing: 8, runSpacing: 8, alignment: WrapAlignment.center,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 14, vertical: 6),
-                                      decoration: BoxDecoration(
-                                          color: const Color(0xFF42A5F5)
-                                              .withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(25),
-                                          border: Border.all(
-                                              color: const Color(0xFF42A5F5)
-                                                  .withOpacity(0.2))),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                      decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.2))),
                                       child: Text(
-                                        isAdmin
-                                            ? 'MASTER NODE AUTHORIZED'
-                                            : role == 'student'
-                                                ? 'CLASS: ${user?['grade'] ?? 'N/A'}'
-                                                : 'FACULTY MEMBER',
-                                        style: const TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.w900,
-                                            color: Color(0xFF42A5F5),
-                                            fontStyle: FontStyle.italic),
+                                        isAdmin ? 'MASTER NODE AUTHORIZED'
+                                            : role == 'transport_incharge' ? 'Transport_incharge'
+                                            : role == 'student' ? 'CLASS: ${user?['grade'] ?? 'N/A'}'
+                                            : 'FACULTY MEMBER',
+                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), fontStyle: FontStyle.italic),
                                       ),
                                     ),
                                     if (!isAdmin)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 14, vertical: 6),
-                                        decoration: BoxDecoration(
-                                            color: const Color(0xFF42A5F5)
-                                                .withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                            border: Border.all(
-                                                color: const Color(0xFF42A5F5)
-                                                    .withOpacity(0.2))),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                        decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.2))),
                                         child: Text(
-                                          (role == 'student'
-                                                  ? (user?['enrollmentNo'] ??
-                                                      'N/A')
-                                                  : (user?['employeeId'] ??
-                                                      'N/A'))
-                                              .toString()
-                                              .toUpperCase(),
-                                          style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: Color(0xFF42A5F5),
-                                              letterSpacing: 1),
+                                          (role == 'student' ? (user?['enrollmentNo'] ?? 'N/A')
+                                              : role == 'transport_incharge' ? (user?['customId'] ?? 'N/A')
+                                              : (user?['employeeId'] ?? 'N/A'))
+                                              .toString().toUpperCase(),
+                                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1),
                                         ),
                                       ),
-                                    if (role == 'teacher' &&
-                                        user?['assignedClass'] != null)
+                                    if (role == 'teacher' && user?['assignedClass'] != null)
                                       Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 14, vertical: 6),
-                                        decoration: BoxDecoration(
-                                            color: const Color(0xFF10B981)
-                                                .withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(25),
-                                            border: Border.all(
-                                                color: const Color(0xFF10B981)
-                                                    .withOpacity(0.2))),
-                                        child: Text(
-                                          "ASSIGNED CLASS: ${user?['assignedClass']}"
-                                              .toUpperCase(),
-                                          style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w900,
-                                              color: Color(0xFF10B981),
-                                              fontStyle: FontStyle.italic),
-                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                        decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF10B981).withOpacity(0.2))),
+                                        child: Text("ASSIGNED CLASS: ${user?['assignedClass']}".toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF10B981), fontStyle: FontStyle.italic)),
                                       ),
                                   ],
                                 ),
@@ -859,90 +812,34 @@ class _MyAccountState extends ConsumerState<MyAccount> {
     ];
   }
 
-  // --- RENDERING NODE: CLIENT (STUDENT/TEACHER) ---
-  List<Widget> _buildClientFields(String role, bool isDarkMode,
-      Color textPrimary, Color textSecondary, Color boxBg, Color cardBorder) {
+  // --- RENDERING NODE: CLIENT (STUDENT/TEACHER/TRANSPORTER) ---
+  List<Widget> _buildClientFields(String role, bool isDarkMode, Color textPrimary, Color textSecondary, Color boxBg, Color cardBorder) {
     return [
-      if (role == 'student') ...[
-        _buildDataRow(
-            Icons.tag,
-            "ADMISSION NUMBER",
-            (user?['admissionNo'] ?? "NOT_LOGGED").toString().toUpperCase(),
-            isDarkMode
-                ? const Color(0xFF1E3A8A).withOpacity(0.2)
-                : const Color(0xFFEFF6FF),
-            isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE),
-            const Color(0xFF42A5F5),
-            textSecondary),
+      if (role == 'transport_incharge') ...[
+        _buildDataRow(Icons.badge, "CUSTOM LOGIN ID", (user?['customId'] ?? "N/A").toString().toLowerCase(), isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF), isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE), const Color(0xFF42A5F5), textSecondary),
         const SizedBox(height: 16),
       ],
-      _buildDataRow(
-          Icons.person_4_outlined,
-          "FATHER'S NAME",
-          (user?['fatherName'] ?? "UNSPECIFIED").toString().toUpperCase(),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      if (role == 'student') ...[
+        _buildDataRow(Icons.tag, "ADMISSION NUMBER", (user?['admissionNo'] ?? "NOT_LOGGED").toString().toUpperCase(), isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF), isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE), const Color(0xFF42A5F5), textSecondary),
+        const SizedBox(height: 16),
+      ],
+      _buildDataRow(Icons.person_4_outlined, "FATHER'S NAME", (user?['fatherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(
-          Icons.favorite_border,
-          "MOTHER'S NAME",
-          (user?['motherName'] ?? "UNSPECIFIED").toString().toUpperCase(),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      _buildDataRow(Icons.favorite_border, "MOTHER'S NAME", (user?['motherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(
-          Icons.calendar_today,
-          "DATE OF BIRTH",
-          _formatDate(user?['dob']),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      _buildDataRow(Icons.calendar_today, "DATE OF BIRTH", _formatDate(user?['dob']), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(
-          Icons.face_retouching_natural,
-          "GENDER",
-          (user?['gender'] ?? "N/A").toString().toUpperCase(),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      _buildDataRow(Icons.face_retouching_natural, "GENDER", (user?['gender'] ?? "N/A").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(
-          Icons.phone_android,
-          "CONTACT NO.",
-          (user?['phone'] ?? "N/A").toString(),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      _buildDataRow(Icons.phone_android, "CONTACT NO.", (user?['phone'] ?? "N/A").toString(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(
-          Icons.verified_user_outlined,
-          "RELIGION",
-          (user?['religion'] ?? "N/A").toString().toUpperCase(),
-          boxBg,
-          cardBorder,
-          textPrimary,
-          textSecondary),
+      _buildDataRow(Icons.verified_user_outlined, "RELIGION", (user?['religion'] ?? "N/A").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
       if (role == 'teacher') ...[
-        _buildTeacherSubjectsBox(
-            isDarkMode, boxBg, cardBorder, textPrimary, textSecondary),
+        _buildTeacherSubjectsBox(isDarkMode, boxBg, cardBorder, textPrimary, textSecondary),
         const SizedBox(height: 16),
       ] else ...[
-        _buildDataRow(
-            Icons.alternate_email,
-            "REGISTERED EMAIL",
-            (user?['email'] ?? "N/A").toString().toLowerCase(),
-            boxBg,
-            cardBorder,
-            textPrimary,
-            textSecondary),
+        _buildDataRow(Icons.alternate_email, "REGISTERED EMAIL", (user?['email'] ?? "N/A").toString().toLowerCase(), boxBg, cardBorder, textPrimary, textSecondary),
         const SizedBox(height: 16),
       ],
       _buildAddressBox(boxBg, cardBorder, textSecondary),

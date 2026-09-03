@@ -707,6 +707,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           context.go('/superadmin/dashboard');
         } else if (role == 'finance') {
           context.go('/finance/dashboard');
+        } else if (role == 'transport_incharge') { 
+          // 👇🔥 NAYA ROUTE ADD KIYA 🔥👇
+          context.go('/transporter/dashboard');
         } else {
           context.go('/');
         }
