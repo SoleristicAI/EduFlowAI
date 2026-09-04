@@ -57,6 +57,7 @@ import '../features/finance/screens/finance_gateway.dart';
 import '../features/transporter/transporter_dashboard.dart';
 import '../features/transporter/manage_fleet_screen.dart';
 import '../features/driver/driver_home.dart';
+import '../features/transporter/live_tracking_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -392,6 +393,17 @@ final appRouter = GoRouter(
         return const LayoutWrapper(
           role: 'driver', // 🔥 Ye role pass hote hi LayoutWrapper BottomNav hide kar dega
           child: DriverHome(), // 🔥 Yahan se Driver ka UI render hoga
+        );
+      },
+    ),
+
+    GoRoute(
+      path: '/transport/live-tracking',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?; // Argument lenge
+        return LiveTrackingScreen(
+          vehicleId: extra?['vehicleId'] ?? '',
+          vehicleNumber: extra?['vehicleNumber'] ?? 'Unknown',
         );
       },
     ),

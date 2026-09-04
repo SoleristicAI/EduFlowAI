@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
@@ -41,6 +43,37 @@ require('./utils/paymentCron');
 require('./utils/penaltyCron');
 
 const app = express();
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+// 🔥 SOCKET.IO EVENT ENGINE 🔥
+io.on('connection', (socket) => {
+    console.log(`⚡ New Client Connected: ${socket.id}`);
+
+    socket.on('join_bus_room', (vehicleId) => {
+        socket.join(vehicleId);
+        console.log(`🚌 Client joined room for bus: ${vehicleId}`);
+    });
+
+    socket.on('send_location', (data) => {
+        io.to(data.vehicleId).emit('receive_location', {
+            latitude: data.latitude,
+            longitude: data.longitude,
+            speed: data.speed,
+            timestamp: new Date()
+        });
+    });
+
+    socket.on('disconnect', () => {
+        console.log(`🔌 Client Disconnected: ${socket.id}`);
+    });
+});
 
 /* =========================
    CORS CONFIGURATION
@@ -144,8 +177,9 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, '0.0.0.0', () => {
+// 🔥 app.listen ki jagah server.listen use karna hai taki socket active rahe 🔥
+server.listen(PORT, '0.0.0.0', () => {
   console.log(
-    `🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`
+    `🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT} with WebSockets enabled! ⚡`
   );
 });

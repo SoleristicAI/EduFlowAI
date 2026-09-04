@@ -297,8 +297,11 @@ router.get('/driver/my-assignment', protect, async (req, res) => {
             return res.status(404).json({ message: 'No bus assigned to you currently. Contact Transport Manager.' });
         }
 
-        // 3. Find the route where this bus is operating
+       // 3. Find the route where this bus is operating
         const route = await Route.findOne({ schoolId: req.user.schoolId, vehicle: vehicle._id });
+
+        // 🔥 4. Check if this bus already has an ACTIVE trip running
+        const activeTrip = await Trip.findOne({ vehicle: vehicle._id, status: 'ACTIVE' });
 
         res.json({
             message: 'Assignment fetched successfully',
@@ -311,7 +314,12 @@ router.get('/driver/my-assignment', protect, async (req, res) => {
                 _id: route._id,
                 routeName: route.routeName,
                 stops: route.stops
-            } : null 
+            } : null,
+            // 🔥 Agar trip active hai, toh uski details bhi bhej do
+            activeTrip: activeTrip ? {
+                _id: activeTrip._id,
+                tripType: activeTrip.tripType
+            } : null
         });
 
     } catch (error) {
@@ -387,6 +395,32 @@ router.put('/trips/end/:tripId', protect, async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: 'Failed to end trip: ' + error.message });
+    }
+});
+
+// ==========================================================
+// 🔥 TRANSPORTER DASHBOARD API (Live Active Trips) 🔥
+// ==========================================================
+
+// @route   GET /api/transport/trips/active
+// @desc    Get all currently active trips for the school dashboard
+router.get('/trips/active', protect, async (req, res) => {
+    try {
+        // 🔥 1. Sabse pehle user check karo (transporter, admin ya superadmin)
+        if (!['transport_incharge', 'transporter', 'admin', 'superadmin'].includes(req.user.role)) {
+            return res.status(403).json({ message: 'Access Denied: Not authorized for dashboard' });
+        }
+
+        // 🔥 2. Trips fetch karo aur vehicle, route ki details jodo taaki app crash na ho
+        const activeTrips = await Trip.find({ schoolId: req.user.schoolId, status: 'ACTIVE' })
+            .populate({ path: 'vehicle', select: 'vehicleNumber seatingCapacity' })
+            .populate({ path: 'route', select: 'routeName stops' })
+            .populate({ path: 'driver', select: 'name phone' });
+            
+        res.json({ trips: activeTrips });
+    } catch (error) {
+        console.error("Dashboard Fetch Error:", error);
+        res.status(500).json({ message: 'Failed to fetch active trips', error: error.message });
     }
 });
 

@@ -66,5 +66,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	
+	<!-- 🔥 NAYI iOS GPS PERMISSIONS LIVE TRACKING KE LIYE 🔥 -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to track live bus movement for parents and school during active trips.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>We need your live location to stream bus coordinates in the background during trips.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need your background location for uninterrupted school bus tracking.</string>
+	
 </dict>
 </plist>

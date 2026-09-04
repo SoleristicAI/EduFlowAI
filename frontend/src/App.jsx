@@ -102,6 +102,7 @@ import TermsConditions from "./pages/TermsConditions";
 import TransportDashboard from './pages/transport/TransportDashboard';
 import TransportSetup from './pages/transport/TransportSetup';
 import ManageFleet from './pages/transport/ManageFleet';
+import LiveTracking from './pages/transport/LiveTracking';
 
 import { useTheme } from './context/ThemeContext';
 const VisualMatrix = () => {
@@ -486,6 +487,7 @@ function App() {
           <Route path="/admin/transport-setup" element={<TransportSetup />} />
           <Route path="/transport/dashboard" element={<TransportDashboard />} />
           <Route path="/transport/manage" element={<ManageFleet />} />
+          <Route path="/transport/live-tracking" element={<LiveTracking />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
