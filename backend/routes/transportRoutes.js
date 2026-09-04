@@ -195,6 +195,15 @@ router.post('/routes', protect, transportAuth, async (req, res) => {
     try {
         const { routeName, vehicleId, stops } = req.body;
 
+        // 🔥 AUTO-REMOVE BUS FROM OLD ROUTE 🔥
+        if (vehicleId) {
+            const oldRoute = await Route.findOne({ schoolId: req.user.schoolId, vehicle: vehicleId });
+            if (oldRoute) {
+                oldRoute.vehicle = null;
+                await oldRoute.save();
+            }
+        }
+
         const route = await Route.create({
             schoolId: req.user.schoolId,
             routeName: routeName.toUpperCase().trim(),
@@ -225,6 +234,19 @@ router.get('/routes', protect, transportAuth, async (req, res) => {
 router.put('/routes/:id', protect, transportAuth, async (req, res) => {
     try {
         const { routeName, vehicleId, stops, status } = req.body;
+
+        // 🔥 SWAP / AUTO-REMOVE BUS LOGIC 🔥
+        if (vehicleId) {
+            const oldRoute = await Route.findOne({ 
+                schoolId: req.user.schoolId, 
+                vehicle: vehicleId, 
+                _id: { $ne: req.params.id } 
+            });
+            if (oldRoute) {
+                oldRoute.vehicle = null;
+                await oldRoute.save();
+            }
+        }
 
         const route = await Route.findByIdAndUpdate(
             req.params.id,

@@ -82,22 +82,51 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
   }
 
   void _showToast(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(isError ? Icons.error : Icons.check_circle, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, fontSize: 12))),
-          ],
+    // 1. Screen ka sabse top-most layer (Overlay) nikaalo
+    final overlay = Overlay.of(context);
+    late OverlayEntry overlayEntry;
+
+    // 2. Custom Toast Design banao jo humesha aage rahega
+    overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 20, // Status bar ke theek neeche
+        left: 20,
+        right: 20,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: isError ? const Color(0xFFF43F5E) : const Color(0xFF10B981),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
+            ),
+            child: Row(
+              children: [
+                Icon(isError ? Icons.error : Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message, 
+                    style: const TextStyle(fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, fontSize: 12, color: Colors.white)
+                  )
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.5, end: 0, curve: Curves.easeOutBack), // Premium Drop Animation
         ),
-        backgroundColor: isError ? const Color(0xFFF43F5E) : const Color(0xFF10B981),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        margin: const EdgeInsets.all(20),
-        duration: const Duration(seconds: 3),
       ),
     );
+
+    // 3. Toast ko screen par dikhao
+    overlay.insert(overlayEntry);
+
+    // 4. 3 second baad automatically hat jao
+    Future.delayed(const Duration(seconds: 3), () {
+      if (overlayEntry.mounted) {
+        overlayEntry.remove();
+      }
+    });
   }
 
   void _handleBack() {
@@ -136,19 +165,18 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
 
   Map<String, dynamic>? _getDriverObj(dynamic driverData) {
     if (driverData == null) return null;
-    
-    // Agar backend ne poora object (Map) bheja hai
-    if (driverData is Map) {
-      return Map<String, dynamic>.from(driverData);
-    }
-    
-    // Agar backend ne sirf ID (String) bheji hai
+    if (driverData is Map) return Map<String, dynamic>.from(driverData);
     if (driverData is String) {
       final matches = drivers.where((element) => element['_id'] == driverData);
       if (matches.isNotEmpty) return matches.first;
     }
-    
     return null;
+  }
+
+  String _getVehicleId(dynamic vehicleData) {
+    if (vehicleData == null) return '';
+    if (vehicleData is Map) return vehicleData['_id'].toString();
+    return vehicleData.toString();
   }
 
   String _getVehicleNumber(dynamic vehicleData) {
@@ -159,6 +187,39 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
       return v != null ? v['vehicleNumber'] : 'Unknown';
     }
     return 'Unknown';
+  }
+
+  Future<void> _pickTime(BuildContext context, String current, Function(String) onPicked) async {
+    TimeOfDay initialTime = TimeOfDay.now();
+    try {
+      final format = DateFormat.jm();
+      initialTime = TimeOfDay.fromDateTime(format.parse(current));
+    } catch (_) {}
+
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: initialTime,
+      builder: (context, child) {
+        final isDark = ref.read(themeProvider) == ThemeMode.dark;
+        return Theme(
+          data: ThemeData.light().copyWith(
+            colorScheme: ColorScheme.light(
+              primary: const Color(0xFF42A5F5),
+              onPrimary: Colors.white,
+              surface: isDark ? const Color(0xFF1E293B) : Colors.white,
+              onSurface: isDark ? Colors.white : Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && context.mounted) {
+      final now = DateTime.now();
+      final dt = DateTime(now.year, now.month, now.day, picked.hour, picked.minute);
+      onPicked(DateFormat('hh:mm a').format(dt));
+    }
   }
 
   // ==========================================
@@ -194,89 +255,96 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
             slivers: [
-              // --- PREMIUM GRADIENT HEADER ---
               SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.only(top: 60, bottom: 40, left: 24, right: 24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: isDarkMode ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] : [const Color(0xFF64B5F6), accent],
-                      begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                    ),
-                    borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
-                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
-                  ),
-                  child: Column(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    alignment: Alignment.bottomCenter,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          GestureDetector(
-                            onTap: _handleBack,
-                            child: Container(
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 30),
+                        padding: const EdgeInsets.only(top: 60, bottom: 60, left: 24, right: 24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isDarkMode ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] : [const Color(0xFF64B5F6), accent],
+                            begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                          ),
+                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(55)),
+                          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 15, offset: Offset(0, 10))],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: _handleBack,
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
+                                child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                children: [
+                                  const Text("SETUP MANAGER", textAlign: TextAlign.center, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)),
+                                  Text("DRIVERS, BUSES & ROUTES", textAlign: TextAlign.center, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.9), letterSpacing: 2)),
+                                ],
+                              ),
+                            ),
+                            Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
-                              child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                              child: const Icon(Icons.directions_bus, color: Colors.white, size: 24),
                             ),
+                          ],
+                        ),
+                      ).animate().slideY(begin: -0.2, duration: 500.ms),
+
+                      Positioned(
+                        bottom: 0,
+                        left: 24,
+                        right: 24,
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: cardColor,
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
                           ),
-                          Column(
-                            children: [
-                              const Text("SETUP MANAGER", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: Colors.white, fontStyle: FontStyle.italic, letterSpacing: -0.5)),
-                              Text("DRIVERS, BUSES & ROUTES", style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white.withValues(alpha: 0.9), letterSpacing: 2)),
-                            ],
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final tabWidth = (constraints.maxWidth - 8) / 3;
+                              return Stack(
+                                children: [
+                                  AnimatedPositioned(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeOut,
+                                    top: 4, bottom: 4,
+                                    left: 4 + (_activeTabIndex * tabWidth),
+                                    width: tabWidth,
+                                    child: Container(
+                                      decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(26)),
+                                    ),
+                                  ),
+                                  Row(
+                                    children: [
+                                      _buildTabItem(0, "DRIVERS", Icons.people_alt, textColorSecondary),
+                                      _buildTabItem(1, "BUSES", Icons.directions_bus, textColorSecondary),
+                                      _buildTabItem(2, "ROUTES", Icons.map, textColorSecondary),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.3))),
-                            child: const Icon(Icons.directions_bus, color: Colors.white, size: 24),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
-                  ),
-                ).animate().slideY(begin: -0.2, duration: 500.ms),
-              ),
-
-              // --- 3 TABS (SEGMENTED CONTROL) ---
-              SliverToBoxAdapter(
-                child: Transform.translate(
-                  offset: const Offset(0, -25),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Container(
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: cardColor,
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-                      ),
-                      child: Stack(
-                        children: [
-                          AnimatedPositioned(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOut,
-                            top: 4, bottom: 4,
-                            left: 4 + (_activeTabIndex * ((MediaQuery.of(context).size.width - 48 - 8) / 3)),
-                            width: (MediaQuery.of(context).size.width - 48 - 8) / 3,
-                            child: Container(
-                              decoration: BoxDecoration(color: accent, borderRadius: BorderRadius.circular(26)),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              _buildTabItem(0, "DRIVERS", Icons.people_alt, textColorSecondary),
-                              _buildTabItem(1, "BUSES", Icons.directions_bus, textColorSecondary),
-                              _buildTabItem(2, "ROUTES", Icons.map, textColorSecondary),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
               ),
 
-              // --- DYNAMIC CONTENT BASED ON TAB ---
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 sliver: SliverList(
@@ -299,9 +367,6 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
     );
   }
 
-  // ==========================================
-  // TAB BUILDERS
-  // ==========================================
   Widget _buildTabItem(int index, String title, IconData icon, Color textColorSecondary) {
     final isSelected = _activeTabIndex == index;
     return Expanded(
@@ -312,12 +377,14 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: isSelected ? Colors.white : textColorSecondary),
-              const SizedBox(width: 6),
-              Text(title, style: TextStyle(
-                color: isSelected ? Colors.white : textColorSecondary,
-                fontSize: 10, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, letterSpacing: 1
-              )),
+              Icon(icon, size: 14, color: isSelected ? Colors.white : textColorSecondary),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(title, overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(
+                  color: isSelected ? Colors.white : textColorSecondary,
+                  fontSize: 10, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, letterSpacing: 1
+                )),
+              ),
             ],
           ),
         ),
@@ -325,15 +392,34 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
     );
   }
 
+  Widget _buildEmptyState(String message, Color textSec) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 40, bottom: 20),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(Icons.search_off, size: 40, color: textSec.withValues(alpha: 0.5)),
+            const SizedBox(height: 12),
+            Text(message.toUpperCase(), textAlign: TextAlign.center, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textSec, letterSpacing: 1)),
+          ],
+        ),
+      ),
+    ).animate().fadeIn();
+  }
+
   // 🔥 DRIVERS TAB 🔥
   Widget _buildDriversTab(bool isDark, Color cardColor, Color cardBorder, Color textPrimary, Color textSec, Color inputBg) {
+    final filteredDrivers = drivers.where((d) => d['name'].toString().toLowerCase().contains(_driverSearch.toLowerCase()) || d['phone'].toString().contains(_driverSearch)).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader("Drivers List", "Total Drivers: ${drivers.length}", "Add Driver", () => _showDriverSheet(null, isDark, cardColor, cardBorder, textPrimary, textSec, inputBg), cardColor, cardBorder, textPrimary, textSec),
         _buildSearchBar("Search driver...", (val) => setState(() => _driverSearch = val), cardColor, cardBorder, textPrimary, textSec),
         
-        ...drivers.where((d) => d['name'].toString().toLowerCase().contains(_driverSearch.toLowerCase()) || d['phone'].toString().contains(_driverSearch)).map((drv) {
+        if (filteredDrivers.isEmpty) _buildEmptyState("NO DRIVER FOUND", textSec),
+        
+        ...filteredDrivers.map((drv) {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(20),
@@ -346,12 +432,13 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(drv['name'].toString().toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textPrimary)),
-                      const SizedBox(height: 4),
-                      Row(
+                      Text(drv['name'].toString().toUpperCase(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textPrimary)),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
                           Text(drv['phone'], style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: textSec)),
-                          Text(" • ", style: TextStyle(color: cardBorder)),
+                          Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Text("•", style: TextStyle(color: cardBorder))),
                           Text("AGE: ${_calculateAge(drv['dob'])}", style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.teal)),
                         ],
                       )
@@ -369,13 +456,17 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
 
   // 🔥 VEHICLES TAB 🔥
   Widget _buildVehiclesTab(bool isDark, Color cardColor, Color cardBorder, Color textPrimary, Color textSec, Color inputBg) {
+    final filteredVehicles = vehicles.where((v) => v['vehicleNumber'].toString().toLowerCase().contains(_busSearch.toLowerCase())).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader("School Buses", "Total Buses: ${vehicles.length}", "Add Bus", () => _showBusSheet(null, isDark, cardColor, cardBorder, textPrimary, textSec, inputBg), cardColor, cardBorder, textPrimary, textSec, btnColor: Colors.teal),
         _buildSearchBar("Search bus number...", (val) => setState(() => _busSearch = val), cardColor, cardBorder, textPrimary, textSec),
 
-        ...vehicles.where((v) => v['vehicleNumber'].toString().toLowerCase().contains(_busSearch.toLowerCase())).map((bus) {
+        if (filteredVehicles.isEmpty) _buildEmptyState("NO BUS FOUND", textSec),
+
+        ...filteredVehicles.map((bus) {
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(20),
@@ -390,9 +481,9 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(bus['vehicleNumber'].toString().toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textPrimary)),
+                          Text(bus['vehicleNumber'].toString().toUpperCase(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textPrimary)),
                           const SizedBox(height: 4),
-                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text("CAPACITY: ${bus['seatingCapacity']}", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.teal))),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.teal.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)), child: Text("CAPACITY: ${bus['seatingCapacity']}", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.teal))),
                         ],
                       ),
                     ),
@@ -401,11 +492,14 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                 ),
                 Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Divider(height: 1, color: cardBorder)),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(Icons.person, size: 14, color: textSec),
                     const SizedBox(width: 6),
                     Text("DRIVER: ", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textSec)),
-                    Text(_getDriverName(bus['driver']).toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)),
+                    Expanded(
+                      child: Text(_getDriverName(bus['driver']).toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)),
+                    ),
                   ],
                 )
               ],
@@ -418,15 +512,19 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
 
   // 🔥 ROUTES TAB 🔥
   Widget _buildRoutesTab(bool isDark, Color cardColor, Color cardBorder, Color textPrimary, Color textSec, Color inputBg) {
+    final filteredRoutes = routes.where((r) => r['routeName'].toString().toLowerCase().contains(_routeSearch.toLowerCase())).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader("Bus Routes", "Total Routes: ${routes.length}", "Create Route", () => _showRouteSheet(null, isDark, cardColor, cardBorder, textPrimary, textSec, inputBg), cardColor, cardBorder, textPrimary, textSec),
         _buildSearchBar("Search route name...", (val) => setState(() => _routeSearch = val), cardColor, cardBorder, textPrimary, textSec),
 
-        ...routes.where((r) => r['routeName'].toString().toLowerCase().contains(_routeSearch.toLowerCase())).map((route) {
-          final busObj = vehicles.firstWhere((v) => v['_id'] == (route['vehicle'] is Map ? route['vehicle']['_id'] : route['vehicle']), orElse: () => null);
-          final driverObj = _getDriverObj(busObj?['driver'] is Map ? busObj['driver']['_id'] : busObj?['driver']);
+        if (filteredRoutes.isEmpty) _buildEmptyState("NO ROUTE FOUND", textSec),
+
+        ...filteredRoutes.map((route) {
+          final busObj = vehicles.firstWhere((v) => v['_id'] == _getVehicleId(route['vehicle']), orElse: () => null);
+          final driverObj = _getDriverObj(busObj?['driver']);
 
           return Container(
             margin: const EdgeInsets.only(bottom: 20),
@@ -444,16 +542,20 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(route['routeName'].toString().toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textPrimary)),
+                          Text(route['routeName'].toString().toUpperCase(), style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textPrimary)),
                           const SizedBox(height: 6),
-                          Row(children: [const Icon(Icons.directions_bus, size: 12, color: Color(0xFF42A5F5)), const SizedBox(width: 4), Text("BUS: ${_getVehicleNumber(route['vehicle'])}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary))]),
-                          if (driverObj != null) ...[
-                            const SizedBox(height: 4),
-                            Row(children: [const Icon(Icons.person, size: 12, color: Colors.teal), const SizedBox(width: 4), Text("DRIVER: ${driverObj['name']} • ${driverObj['phone']}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary))]),
-                          ]
+                          Wrap(
+                            spacing: 8, runSpacing: 4,
+                            children: [
+                              Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [const Icon(Icons.directions_bus, size: 12, color: Color(0xFF42A5F5)), const SizedBox(width: 4), Flexible(child: Text("BUS: ${_getVehicleNumber(route['vehicle'])}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)))]),
+                              if (driverObj != null) 
+                                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [const Icon(Icons.person, size: 12, color: Colors.teal), const SizedBox(width: 4), Flexible(child: Text("DRIVER: ${driverObj['name']}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)))]),
+                            ],
+                          ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 8),
                     _buildActionButtons(() => _showRouteSheet(route, isDark, cardColor, cardBorder, textPrimary, textSec, inputBg), () => _showDeleteConfirmModal('ROUTE', route['_id'])),
                   ],
                 ),
@@ -470,12 +572,14 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(stop['stopName'].toString().toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textPrimary)),
-                          const SizedBox(height: 4),
-                          Row(
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 8, runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              const Icon(Icons.currency_rupee, size: 10, color: Colors.teal), Text("${stop['monthlyFee']}/mo  ", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.teal)),
-                              Icon(Icons.access_time, size: 10, color: textSec), Text(" P: ${stop['pickupTime']}  ", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: textSec)),
-                              Icon(Icons.access_time, size: 10, color: textSec), Text(" D: ${stop['dropTime']}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: textSec)),
+                              Row(mainAxisSize: MainAxisSize.min, children: [const Icon(Icons.currency_rupee, size: 10, color: Colors.teal), const SizedBox(width: 2), Text("${stop['monthlyFee']}/mo", style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Colors.teal))]),
+                              Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.access_time, size: 10, color: textSec), const SizedBox(width: 2), Text("P: ${stop['pickupTime']}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: textSec))]),
+                              Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.access_time, size: 10, color: textSec), const SizedBox(width: 2), Text("D: ${stop['dropTime']}", style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: textSec))]),
                             ],
                           )
                         ],
@@ -502,13 +606,17 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title.toUpperCase(), style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: textPrimary)),
-              Text(subtitle.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textSec, letterSpacing: 1)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title.toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textPrimary)),
+                const SizedBox(height: 2),
+                Text(subtitle.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: textSec, letterSpacing: 1)),
+              ],
+            ),
           ),
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: onBtnTap,
             child: Container(
@@ -548,6 +656,7 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
 
   Widget _buildActionButtons(VoidCallback onEdit, VoidCallback onDelete) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(onTap: onEdit, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: const Color(0xFF42A5F5).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.edit, size: 16, color: Color(0xFF42A5F5)))),
         const SizedBox(width: 8),
@@ -574,13 +683,54 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
     );
   }
 
+  // 🔥 CUSTOM UNIVERSAL BOTTOM SHEET DROPDOWN 🔥
+  void _showOptionsSheet(String title, List<Map<String, String>> options, Function(String) onSelect, Color cardColor, Color cardBorder, Color textPrimary, Color textSec) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: BoxDecoration(color: cardColor, borderRadius: const BorderRadius.vertical(top: Radius.circular(40))),
+        padding: const EdgeInsets.only(left: 24, right: 24, top: 32, bottom: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: cardBorder, borderRadius: BorderRadius.circular(10)))),
+            const SizedBox(height: 24),
+            Text("SELECT $title", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: textPrimary, letterSpacing: 1)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: options.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () {
+                      onSelect(options[index]['value']!);
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                      child: Text(options[index]['label']!.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textPrimary)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ==========================================
   // MODALS (BOTTOM SHEETS)
   // ==========================================
   
   void _showDeleteConfirmModal(String type, String id) {
     final isDark = ref.read(themeProvider) == ThemeMode.dark;
-    
     showGeneralDialog(
       context: context,
       barrierDismissible: true,
@@ -641,6 +791,9 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
     final emailCtrl = TextEditingController(text: driver?['email'] ?? '');
     final addressCtrl = TextEditingController(text: driver?['address']?['fullAddress'] ?? '');
     final passCtrl = TextEditingController();
+    final confirmPassCtrl = TextEditingController();
+    bool obscurePass = true;
+    bool obscureConfirmPass = true;
     
     DateTime selectedDob = driver?['dob'] != null ? DateTime.parse(driver!['dob']) : DateTime(1990);
     String gender = driver?['gender'] ?? 'Male';
@@ -683,12 +836,12 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                                   if (picked != null) setModalState(() => selectedDob = picked);
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                                   decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(DateFormat('dd MMM yyyy').format(selectedDob), style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textPrimary)),
+                                      Flexible(child: Text(DateFormat('dd MMM yyyy').format(selectedDob), overflow: TextOverflow.ellipsis, maxLines: 1, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textPrimary))),
                                       const Icon(Icons.calendar_today, size: 16, color: Color(0xFF42A5F5)),
                                     ],
                                   ),
@@ -703,16 +856,21 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildLabel("GENDER", textSec),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                                decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    isExpanded: true,
-                                    value: gender,
-                                    dropdownColor: cardColor,
-                                    items: ['Male', 'Female', 'Other'].map((g) => DropdownMenuItem(value: g, child: Text(g, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textPrimary)))).toList(),
-                                    onChanged: (val) => setModalState(() => gender = val!),
+                              GestureDetector(
+                                onTap: () => _showOptionsSheet("GENDER", [
+                                  {'label': 'Male', 'value': 'Male'},
+                                  {'label': 'Female', 'value': 'Female'},
+                                  {'label': 'Other', 'value': 'Other'},
+                                ], (val) => setModalState(() => gender = val), cardColor, cardBorder, textPrimary, textSec),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                  decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(gender.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: textPrimary)),
+                                      const Icon(Icons.keyboard_arrow_down, color: Color(0xFF42A5F5), size: 16),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -737,7 +895,47 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                           const SizedBox(height: 12),
                           _buildLabel("CUSTOM LOGIN ID", textSec), _buildTextField(customIdCtrl, "e.g. driver_ramesh", inputBg, cardBorder, textPrimary, textSec, enabled: driver == null),
                           if (driver == null) ...[
-                             _buildLabel("PASSWORD", textSec), _buildTextField(passCtrl, "••••••••", inputBg, cardBorder, textPrimary, textSec, isPassword: true),
+                             _buildLabel("PASSWORD", textSec), 
+                             Container(
+                               decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                               child: TextField(
+                                 controller: passCtrl,
+                                 obscureText: obscurePass,
+                                 onChanged: (val) => setModalState(() {}), // UI update on type
+                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textPrimary),
+                                 decoration: InputDecoration(
+                                   hintText: "••••••••", hintStyle: TextStyle(color: textSec), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                   suffixIcon: IconButton(
+                                     icon: Icon(obscurePass ? Icons.visibility_off : Icons.visibility, color: textSec, size: 18),
+                                     onPressed: () => setModalState(() => obscurePass = !obscurePass),
+                                   ),
+                                 ),
+                               ),
+                             ),
+                             const SizedBox(height: 12),
+                             _buildLabel("CONFIRM PASSWORD", textSec), 
+                             Container(
+                               decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                               child: TextField(
+                                 controller: confirmPassCtrl,
+                                 obscureText: obscureConfirmPass,
+                                 onChanged: (val) => setModalState(() {}), // UI update on type
+                                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textPrimary),
+                                 decoration: InputDecoration(
+                                   hintText: "••••••••", hintStyle: TextStyle(color: textSec), border: InputBorder.none, contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                                   suffixIcon: IconButton(
+                                     icon: Icon(obscureConfirmPass ? Icons.visibility_off : Icons.visibility, color: textSec, size: 18),
+                                     onPressed: () => setModalState(() => obscureConfirmPass = !obscureConfirmPass),
+                                   ),
+                                 ),
+                               ),
+                             ),
+                             // 🔥 Password Mismatch Error Label 🔥
+                             if (passCtrl.text.isNotEmpty && confirmPassCtrl.text.isNotEmpty && passCtrl.text != confirmPassCtrl.text)
+                               const Padding(
+                                 padding: EdgeInsets.only(top: 8, left: 12),
+                                 child: Text("Passwords do not match! ❌", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                               ),
                           ],
                         ],
                       ),
@@ -749,8 +947,13 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                         if (nameCtrl.text.isEmpty || phoneCtrl.text.isEmpty || customIdCtrl.text.isEmpty) {
                           return _showToast("Please fill all required fields! ⚠️", isError: true);
                         }
-                        if (driver == null && passCtrl.text.isEmpty) {
-                          return _showToast("Password is required for new driver! ⚠️", isError: true);
+                        if (driver == null) {
+                          if (passCtrl.text.isEmpty || confirmPassCtrl.text.isEmpty) {
+                            return _showToast("Password fields cannot be empty! ⚠️", isError: true);
+                          }
+                          if (passCtrl.text != confirmPassCtrl.text) {
+                            return _showToast("Passwords do not match! ⚠️", isError: true);
+                          }
                         }
 
                         setState(() => isSubmitting = true);
@@ -796,7 +999,7 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
   void _showBusSheet(Map<String, dynamic>? bus, bool isDark, Color cardColor, Color cardBorder, Color textPrimary, Color textSec, Color inputBg) {
     final vehicleCtrl = TextEditingController(text: bus?['vehicleNumber'] ?? '');
     final capCtrl = TextEditingController(text: bus?['seatingCapacity']?.toString() ?? '');
-    String? selectedDriver = bus?['driver'] is Map ? bus!['driver']['_id'] : bus?['driver'];
+    String? selectedDriverId = bus?['driver'] is Map ? bus!['driver']['_id'] : bus?['driver'];
 
     showModalBottomSheet(
       context: context,
@@ -817,24 +1020,40 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                   children: [
                     _buildLabel("BUS NUMBER PLATE", textSec), _buildTextField(vehicleCtrl, "e.g. DL10AB1234", inputBg, cardBorder, textPrimary, textSec),
                     _buildLabel("TOTAL SEATS", textSec), _buildTextField(capCtrl, "e.g. 50", inputBg, cardBorder, textPrimary, textSec, isNumber: true),
-                    _buildLabel("ASSIGN DRIVER (OPTIONAL)", textSec),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          dropdownColor: cardColor,
-                          value: selectedDriver,
-                          hint: Text("SELECT DRIVER", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textSec)),
-                          items: drivers.map((d) {
-                            // Find if driver is busy
-                            final otherBus = vehicles.firstWhere((v) => v['driver'] == d['_id'] && v['_id'] != bus?['_id'], orElse: () => null);
-                            String dLabel = "${d['name']} - Available";
-                            if (otherBus != null) dLabel = "${d['name']} - Swap w/ ${otherBus['vehicleNumber']}";
-                            return DropdownMenuItem(value: d['_id'].toString(), child: Text(dLabel, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textPrimary)));
-                          }).toList(),
-                          onChanged: (val) => setModalState(() => selectedDriver = val),
+                   _buildLabel("ASSIGN DRIVER ", textSec),
+                    GestureDetector(
+                      onTap: () {
+                        List<Map<String, String>> options = []; 
+                        for (var d in drivers) {
+                          
+                          // 🔥 NAYA LOGIC: Agar EDIT mode hai aur ye driver issi bus ka hai, toh usko list mein mat dikhao
+                          if (bus != null) {
+                            String currentDriverId = bus['driver'] is Map ? bus['driver']['_id'] : bus['driver']?.toString() ?? '';
+                            if (currentDriverId == d['_id'].toString()) {
+                              continue; // Is driver ko list mein add mat karo (Skip)
+                            }
+                          }
+
+                          // Baaki drivers ke liye check karo ki wo free hain ya kisi aur bus mein hain
+                          final otherBus = vehicles.firstWhere((v) => v['driver'] != null && (v['driver'] is Map ? v['driver']['_id'] : v['driver'].toString()) == d['_id'].toString() && v['_id'] != bus?['_id'], orElse: () => null);
+                          
+                          String label = "${d['name']} - Not Assigned";
+                          if (otherBus != null) label = "${d['name']} - Swap w/ ${otherBus['vehicleNumber']}";
+                          
+                          options.add({'label': label, 'value': d['_id'].toString()});
+                        }
+                        
+                        _showOptionsSheet("DRIVER", options, (val) => setModalState(() => selectedDriverId = val), cardColor, cardBorder, textPrimary, textSec);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(child: Text(selectedDriverId == null ? "SELECT DRIVER" : _getDriverName(selectedDriverId).toUpperCase(), overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: selectedDriverId == null ? textSec : textPrimary))),
+                            const Icon(Icons.keyboard_arrow_down, color: Color(0xFF42A5F5), size: 16),
+                          ],
                         ),
                       ),
                     ),
@@ -849,7 +1068,7 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                           Map<String, dynamic> payload = {
                             'vehicleNumber': vehicleCtrl.text.replaceAll(' ', '').toUpperCase(),
                             'seatingCapacity': capCtrl.text,
-                            'driverId': selectedDriver
+                            'driverId': selectedDriverId
                           };
                           
                           if (bus == null) {
@@ -881,9 +1100,8 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
 
   void _showRouteSheet(Map<String, dynamic>? route, bool isDark, Color cardColor, Color cardBorder, Color textPrimary, Color textSec, Color inputBg) {
     final nameCtrl = TextEditingController(text: route?['routeName'] ?? '');
-    String? selectedVehicle = route?['vehicle'] is Map ? route!['vehicle']['_id'] : route?['vehicle'];
+    String? selectedVehicleId = route?['vehicle'] is Map ? route!['vehicle']['_id'] : route?['vehicle'];
     
-    // Parse existing stops or initialize with one empty stop
     List<Map<String, dynamic>> stopsList = [];
     if (route != null && route['stops'] != null) {
       for (var s in route['stops']) {
@@ -898,6 +1116,27 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
     if (stopsList.isEmpty) {
       stopsList.add({'stopName': TextEditingController(), 'monthlyFee': TextEditingController(), 'pickupTime': '08:00 AM', 'dropTime': '02:00 PM'});
     }
+
+    // 🔥 BULLETPROOF TIME PARSING & SORTING (Bina kisi DateFormat plugin ke error ke) 🔥
+    void sortStops() {
+      stopsList.sort((a, b) {
+        int timeToMinutes(String t) {
+          try {
+            final parts = t.split(' ');
+            final timeParts = parts[0].split(':');
+            int h = int.parse(timeParts[0]);
+            int m = int.parse(timeParts[1]);
+            if (parts[1].toUpperCase() == 'PM' && h != 12) h += 12;
+            if (parts[1].toUpperCase() == 'AM' && h == 12) h = 0;
+            return (h * 60) + m;
+          } catch (_) { return 0; }
+        }
+        return timeToMinutes(a['pickupTime']).compareTo(timeToMinutes(b['pickupTime']));
+      });
+    }
+
+    // Khulte hi ek baar sort kar do (agar edit mode hai)
+    sortStops();
 
     showModalBottomSheet(
       context: context,
@@ -918,17 +1157,31 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                   children: [
                     _buildLabel("ROUTE NAME", textSec), _buildTextField(nameCtrl, "e.g. ABC to XYZ", inputBg, cardBorder, textPrimary, textSec),
                     _buildLabel("ASSIGN BUS", textSec),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          isExpanded: true,
-                          dropdownColor: cardColor,
-                          value: selectedVehicle,
-                          hint: Text("SELECT BUS", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textSec)),
-                          items: vehicles.map((v) => DropdownMenuItem(value: v['_id'].toString(), child: Text("${v['vehicleNumber']} (Seats: ${v['seatingCapacity']})", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: textPrimary)))).toList(),
-                          onChanged: (val) => setModalState(() => selectedVehicle = val),
+                    GestureDetector(
+                      onTap: () {
+                        List<Map<String, String>> options = []; 
+                        for (var v in vehicles) {
+                          if (route != null) {
+                            String currentVehicleId = route['vehicle'] is Map ? route['vehicle']['_id'] : route['vehicle']?.toString() ?? '';
+                            if (currentVehicleId == v['_id'].toString()) continue; 
+                          }
+
+                          final assignedRoute = routes.firstWhere((r) => _getVehicleId(r['vehicle']) == v['_id'].toString() && r['_id'] != route?['_id'], orElse: () => null);
+                          String label = "${v['vehicleNumber']} (Seats: ${v['seatingCapacity']}) - Not Assigned";
+                          if (assignedRoute != null) label = "${v['vehicleNumber']} - Assigned to ${assignedRoute['routeName']}";
+                          options.add({'label': label, 'value': v['_id'].toString()});
+                        }
+                        _showOptionsSheet("BUS", options, (val) => setModalState(() => selectedVehicleId = val), cardColor, cardBorder, textPrimary, textSec);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: cardBorder)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Flexible(child: Text(selectedVehicleId == null ? "SELECT BUS" : _getVehicleNumber(selectedVehicleId).toUpperCase(), overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: selectedVehicleId == null ? textSec : textPrimary))),
+                            const Icon(Icons.keyboard_arrow_down, color: Color(0xFF42A5F5), size: 16),
+                          ],
                         ),
                       ),
                     ),
@@ -938,7 +1191,10 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                       children: [
                         Text("BUS STOPS", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textPrimary, letterSpacing: 1)),
                         GestureDetector(
-                          onTap: () => setModalState(() => stopsList.add({'stopName': TextEditingController(), 'monthlyFee': TextEditingController(), 'pickupTime': '08:00 AM', 'dropTime': '02:00 PM'})),
+                          onTap: () => setModalState(() {
+                            stopsList.add({'stopName': TextEditingController(), 'monthlyFee': TextEditingController(), 'pickupTime': '08:00 AM', 'dropTime': '02:00 PM'});
+                            sortStops(); // 🔥 NEW STOP ADD HOTE HI SORT KAREGA
+                          }),
                           child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(color: const Color(0xFF42A5F5).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: const Text("+ ADD STOP", style: TextStyle(color: Color(0xFF42A5F5), fontSize: 10, fontWeight: FontWeight.w900))),
                         )
                       ],
@@ -949,6 +1205,7 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                       int idx = entry.key;
                       var stop = entry.value;
                       return Container(
+                        key: ObjectKey(stop), // 🔥 MAGICAL FIX: Iske bina list update hone par text fields mix ho jate hain
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(color: inputBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: cardBorder)),
@@ -967,6 +1224,49 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                             _buildTextField(stop['stopName'], "Stop Name", cardColor, cardBorder, textPrimary, textSec),
                             const SizedBox(height: 8),
                             _buildTextField(stop['monthlyFee'], "Monthly Fee (₹)", cardColor, cardBorder, textPrimary, textSec, isNumber: true),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _pickTime(context, stop['pickupTime'], (t) => setModalState(() {
+                                      stop['pickupTime'] = t;
+                                      sortStops(); // 🔥 TIME PICK HOTE HI AUTO-SLIDE/SORT HOGA 🔥
+                                    })),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: cardBorder)),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.access_time, size: 12, color: textSec),
+                                          const SizedBox(width: 4),
+                                          Text("P: ${stop['pickupTime']}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () => _pickTime(context, stop['dropTime'], (t) => setModalState(() => stop['dropTime'] = t)),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+                                      decoration: BoxDecoration(color: cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: cardBorder)),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.access_time, size: 12, color: textSec),
+                                          const SizedBox(width: 4),
+                                          Text("D: ${stop['dropTime']}", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: textPrimary)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
                           ],
                         ),
                       );
@@ -975,7 +1275,7 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                     const SizedBox(height: 32),
                     GestureDetector(
                       onTap: () async {
-                        if (nameCtrl.text.isEmpty || selectedVehicle == null || stopsList.isEmpty) {
+                        if (nameCtrl.text.isEmpty || selectedVehicleId == null || stopsList.isEmpty) {
                           return _showToast("Route name, bus, and at least 1 stop required! ⚠️", isError: true);
                         }
                         
@@ -990,11 +1290,30 @@ class _ManageFleetScreenState extends ConsumerState<ManageFleetScreen> {
                           });
                         }
 
+                        // 🔥 Backend Submit se pehle bhi final sort taaki Database hamesha clean rahe 🔥
+                        finalStops.sort((a, b) {
+                          try {
+                            final partsA = a['pickupTime'].split(' ');
+                            final timePartsA = partsA[0].split(':');
+                            int hA = int.parse(timePartsA[0]), mA = int.parse(timePartsA[1]);
+                            if (partsA[1].toUpperCase() == 'PM' && hA != 12) hA += 12;
+                            if (partsA[1].toUpperCase() == 'AM' && hA == 12) hA = 0;
+
+                            final partsB = b['pickupTime'].split(' ');
+                            final timePartsB = partsB[0].split(':');
+                            int hB = int.parse(timePartsB[0]), mB = int.parse(timePartsB[1]);
+                            if (partsB[1].toUpperCase() == 'PM' && hB != 12) hB += 12;
+                            if (partsB[1].toUpperCase() == 'AM' && hB == 12) hB = 0;
+
+                            return ((hA * 60) + mA).compareTo((hB * 60) + mB);
+                          } catch (_) { return 0; }
+                        });
+
                         setState(() => isSubmitting = true);
                         try {
                           Map<String, dynamic> payload = {
                             'routeName': nameCtrl.text.toUpperCase(),
-                            'vehicleId': selectedVehicle,
+                            'vehicleId': selectedVehicleId,
                             'stops': finalStops
                           };
                           
