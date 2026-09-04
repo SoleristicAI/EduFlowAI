@@ -111,10 +111,12 @@ class _NavbarState extends ConsumerState<Navbar> {
     final firstName = name.split(' ')[0];
     final capitalizedName = firstName.isNotEmpty ? firstName[0].toUpperCase() + firstName.substring(1).toLowerCase() : '';
     
-    // 🔥 FIX: Cleaned up Role Display for Transporter 🔥
+   // 🔥 FIX: Added Fleet Captain for Drivers 🔥
     String displayRole = role == 'transport_incharge' 
         ? 'Transport Manager' 
-        : (role.isNotEmpty ? role[0].toUpperCase() + role.substring(1).toLowerCase() : '');
+        : role == 'driver'
+            ? 'Fleet Captain'
+            : (role.isNotEmpty ? role[0].toUpperCase() + role.substring(1).toLowerCase() : '');
 
     final today = DateTime.now();
     bool isBirthday = false;

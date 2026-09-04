@@ -4,6 +4,7 @@ const { protect } = require('../middleware/authMiddleware');
 const Vehicle = require('../models/Vehicle');
 const Route = require('../models/Route');
 const User = require('../models/User');
+const Trip = require('../models/Trip');
 
 // 🔥 CUSTOM SECURITY MIDDLEWARE
 const transportAuth = (req, res, next) => {
@@ -272,6 +273,120 @@ router.delete('/routes/:id', protect, transportAuth, async (req, res) => {
         res.json({ message: 'Route removed from tracking grid. 🗑️' });
     } catch (error) {
         res.status(500).json({ message: 'Failed to delete route.' });
+    }
+});
+
+
+// ==========================================================
+// 🔥 DRIVER PORTAL ENGINE (My Assignment & Trips) 🔥
+// ==========================================================
+
+// @route   GET /api/transport/driver/my-assignment
+// @desc    Get currently assigned bus and route for the logged-in driver
+router.get('/driver/my-assignment', protect, async (req, res) => {
+    try {
+        // 1. Check if the logged-in user is actually a driver (Ye guard ka kaam karega)
+        if (req.user.role !== 'driver') {
+            return res.status(403).json({ message: 'Access Denied: Only drivers can access this portal.' });
+        }
+
+        // 2. Find the bus assigned to this driver
+        const vehicle = await Vehicle.findOne({ schoolId: req.user.schoolId, driver: req.user._id });
+        
+        if (!vehicle) {
+            return res.status(404).json({ message: 'No bus assigned to you currently. Contact Transport Manager.' });
+        }
+
+        // 3. Find the route where this bus is operating
+        const route = await Route.findOne({ schoolId: req.user.schoolId, vehicle: vehicle._id });
+
+        res.json({
+            message: 'Assignment fetched successfully',
+            vehicle: {
+                _id: vehicle._id,
+                vehicleNumber: vehicle.vehicleNumber,
+                seatingCapacity: vehicle.seatingCapacity
+            },
+            route: route ? {
+                _id: route._id,
+                routeName: route.routeName,
+                stops: route.stops
+            } : null 
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch assignment: ' + error.message });
+    }
+});
+
+// ==========================================================
+// 🔥 TRIP MANAGEMENT ENGINE (Start & End Trips) 🔥
+// ==========================================================
+
+// @route   POST /api/transport/trips/start
+// @desc    Driver starts a morning or evening trip
+router.post('/trips/start', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'driver') {
+            return res.status(403).json({ message: 'Access Denied: Only drivers can start trips.' });
+        }
+
+        const { vehicleId, routeId, tripType } = req.body;
+
+        if (!vehicleId || !routeId || !tripType) {
+            return res.status(400).json({ message: 'Vehicle, Route, and Trip Type are required! ⚠️' });
+        }
+
+        // Check karo ki kahin is bus ki koi purani trip already ACTIVE toh nahi hai
+        const activeTrip = await Trip.findOne({ vehicle: vehicleId, status: 'ACTIVE' });
+        if (activeTrip) {
+            return res.status(400).json({ message: 'A trip is already active for this bus! ⚠️' });
+        }
+
+        // Nayi trip create karo
+        const trip = await Trip.create({
+            schoolId: req.user.schoolId,
+            vehicle: vehicleId,
+            route: routeId,
+            driver: req.user._id,
+            tripType,
+            status: 'ACTIVE',
+            startTime: new Date()
+        });
+
+        res.status(201).json({ 
+            message: `${tripType} Trip Started Successfully! 🚌🚀`, 
+            tripId: trip._id,
+            trip 
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to start trip: ' + error.message });
+    }
+});
+
+// @route   PUT /api/transport/trips/end/:tripId
+// @desc    Driver ends the active trip
+router.put('/trips/end/:tripId', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'driver') {
+            return res.status(403).json({ message: 'Access Denied: Only drivers can end trips.' });
+        }
+
+        const trip = await Trip.findOne({ _id: req.params.tripId, driver: req.user._id, status: 'ACTIVE' });
+        
+        if (!trip) {
+            return res.status(404).json({ message: 'Active trip not found or already completed.' });
+        }
+
+        trip.status = 'COMPLETED';
+        trip.endTime = new Date();
+        await trip.save();
+
+        res.json({ message: 'Trip Ended Successfully. Safe Parking! ✅', trip });
+
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to end trip: ' + error.message });
     }
 });
 

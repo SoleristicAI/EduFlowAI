@@ -681,7 +681,8 @@ class _MyAccountState extends ConsumerState<MyAccount> {
                                       decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.2))),
                                       child: Text(
                                         isAdmin ? 'MASTER NODE AUTHORIZED'
-                                            : role == 'transport_incharge' ? 'Transport_incharge'
+                                            : role == 'transport_incharge' ? 'TRANSPORT MANAGER'
+                                            : role == 'driver' ? 'Driver' // 🔥 Driver Badge
                                             : role == 'student' ? 'CLASS: ${user?['grade'] ?? 'N/A'}'
                                             : 'FACULTY MEMBER',
                                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), fontStyle: FontStyle.italic),
@@ -693,7 +694,7 @@ class _MyAccountState extends ConsumerState<MyAccount> {
                                         decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.2))),
                                         child: Text(
                                           (role == 'student' ? (user?['enrollmentNo'] ?? 'N/A')
-                                              : role == 'transport_incharge' ? (user?['customId'] ?? 'N/A')
+                                              : (role == 'transport_incharge' || role == 'driver') ? (user?['customId'] ?? 'N/A')
                                               : (user?['employeeId'] ?? 'N/A'))
                                               .toString().toUpperCase(),
                                           style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1),
@@ -815,7 +816,7 @@ class _MyAccountState extends ConsumerState<MyAccount> {
   // --- RENDERING NODE: CLIENT (STUDENT/TEACHER/TRANSPORTER) ---
   List<Widget> _buildClientFields(String role, bool isDarkMode, Color textPrimary, Color textSecondary, Color boxBg, Color cardBorder) {
     return [
-      if (role == 'transport_incharge') ...[
+      if (role == 'transport_incharge' || role == 'driver') ...[
         _buildDataRow(Icons.badge, "CUSTOM LOGIN ID", (user?['customId'] ?? "N/A").toString().toLowerCase(), isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF), isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE), const Color(0xFF42A5F5), textSecondary),
         const SizedBox(height: 16),
       ],

@@ -22,12 +22,13 @@ class _SidebarState extends ConsumerState<Sidebar> {
   Timer? _syncTimer;
   final ScrollController _scrollController = ScrollController();
 
-@override
+  @override
   void initState() {
     super.initState();
     _loadUser();
     // 🔥 Har 1.5 second mein silent check karega ki ID toh nahi badli
-    _syncTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) => _silentUserUpdate());
+    _syncTimer = Timer.periodic(
+        const Duration(milliseconds: 1500), (_) => _silentUserUpdate());
   }
 
   @override
@@ -45,7 +46,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
   }
 
- // 🔥 SMART SILENT SYNC 🔥
+  // 🔥 SMART SILENT SYNC 🔥
   Future<void> _silentUserUpdate() async {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
@@ -58,7 +59,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
   }
 
-void _handleLogout() async {
+  void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     final backup = prefs.getString('superadmin_backup');
     ref.read(themeProvider.notifier).resetTheme();
@@ -80,19 +81,21 @@ void _handleLogout() async {
       List<dynamic> savedAccounts = jsonDecode(savedAccountsStr);
 
       // Current user ki exact ID nikalo
-      final currentUserId = currentUser['_id'] ?? currentUser['id'] ?? currentUser['email'];
+      final currentUserId =
+          currentUser['_id'] ?? currentUser['id'] ?? currentUser['email'];
 
       // Logout wale account ko local saved list se hamesha ke liye uda do
-      savedAccounts.removeWhere((acc) => (acc['_id'] ?? acc['id'] ?? acc['email']) == currentUserId);
+      savedAccounts.removeWhere(
+          (acc) => (acc['_id'] ?? acc['id'] ?? acc['email']) == currentUserId);
 
       // Agar list me aur bache hain (jaise Ravi bacha hai)
       if (savedAccounts.isNotEmpty) {
         // Nayi list save karo
         await prefs.setString('saved_accounts', jsonEncode(savedAccounts));
-        
+
         // Next available account (Ravi) ko active user bana do
         final nextUser = savedAccounts.first;
-        await prefs.setString('user', jsonEncode(nextUser)); 
+        await prefs.setString('user', jsonEncode(nextUser));
 
         if (mounted) {
           // Naye user ke role ke hisaab se dashboard pe fenk do (Bina login screen dikhaye!)
@@ -105,7 +108,7 @@ void _handleLogout() async {
             context.go('/');
           }
         }
-        return; 
+        return;
       }
     }
 
@@ -316,14 +319,15 @@ void _handleLogout() async {
 
   @override
   Widget build(BuildContext context) {
-
     final role = user?['role'] ?? 'student';
     final name = user?['name'] ?? 'Guest User';
     final id = role == 'student'
         ? (user?['enrollmentNo'] ?? 'ST-0000')
-        : (user?['employeeId'] ?? 'EMP-0000');
+        : (role == 'transport_incharge' || role == 'driver')
+            ? (user?['customId'] ?? 'ID-0000')
+            : (user?['employeeId'] ?? 'EMP-0000');
 
-        // 🔥 SIDEBAR BIRTHDAY CHECK 🔥
+    // 🔥 SIDEBAR BIRTHDAY CHECK 🔥
     final today = DateTime.now();
     bool isBirthday = false;
     if (role == 'student' && user?['dob'] != null) {
@@ -337,11 +341,11 @@ void _handleLogout() async {
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
 
-    
-
-   // 🔥 UPDATE COLORS BASED ON BIRTHDAY 🔥
-    final Color baseBgColor = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
-    final Color bdayBgColor = isDarkMode ? const Color(0xFF4C0519) : const Color(0xFFFFF1F2);
+    // 🔥 UPDATE COLORS BASED ON BIRTHDAY 🔥
+    final Color baseBgColor =
+        isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final Color bdayBgColor =
+        isDarkMode ? const Color(0xFF4C0519) : const Color(0xFFFFF1F2);
     final Color bgColor = isBirthday ? bdayBgColor : baseBgColor;
 
     // 🔥 NAYA CODE: AVATAR URL SANITIZATION VIA APP CONFIG 🔥
@@ -404,9 +408,19 @@ void _handleLogout() async {
                     top: 50, left: 20, right: 20, bottom: 20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isBirthday 
-                      ? (isDarkMode ? [const Color(0xFF9F1239), const Color(0xFFE11D48)] : [const Color(0xFFF43F5E), const Color(0xFFFB923C)])
-                      : (isDarkMode ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)] : [const Color(0xFF42A5F5), const Color(0xFF1E88E5)]),
+                    colors: isBirthday
+                        ? (isDarkMode
+                            ? [const Color(0xFF9F1239), const Color(0xFFE11D48)]
+                            : [
+                                const Color(0xFFF43F5E),
+                                const Color(0xFFFB923C)
+                              ])
+                        : (isDarkMode
+                            ? [const Color(0xFF1E3A8A), const Color(0xFF3B82F6)]
+                            : [
+                                const Color(0xFF42A5F5),
+                                const Color(0xFF1E88E5)
+                              ]),
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -505,23 +519,29 @@ void _handleLogout() async {
                                     : role == 'admin'
                                         ? Icons.assignment
                                         : role == 'teacher'
-                                            ? Icons
-                                                .chat_bubble_outline // Teacher ke liye MessageCircle icon
-                                            : Icons.help_outline,
+                                            ? Icons.chat_bubble_outline
+                                            : role == 'driver'
+                                                ? Icons
+                                                    .directions_bus // 🔥 Driver Icon
+                                                : Icons.help_outline,
                                 label: role == 'finance'
                                     ? "Add Pay"
                                     : role == 'admin'
                                         ? "Notices"
                                         : role == 'teacher'
-                                            ? "Help desk" // 🔥 Teacher Specific Label
-                                            : "Support",
+                                            ? "Help desk"
+                                            : role == 'driver'
+                                                ? "My Bus" // 🔥 Driver Label
+                                                : "Support",
                                 onTap: () => _navigate(role == 'finance'
                                     ? '/finance/add-payment'
                                     : role == 'admin'
                                         ? '/notice-feed'
                                         : role == 'teacher'
-                                            ? '/teacher/support' // 🔥 Teacher Specific Route
-                                            : '/support')),
+                                            ? '/teacher/support'
+                                            : role == 'driver'
+                                                ? '/driver/home' // 🔥 Driver Route
+                                                : '/support')),
                           _QuickAction(
                               icon: Icons.settings,
                               label: "Settings",
@@ -753,6 +773,38 @@ void _handleLogout() async {
                     icon: Icons.message,
                     label: "Feedback",
                     path: '/feedback',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+        ];
+
+      case 'driver':
+        return [
+          _buildCategory(
+              "Fleet Operations",
+              [
+                _MenuItem(
+                    icon: Icons.directions_bus_filled_outlined,
+                    label: "Live Trip",
+                    path: '/driver/home',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.map_outlined,
+                    label: "Route Map",
+                    path: '/driver/home',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode), // Future module
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Communication",
+              [
+                _MenuItem(
+                    icon: Icons.campaign_outlined,
+                    label: "Notice Feed",
+                    path: '/notice-feed',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],

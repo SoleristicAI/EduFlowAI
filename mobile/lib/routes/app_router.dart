@@ -56,6 +56,7 @@ import '../features/finance/screens/finance_student_ledger.dart';
 import '../features/finance/screens/finance_gateway.dart';
 import '../features/transporter/transporter_dashboard.dart';
 import '../features/transporter/manage_fleet_screen.dart';
+import '../features/driver/driver_home.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -88,10 +89,10 @@ final appRouter = GoRouter(
         if (role == 'superadmin') return '/superadmin/dashboard';
         if (role == 'finance') return '/finance/dashboard';
         if (role == 'teacher') return '/teacher/home';
-        if (role == 'transport_incharge') return '/transporter/dashboard'; // 🔥 YE LINE ADD KARNI HAI 🔥
+        if (role == 'transport_incharge') return '/transporter/dashboard';
+        if (role == 'driver') return '/driver/home'; // 🔥 YE LINE ADD KARNI HAI 🔥
 
-        // Agar inme se koi nahi hai toh matlab student hai
-        if (isGoingToLogin) return '/'; // Student ko root pe bhej do
+        if (isGoingToLogin) return '/'; // Student
       }
     }
 
@@ -384,6 +385,17 @@ final appRouter = GoRouter(
       path: '/transporter/manage',
       builder: (context, state) => const ManageFleetScreen(),
     ),
+
+    GoRoute(
+      path: '/driver/home',
+      builder: (context, state) {
+        return const LayoutWrapper(
+          role: 'driver', // 🔥 Ye role pass hote hi LayoutWrapper BottomNav hide kar dega
+          child: DriverHome(), // 🔥 Yahan se Driver ka UI render hoga
+        );
+      },
+    ),
+    
 
     GoRoute(
       path: '/',

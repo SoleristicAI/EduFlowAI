@@ -95,6 +95,8 @@ import PaymentMethods from './pages/student/PaymentMethods';
 
 // Landing page
 import LandingPage from './pages/LandingPage';
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsConditions from "./pages/TermsConditions";
 
 // Transport Related file path
 import TransportDashboard from './pages/transport/TransportDashboard';
@@ -405,6 +407,10 @@ function App() {
             <div className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-cyan-400 rounded-full animate-ping delay-1000 opacity-20"></div>
           </div>
         } />
+
+        {/* Public Legal Pages */}
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions" element={<TermsConditions />} />
 
         {/* Catch-all route to redirect back to Landing Page */}
         <Route path="*" element={<Navigate to="/" />} />

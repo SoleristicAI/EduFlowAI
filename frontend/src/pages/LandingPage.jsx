@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import LeadCaptureModal from "../components/LeadCaptureModal";
 import Countup from "react-countup";
 import {
@@ -1048,6 +1048,17 @@ font-semibold
             <p className="text-slate-500 mt-2">
               AI-Powered Education Operating System
             </p>
+
+            {/* Privacy & Terms Links */}
+            <div className="mt-8 flex justify-center items-center gap-6 text-sm font-semibold text-slate-500">
+              <Link to="/privacy-policy" className="hover:text-[#4A90E2] transition-colors duration-300">
+                Privacy Policy
+              </Link>
+              <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+              <Link to="/terms-conditions" className="hover:text-[#4A90E2] transition-colors duration-300">
+                Terms & Conditions
+              </Link>
+            </div>
 
             <p className="text-slate-400 text-sm mt-6">
               © 2026 EduFlowAI. All rights reserved.
