@@ -49,6 +49,17 @@ const userSchema = new mongoose.Schema({
         enum: ['Active', 'Alumni', 'Left'], 
         default: 'Active' 
     },
+
+    transportRoute: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Route', 
+        default: null 
+    },
+    transportStop: {
+        stopName: { type: String, default: null },
+        price: { type: Number, default: 0 }
+    },
+    
     academicHistory: [{
         session: String,       
         gradePassed: String,   

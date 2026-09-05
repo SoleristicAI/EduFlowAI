@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bus, Users, Navigation, Clock, AlertTriangle, ArrowRight, RadioReceiver, ScanEye, Settings, LocateFixed } from 'lucide-react';
+import { Bus, Users, Navigation, Clock, AlertTriangle, ArrowRight,MapPin, RadioReceiver, ScanEye, Settings, LocateFixed } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
@@ -47,12 +47,30 @@ const TransportDashboard = () => {
                         <RadioReceiver size={16} className="animate-pulse" /> Live Bus Tracking
                     </p>
                     
-                    <button 
-                        onClick={() => navigate('/transport/manage')} 
-                        className="mt-5 bg-slate-800 text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-slate-700 shadow-md transition-all active:scale-95"
-                    >
-                        <Settings size={16} /> Manage Buses & Routes
-                    </button>
+                  {/* 🔥 BUTTONS GROUP 🔥 */}
+                    <div className="flex flex-wrap items-center gap-3 mt-5">
+                        <button 
+                            onClick={() => navigate('/transport/manage')} 
+                            className="bg-slate-800 text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-slate-700 shadow-md transition-all active:scale-95 shrink-0"
+                        >
+                            <Settings size={16} /> Manage Routes
+                        </button>
+
+                        <button 
+                            onClick={() => navigate('/transport/assign')} 
+                            className="bg-[#42A5F5] text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-blue-600 shadow-md shadow-blue-500/20 transition-all active:scale-95 shrink-0"
+                        >
+                            <Users size={16} /> Assign Students
+                        </button>
+
+                        {/* 👇 NAYA ROUTE DIRECTORY BUTTON 👇 */}
+                        <button 
+                            onClick={() => navigate('/transport/route-students')} 
+                            className="bg-purple-500 text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-purple-600 shadow-md shadow-purple-500/20 transition-all active:scale-95 shrink-0"
+                        >
+                            <MapPin size={16} /> Route Directory
+                        </button>
+                    </div>
                 </div>
                 
                 <div className="text-left md:text-right bg-white px-6 py-4 rounded-[1.5rem] shadow-sm border border-slate-100">

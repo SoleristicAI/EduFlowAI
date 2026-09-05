@@ -424,4 +424,61 @@ router.get('/trips/active', protect, async (req, res) => {
     }
 });
 
+// ==========================================================
+// 🔥 BULK STUDENT TRANSPORT ASSIGNMENT ENGINE 🔥
+// ==========================================================
+
+// @route   PUT /api/transport/assign-students
+// @desc    Assign routes and stops to multiple students at once
+router.put('/assign-students', protect, transportAuth, async (req, res) => {
+    try {
+        const { assignments, routeId } = req.body;
+        // assignments will be an array: [{ studentId, stopName, stopPrice }]
+
+        if (!assignments || assignments.length === 0) {
+            return res.status(400).json({ message: "No students selected for assignment." });
+        }
+
+        // Saare selected bacchon ko DB mein update kar rahe hain
+        for (let assign of assignments) {
+            await User.findByIdAndUpdate(assign.studentId, {
+                transportRoute: routeId,
+                transportStop: {
+                    stopName: assign.stopName,
+                    price: assign.stopPrice
+                }
+            });
+        }
+
+        res.json({ message: `${assignments.length} Students successfully assigned to the route! ✅` });
+    } catch (error) {
+        console.error("Assignment Error:", error);
+        res.status(500).json({ message: 'Failed to assign students', error: error.message });
+    }
+});
+
+// ==========================================================
+// 🔥 ROUTE-WISE STUDENT ROSTER ENGINE 🔥
+// ==========================================================
+
+// @route   GET /api/transport/routes/:routeId/students
+// @desc    Get all active students assigned to a specific route
+router.get('/routes/:routeId/students', protect, transportAuth, async (req, res) => {
+    try {
+        const students = await User.find({
+            schoolId: req.user.schoolId,
+            role: 'student',
+            transportRoute: req.params.routeId,
+            status: { $nin: ['Alumni', 'Left'] } // Sirf current bacche
+        })
+        .select('name grade enrollmentNo phone address transportStop avatar transportRoute')
+        .populate('transportRoute', 'routeName');
+        
+        res.json(students);
+    } catch (error) {
+        console.error("Route Students Fetch Error:", error);
+        res.status(500).json({ message: 'Failed to fetch students for this route.' });
+    }
+});
+
 module.exports = router;

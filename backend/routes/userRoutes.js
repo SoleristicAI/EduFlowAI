@@ -154,19 +154,29 @@ router.post('/add-student', protect, adminOnly, async (req, res) => {
     }
 });
 
+// 🔥 FIXED: Robust Student Fetching with Transport Details
 router.get('/students/:grade', protect, async (req, res) => {
     try {
+        // Param aana zaruri hai
+        const gradeParam = req.params.grade;
+        if (!gradeParam) return res.status(400).json({ message: "Grade parameter is missing" });
+
         const students = await User.find({
             role: 'student',
-            grade: req.params.grade,
+            grade: gradeParam,
             schoolId: req.user.schoolId,
             status: { $nin: ['Alumni', 'Left'] }
-        }).select('name email enrollmentNo grade fatherName motherName dob gender religion admissionNo phone address avatar');
-
+        })
+        .select('name email enrollmentNo grade fatherName motherName dob gender religion admissionNo phone address avatar transportRoute transportStop')
+        .populate({
+            path: 'transportRoute',
+            select: 'routeName _id' // Safely sirf jaruri cheezein hi laayega
+        });
 
         res.json(students);
     } catch (error) {
-        res.status(500).json({ message: 'Server Error' });
+        console.error("Student Fetch Error:", error); // Terminal mein error dekhne ke liye
+        res.status(500).json({ message: 'Server Error fetching students' });
     }
 });
 
