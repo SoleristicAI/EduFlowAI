@@ -508,11 +508,23 @@ class _SidebarState extends ConsumerState<Sidebar> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
+                          // 1. Account Button
                           _QuickAction(
                               icon: Icons.person,
                               label: "Account",
                               onTap: () => _navigate('/my-account')),
-                          if (role != 'superadmin')
+
+                          // 2. Transport Incharge ke liye sirf Directory/Manage button
+                          if (role == 'transport_incharge')
+                            _QuickAction(
+                                icon: Icons.map_outlined,
+                                label: "Directory",
+                                onTap: () =>
+                                    _navigate('/transport/route-students')),
+
+                          // Baki roles ke liye unka support/notices button (Agar transport incharge nahi hai)
+                          if (role != 'superadmin' &&
+                              role != 'transport_incharge')
                             _QuickAction(
                                 icon: role == 'finance'
                                     ? Icons.add_circle
@@ -521,8 +533,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                         : role == 'teacher'
                                             ? Icons.chat_bubble_outline
                                             : role == 'driver'
-                                                ? Icons
-                                                    .directions_bus // 🔥 Driver Icon
+                                                ? Icons.directions_bus
                                                 : Icons.help_outline,
                                 label: role == 'finance'
                                     ? "Add Pay"
@@ -531,7 +542,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                         : role == 'teacher'
                                             ? "Help desk"
                                             : role == 'driver'
-                                                ? "My Bus" // 🔥 Driver Label
+                                                ? "My Bus"
                                                 : "Support",
                                 onTap: () => _navigate(role == 'finance'
                                     ? '/finance/add-payment'
@@ -540,8 +551,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
                                         : role == 'teacher'
                                             ? '/teacher/support'
                                             : role == 'driver'
-                                                ? '/driver/home' // 🔥 Driver Route
+                                                ? '/driver/home'
                                                 : '/support')),
+
+                          // 3. Settings Button
                           _QuickAction(
                               icon: Icons.settings,
                               label: "Settings",
@@ -773,6 +786,27 @@ class _SidebarState extends ConsumerState<Sidebar> {
                     icon: Icons.message,
                     label: "Feedback",
                     path: '/feedback',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+        ];
+
+      case 'transport_incharge':
+        return [
+          _buildCategory(
+              "Fleet Operations",
+              [
+                _MenuItem(
+                    icon: Icons.map_outlined,
+                    label: "Route Directory",
+                    path: '/transport/route-students',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.assignment_turned_in_outlined,
+                    label: "Assign Students",
+                    path: '/transport/assign',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],

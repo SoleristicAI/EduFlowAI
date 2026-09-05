@@ -58,6 +58,8 @@ import '../features/transporter/transporter_dashboard.dart';
 import '../features/transporter/manage_fleet_screen.dart';
 import '../features/driver/driver_home.dart';
 import '../features/transporter/live_tracking_screen.dart';
+import '../features/transporter/assign_transport_screen.dart';
+import '../features/transporter/route_students_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -407,8 +409,17 @@ final appRouter = GoRouter(
         );
       },
     ),
-    
 
+    GoRoute(
+      path: '/transport/assign',
+      builder: (context, state) => const AssignTransportScreen(),
+    ),
+
+    GoRoute(
+      path: '/transport/route-students',
+      builder: (context, state) => const RouteStudentsScreen(),
+    ),
+  
     GoRoute(
       path: '/',
       builder: (context, state) {

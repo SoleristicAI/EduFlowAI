@@ -59,24 +59,63 @@ class _TransporterDashboardState extends ConsumerState<TransporterDashboard> {
         children: [
           const SizedBox(height: 20),
           
-          // --- SETTINGS / MANAGE FLEET BUTTON ---
-          Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(
-              onTap: () => context.push('/transporter/manage'),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.settings, color: Color(0xFF475569), size: 16),
-                    SizedBox(width: 8),
-                    Text("MANAGE FLEET", style: TextStyle(color: Color(0xFF475569), fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                  ],
+          // --- FLEET OPERATIONS BUTTONS ---
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // 1. Manage Fleet Button
+              GestureDetector(
+                onTap: () => context.push('/transporter/manage'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0)), boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.settings, color: Color(0xFF475569), size: 14),
+                      SizedBox(width: 6),
+                      Text("MANAGE", style: TextStyle(color: Color(0xFF475569), fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ],
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 8),
+
+              // 2. Assign Students Button
+              GestureDetector(
+                onTap: () => context.push('/transport/assign'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(color: const Color(0xFF42A5F5), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: const Color(0xFF42A5F5).withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.person_add, color: Colors.white, size: 14),
+                      SizedBox(width: 6),
+                      Text("ASSIGN", style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+
+              // 3. Route Directory Button
+              GestureDetector(
+                onTap: () => context.push('/transport/route-students'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.green.withValues(alpha: 0.3), blurRadius: 10, offset: const Offset(0, 4))]),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.menu_book, color: Colors.white, size: 14),
+                      SizedBox(width: 6),
+                      Text("DIRECTORY", style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
 
