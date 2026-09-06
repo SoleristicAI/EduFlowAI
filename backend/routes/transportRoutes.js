@@ -5,6 +5,7 @@ const Vehicle = require('../models/Vehicle');
 const Route = require('../models/Route');
 const User = require('../models/User');
 const Trip = require('../models/Trip');
+const BusAttendance = require('../models/BusAttendance');
 
 // 🔥 CUSTOM SECURITY MIDDLEWARE
 const transportAuth = (req, res, next) => {
@@ -39,7 +40,7 @@ router.post('/drivers', protect, transportAuth, async (req, res) => {
             role: 'driver',
             email: email.toLowerCase(), // Asli email save ho raha hai
             customId: customId.toLowerCase(),
-            password: password 
+            password: password
         });
 
         res.status(201).json({ message: 'Driver added successfully! 👤', driver });
@@ -54,12 +55,12 @@ router.put('/drivers/:id', protect, transportAuth, async (req, res) => {
         const { name, phone, address, dob, gender, email } = req.body;
 
         // Check karo ki naya phone ya email kisi aur ke paas to nahi
-        const exists = await User.findOne({ 
-            schoolId: req.user.schoolId, 
+        const exists = await User.findOne({
+            schoolId: req.user.schoolId,
             _id: { $ne: req.params.id },
-            $or: [{ phone }, { email: email.toLowerCase() }] 
+            $or: [{ phone }, { email: email.toLowerCase() }]
         });
-        
+
         if (exists) return res.status(400).json({ message: 'Phone or Email already in use by another user!' });
 
         const driver = await User.findByIdAndUpdate(req.params.id, {
@@ -103,9 +104,9 @@ router.delete('/drivers/:id', protect, transportAuth, async (req, res) => {
 router.post('/vehicles', protect, transportAuth, async (req, res) => {
     try {
         const { vehicleNumber, seatingCapacity, driverId } = req.body;
-        
+
         const exists = await Vehicle.findOne({ schoolId: req.user.schoolId, vehicleNumber: vehicleNumber.toUpperCase().trim() });
-        if(exists) return res.status(400).json({ message: `Bus ${vehicleNumber} is already in the list! ⚠️` });
+        if (exists) return res.status(400).json({ message: `Bus ${vehicleNumber} is already in the list! ⚠️` });
 
         // Nayi bus banate waqt agar kisi dusri bus ka driver assign kiya, toh us dusri bus ko khali (null) kar do
         if (driverId) {
@@ -145,7 +146,7 @@ router.put('/vehicles/:id', protect, transportAuth, async (req, res) => {
         if (newDriverId && String(newDriverId) !== String(oldDriverId)) {
             const otherBus = await Vehicle.findOne({ schoolId: req.user.schoolId, driver: newDriverId });
             if (otherBus) {
-                otherBus.driver = oldDriverId; 
+                otherBus.driver = oldDriverId;
                 await otherBus.save();
             }
         }
@@ -238,10 +239,10 @@ router.put('/routes/:id', protect, transportAuth, async (req, res) => {
 
         // 🔥 SWAP / AUTO-REMOVE BUS LOGIC 🔥
         if (vehicleId) {
-            const oldRoute = await Route.findOne({ 
-                schoolId: req.user.schoolId, 
-                vehicle: vehicleId, 
-                _id: { $ne: req.params.id } 
+            const oldRoute = await Route.findOne({
+                schoolId: req.user.schoolId,
+                vehicle: vehicleId,
+                _id: { $ne: req.params.id }
             });
             if (oldRoute) {
                 oldRoute.vehicle = null;
@@ -292,12 +293,12 @@ router.get('/driver/my-assignment', protect, async (req, res) => {
 
         // 2. Find the bus assigned to this driver
         const vehicle = await Vehicle.findOne({ schoolId: req.user.schoolId, driver: req.user._id });
-        
+
         if (!vehicle) {
             return res.status(404).json({ message: 'No bus assigned to you currently. Contact Transport Manager.' });
         }
 
-       // 3. Find the route where this bus is operating
+        // 3. Find the route where this bus is operating
         const route = await Route.findOne({ schoolId: req.user.schoolId, vehicle: vehicle._id });
 
         // 🔥 4. Check if this bus already has an ACTIVE trip running
@@ -362,10 +363,10 @@ router.post('/trips/start', protect, async (req, res) => {
             startTime: new Date()
         });
 
-        res.status(201).json({ 
-            message: `${tripType} Trip Started Successfully! 🚌🚀`, 
+        res.status(201).json({
+            message: `${tripType} Trip Started Successfully! 🚌🚀`,
             tripId: trip._id,
-            trip 
+            trip
         });
 
     } catch (error) {
@@ -382,7 +383,7 @@ router.put('/trips/end/:tripId', protect, async (req, res) => {
         }
 
         const trip = await Trip.findOne({ _id: req.params.tripId, driver: req.user._id, status: 'ACTIVE' });
-        
+
         if (!trip) {
             return res.status(404).json({ message: 'Active trip not found or already completed.' });
         }
@@ -416,7 +417,7 @@ router.get('/trips/active', protect, async (req, res) => {
             .populate({ path: 'vehicle', select: 'vehicleNumber seatingCapacity' })
             .populate({ path: 'route', select: 'routeName stops' })
             .populate({ path: 'driver', select: 'name phone' });
-            
+
         res.json({ trips: activeTrips });
     } catch (error) {
         console.error("Dashboard Fetch Error:", error);
@@ -471,13 +472,219 @@ router.get('/routes/:routeId/students', protect, transportAuth, async (req, res)
             transportRoute: req.params.routeId,
             status: { $nin: ['Alumni', 'Left'] } // Sirf current bacche
         })
-        .select('name grade enrollmentNo phone address transportStop avatar transportRoute')
-        .populate('transportRoute', 'routeName');
-        
+            .select('name grade enrollmentNo phone address transportStop avatar transportRoute')
+            .populate('transportRoute', 'routeName');
+
         res.json(students);
     } catch (error) {
         console.error("Route Students Fetch Error:", error);
         res.status(500).json({ message: 'Failed to fetch students for this route.' });
+    }
+});
+
+// ==========================================================
+// 🔥 DRIVER BUS BOARDING / ATTENDANCE ENGINE 🔥
+// ==========================================================
+
+// 1. Fetch Students Grouped by Stops with TODAY'S SAVE STATUS
+router.get('/driver/attendance-list/:routeId', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'driver') return res.status(403).json({ message: 'Access Denied' });
+
+        const route = await Route.findById(req.params.routeId);
+        if (!route) return res.status(404).json({ message: 'Route not found' });
+
+        const { tripType } = req.query; // 'MORNING' ya 'EVENING' pass karenge
+        const todayStr = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+
+        // Aaj ke is route aur tripType ke saare saved attendance records nikaalo
+        const todaySaved = await BusAttendance.find({
+            routeId: req.params.routeId,
+            tripType: tripType,
+            dateStr: todayStr
+        });
+
+        const students = await User.find({
+            schoolId: req.user.schoolId,
+            role: 'student',
+            transportRoute: req.params.routeId,
+            status: { $nin: ['Alumni', 'Left'] }
+        }).select('name enrollmentNo transportStop avatar');
+
+        // Stops ke hisaab se grouping + Check if already saved today
+        const groupedData = route.stops.map(stop => {
+            const savedRecord = todaySaved.find(s => s.stopName === stop.stopName);
+            return {
+                stopName: stop.stopName,
+                pickupTime: stop.pickupTime,
+                dropTime: stop.dropTime,
+                isSavedToday: !!savedRecord, // Agar aaj save hua hai toh true
+                savedRecords: savedRecord ? savedRecord.records : [], // Pehle ki lagai hui P/A
+                students: students.filter(s => s.transportStop && s.transportStop.stopName === stop.stopName)
+            };
+        });
+
+        res.json({ date: todayStr, groupedData });
+    } catch (error) {
+        console.error("Attendance List Error:", error);
+        res.status(500).json({ message: 'Failed to fetch boarding list' });
+    }
+});
+
+// 2. Save Attendance Per Stop
+router.post('/driver/save-attendance', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'driver') return res.status(403).json({ message: 'Access Denied' });
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const { tripId, routeId, tripType, stopName, records } = req.body;
+
+        // Check karo ki is trip aur is stop ki attendance pehle lagi hai ya nahi
+        let attendance = await BusAttendance.findOne({
+            routeId,
+            tripType,
+            stopName,
+            dateStr: todayStr
+        });
+
+        if (attendance) {
+            attendance.records = records;
+            await attendance.save();
+        } else {
+            await BusAttendance.create({
+                schoolId: req.user.schoolId,
+                tripId,
+                routeId,
+                tripType,
+                dateStr: todayStr,
+                stopName,
+                records
+            });
+        }
+
+        res.json({ message: `Attendance saved for ${stopName}! ✅` });
+    } catch (error) {
+        console.error("Save Attendance Error:", error);
+        res.status(500).json({ message: 'Failed to save attendance' });
+    }
+});
+
+// ==========================================================
+// 🔥 STUDENT TRANSPORT PORTAL (MY BUS & ATTENDANCE) 🔥
+// ==========================================================
+
+// 1. Get Student's Assigned Bus & Driver Details
+router.get('/student/my-bus', protect, async (req, res) => {
+    try {
+        if (req.user.role !== 'student') return res.status(403).json({ message: 'Only students can access this.' });
+
+        const student = await User.findById(req.user._id).populate({
+            path: 'transportRoute',
+            populate: { path: 'vehicle', populate: { path: 'driver', select: 'name phone' } }
+        });
+
+        if (!student.transportRoute) {
+            return res.status(400).json({ message: 'No transport assigned to you.' });
+        }
+
+        res.json({
+            route: student.transportRoute.routeName,
+            stop: student.transportStop,
+            vehicle: student.transportRoute.vehicle,
+            driver: student.transportRoute.vehicle?.driver
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch bus details.' });
+    }
+});
+
+// 2. Get Student's Transport Attendance (Month-wise)
+router.get('/student/my-attendance', protect, async (req, res) => {
+    try {
+        const { month } = req.query; // format: "YYYY-MM"
+        const studentId = req.user._id;
+
+        // Find all attendance records for this month where this student exists
+        const attendanceRecords = await BusAttendance.find({
+            dateStr: { $regex: `^${month}` },
+            "records.studentId": studentId
+        });
+
+        let presentCount = 0;
+        let absentCount = 0;
+        let history = [];
+
+        attendanceRecords.forEach(record => {
+            const studentRecord = record.records.find(r => r.studentId.toString() === studentId.toString());
+            if (studentRecord) {
+                if (studentRecord.status === 'Present') presentCount++;
+                if (studentRecord.status === 'Absent') absentCount++;
+                
+                history.push({
+                    date: record.dateStr,
+                    tripType: record.tripType,
+                    status: studentRecord.status
+                });
+            }
+        });
+
+        res.json({ presentDays: presentCount, absentDays: absentCount, history });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch transport attendance.' });
+    }
+});
+
+// ==========================================================
+// 🔥 TRANSPORTER DASHBOARD & ATTENDANCE VIEWER APIs 🔥
+// ==========================================================
+
+// 1. Get Dashboard Fleet Stats
+router.get('/stats', protect, transportAuth, async (req, res) => {
+    try {
+        const totalDrivers = await User.countDocuments({ schoolId: req.user.schoolId, role: 'driver' });
+        const totalVehicles = await Vehicle.countDocuments({ schoolId: req.user.schoolId });
+        const totalRoutes = await Route.countDocuments({ schoolId: req.user.schoolId });
+        // Bacche jinko transportRoute assign ho chuka hai
+        const totalStudents = await User.countDocuments({ schoolId: req.user.schoolId, role: 'student', transportRoute: { $ne: null } });
+
+        res.json({ totalDrivers, totalVehicles, totalRoutes, totalStudents });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch fleet stats' });
+    }
+});
+
+// 2. Transporter Viewing Specific Student's Attendance
+router.get('/student-attendance/:studentId', protect, transportAuth, async (req, res) => {
+    try {
+        const { month } = req.query; // "YYYY-MM"
+        const studentId = req.params.studentId;
+
+        const attendanceRecords = await require('../models/BusAttendance').find({
+            dateStr: { $regex: `^${month}` },
+            "records.studentId": studentId
+        });
+
+        let presentCount = 0;
+        let absentCount = 0;
+        let history = [];
+
+        attendanceRecords.forEach(record => {
+            const studentRecord = record.records.find(r => r.studentId.toString() === studentId);
+            if (studentRecord) {
+                if (studentRecord.status === 'Present') presentCount++;
+                if (studentRecord.status === 'Absent') absentCount++;
+                
+                history.push({
+                    date: record.dateStr,
+                    tripType: record.tripType,
+                    status: studentRecord.status
+                });
+            }
+        });
+
+        res.json({ presentDays: presentCount, absentDays: absentCount, history });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch student attendance.' });
     }
 });
 

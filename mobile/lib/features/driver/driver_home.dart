@@ -8,8 +8,10 @@ import '../../../core/theme/theme_provider.dart';
 import '../../../shared/widgets/custom_loader.dart'; // 🔥 LOADER IMPORTED
 import '../../../core/network/socket_service.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async'; // Timer ke liye
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 
 class DriverHome extends ConsumerStatefulWidget {
   const DriverHome({super.key});
@@ -442,6 +444,32 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
               ),
             ).animate().fadeIn(),
           ] else if (!isTripActive) ...[
+            // 🔥 TODAY'S LIVE DATE BADGE 🔥
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: cardColor,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cardBorderColor(isDark)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.calendar_today, size: 14, color: Color(0xFF42A5F5)),
+                  const SizedBox(width: 8),
+                  Text(
+                    DateFormat('EEEE, dd MMMM yyyy').format(DateTime.now()).toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1,
+                      color: textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             _buildBigButton(
                 "MORNING PICKUPS",
                 "Start Home to School Trip",
@@ -458,6 +486,23 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
                 () => _toggleTrip('EVENING'),
                 cardColor),
           ] else ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: (tripType == 'MORNING' ? const Color(0xFFF59E0B) : const Color(0xFF6366F1)).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                DateFormat('dd MMM yyyy').format(DateTime.now()).toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                  color: tripType == 'MORNING' ? const Color(0xFFF59E0B) : const Color(0xFF6366F1),
+                ),
+              ),
+            ),
             Text("TRIP IN PROGRESS: $tripType",
                 style: TextStyle(
                     fontSize: 16,
@@ -471,7 +516,12 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
             const SizedBox(height: 40),
             GestureDetector(
               onTap: () {
-                // TODO: Navigate to Attendance Screen
+                // 🔥 GoRouter ke through data pass karna
+                context.push('/driver/bus-attendance', extra: {
+                  'routeId': routeData!['_id'],
+                  'tripId': activeTripId,
+                  'tripType': tripType
+                });
               },
               child: Container(
                 width: double.infinity,

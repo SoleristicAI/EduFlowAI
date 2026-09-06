@@ -15,12 +15,11 @@ const RecenterMap = ({ lat, lng }) => {
     return null;
 };
 
-// 🔥 Custom HTML Bus Icon
 const busIcon = new L.DivIcon({
     html: `<div style="background-color: #10B981; padding: 10px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M15 6v6"/><path d="M2 12h19.6"/><path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19 6 17.8 6H6c-1.2 0-2.3.8-2.6 1.8L2 12.8c-.1.4-.2.8-.2 1.2 0 .4.1.8.2 1.2.3 1.1.8 2.8.8 2.8h3"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>
            </div>`,
-    className: '',
+    className: 'bus-smooth-glide', // 🔥 YEH LINE ADD KAR
     iconSize: [40, 40],
     iconAnchor: [20, 20],
 });
@@ -57,6 +56,11 @@ const LiveTracking = () => {
 
     return (
         <div className="bg-[#F8FAFC] min-h-screen font-sans italic text-slate-800 p-6 relative">
+            
+            {/* 🔥 CSS FOR SMOOTH BUS GLIDING 🔥 */}
+            <style>{`
+                .bus-smooth-glide { transition: transform 5s linear !important; }
+            `}</style>
             {/* Header */}
             <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] shadow-sm mb-6 border border-slate-100">
                 <div className="flex items-center gap-4">
@@ -78,7 +82,7 @@ const LiveTracking = () => {
                 </div>
             </div>
 
-            {/* Map Container */}
+           {/* Map Container */}
             <div className="h-[70vh] bg-slate-200 rounded-[3rem] overflow-hidden border-4 border-white shadow-xl relative">
                 {!busLocation ? (
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/5 backdrop-blur-sm z-[400]">
@@ -86,8 +90,14 @@ const LiveTracking = () => {
                         <h3 className="text-slate-500 font-bold uppercase tracking-widest text-[12px]">Connecting to Satellite...</h3>
                     </div>
                 ) : (
-                    <MapContainer center={[busLocation.lat, busLocation.lng]} zoom={16} style={{ height: '100%', width: '100%' }} zoomControl={false}>
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <MapContainer center={[busLocation.lat, busLocation.lng]} zoom={18} maxZoom={22} style={{ height: '100%', width: '100%' }} zoomControl={false}>
+                        {/* 🔥 GOOGLE SATELLITE HYBRID LAYER 🔥 */}
+                        <TileLayer 
+                            url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" 
+                            attribution='&copy; Google Maps Satellite'
+                            maxZoom={22}
+                            maxNativeZoom={20}
+                        />
                         <Marker position={[busLocation.lat, busLocation.lng]} icon={busIcon} />
                         <RecenterMap lat={busLocation.lat} lng={busLocation.lng} />
                     </MapContainer>

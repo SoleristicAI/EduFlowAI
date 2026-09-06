@@ -60,6 +60,8 @@ import '../features/driver/driver_home.dart';
 import '../features/transporter/live_tracking_screen.dart';
 import '../features/transporter/assign_transport_screen.dart';
 import '../features/transporter/route_students_screen.dart';
+import '../features/transporter/bus_attendance_screen.dart';
+import '../features/transporter/route_attendance_viewer_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -418,6 +420,19 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/transport/route-students',
       builder: (context, state) => const RouteStudentsScreen(),
+    ),
+
+    GoRoute(
+      path: '/driver/bus-attendance',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>;
+        return BusAttendanceScreen(extraData: extra);
+      },
+    ),
+
+    GoRoute(
+      path: '/transport/attendance-viewer',
+      builder: (context, state) => const RouteAttendanceViewerScreen(),
     ),
   
     GoRoute(
