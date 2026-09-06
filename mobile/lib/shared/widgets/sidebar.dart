@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/network/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
 import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
@@ -59,10 +60,13 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
   }
 
-  void _handleLogout() async {
+void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     final backup = prefs.getString('superadmin_backup');
     ref.read(themeProvider.notifier).resetTheme();
+
+    // 🔥 FIX 1: Hamesha API Client ke dimaag se purana token uda do! 🔥
+    ApiClient.dio.options.headers.remove('Authorization');
 
     // 1. Superadmin Restore Logic (Apna purana system intact)
     if (backup != null) {
@@ -104,6 +108,10 @@ class _SidebarState extends ConsumerState<Sidebar> {
             context.go('/superadmin/dashboard');
           } else if (role == 'finance') {
             context.go('/finance/dashboard');
+          } else if (role == 'transport_incharge') { 
+            context.go('/transporter/dashboard'); // 🔥 Transporter route added
+          } else if (role == 'driver') {
+            context.go('/driver/home'); // 🔥 Driver route added
           } else {
             context.go('/');
           }

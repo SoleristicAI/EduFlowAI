@@ -14,8 +14,7 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(AuthState());
 
-  Future<bool> login(
-      String email, String password, BuildContext context) async {
+  Future<bool> login(String email, String password, BuildContext context) async {
     state = AuthState(isLoading: true, error: null);
     try {
       final response = await ApiClient.dio.post('/auth/login', data: {
@@ -44,6 +43,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await prefs.setString('saved_accounts', jsonEncode(accountsList));
       await prefs.setString('user', jsonEncode(newAccount));
 
+      // 🔥 FIX: NAYA TOKEN API CLIENT KO DO! 🔥
+      if (newAccount['token'] != null) {
+        ApiClient.dio.options.headers['Authorization'] = 'Bearer ${newAccount['token']}';
+      }
+
       state = AuthState(isLoading: false);
       return true; // Login success
     } on DioException catch (e) {
@@ -59,16 +63,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  // OTP and Reset Password Logic
-  Future<String?> sendOtp(String email) async {
+  // 🔥 UNIVERSAL OTP LOGIC 🔥
+  Future<String?> sendOtp(String identity) async {
     try {
-      await ApiClient.dio.post('/auth/send-otp', data: {'email': email});
-      return null; // Null means success
+      // 1. Backend ko 'email' ki jagah 'identity' bhejna hai
+      await ApiClient.dio.post('/auth/send-otp', data: {'identity': identity});
+      return null; 
     } on DioException catch (e) {
-      final msg = e.response?.data['message'] ?? "";
-      return msg.toLowerCase().contains("identity")
-          ? "Invalid email id! ⚠️"
-          : msg;
+      // 2. Hardcoded "Invalid email" hata diya. Ab jo backend bolega wahi error aayega!
+      return e.response?.data['message'] ?? "System error. Try again.";
     }
   }
 
@@ -85,6 +88,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> switchAccount(Map<String, dynamic> accountData) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user', jsonEncode(accountData));
+
+    // 🔥 FIX: SWITCH KARTE WAQT BHI API CLIENT KO NAYA TOKEN DO! 🔥
+    if (accountData['token'] != null) {
+      ApiClient.dio.options.headers['Authorization'] = 'Bearer ${accountData['token']}';
+    }
   }
 
   // 🔥 ACCOUNT REMOVE LOGIC 🔥
@@ -97,9 +105,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await prefs.setString('saved_accounts', jsonEncode(accountsList));
 
       if (accountsList.isNotEmpty) {
-        await prefs.setString('user', jsonEncode(accountsList.first));
+        final nextUser = accountsList.first;
+        await prefs.setString('user', jsonEncode(nextUser));
+        
+        // 🔥 FIX: REMOVE HONE KE BAAD AGLA JO USER BANA HAI, USKA TOKEN BHI DO 🔥
+        if (nextUser['token'] != null) {
+          ApiClient.dio.options.headers['Authorization'] = 'Bearer ${nextUser['token']}';
+        }
       } else {
         await prefs.remove('user');
+        ApiClient.dio.options.headers.remove('Authorization');
       }
     }
   }

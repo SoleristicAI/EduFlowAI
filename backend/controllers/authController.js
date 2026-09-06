@@ -2,27 +2,43 @@ const User = require('../models/User');
 const generateToken = require('../utils/generateToken');
 const crypto = require('crypto');
 
-// 1. Send OTP Protocol
+// ==========================================================
+// 1. UNIVERSAL SEND OTP PROTOCOL
+// ==========================================================
 const sendResetOTP = async (req, res) => {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
+    const { identity } = req.body; // Frontend ab 'identity' bhejega (Email ki jagah)
+    if (!identity) return res.status(400).json({ message: "Identity is required!" });
 
-    if (!user) return res.status(404).json({ message: "Network Identity Not Found!" });
+    const searchKey = identity.trim();
+
+    // 🔥 KISI BHI CHEEZ SE USER DHOONDHO 🔥
+    const user = await User.findOne({
+        $or: [
+            { email: searchKey.toLowerCase() },
+            { phone: searchKey },
+            { customId: searchKey.toLowerCase() },
+            { enrollmentNo: searchKey.toUpperCase() },
+            { employeeId: searchKey.toUpperCase() }
+        ]
+    });
+
+    if (!user) return res.status(404).json({ message: "Network Identity Not Found! ⚠️" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOTP = otp;
-    user.otpExpires = Date.now() + 600000;
+    user.otpExpires = Date.now() + 600000; // 10 mins
     await user.save();
 
+    // 🔥 DEV MODE TERMINAL PRINT 🔥
     console.log(`
     ========================================
     NEURAL BYPASS SIGNAL DETECTED 📡
     ========================================
-    User: ${user.name}
-    Email: ${user.email}
-    Phone: ${user.phone}
+    👤 User: ${user.name} (${user.role})
+    📧 Email: ${user.email}
+    📱 Phone: ${user.phone}
     ----------------------------------------
-    ACCESS OTP: ${otp} ⚡
+    🔑 ACCESS OTP: ${otp} ⚡
     ========================================
     `);
 
@@ -32,16 +48,26 @@ const sendResetOTP = async (req, res) => {
     });
 };
 
-// 2. Reset Password Protocol
+// ==========================================================
+// 2. UNIVERSAL RESET PASSWORD PROTOCOL
+// ==========================================================
 const resetPassword = async (req, res) => {
-    const { email, otp, newPassword } = req.body;
+    const { identity, otp, newPassword } = req.body;
+    const searchKey = identity.trim();
+
     const user = await User.findOne({
-        email,
+        $or: [
+            { email: searchKey.toLowerCase() },
+            { phone: searchKey },
+            { customId: searchKey.toLowerCase() },
+            { enrollmentNo: searchKey.toUpperCase() },
+            { employeeId: searchKey.toUpperCase() }
+        ],
         resetOTP: otp,
         otpExpires: { $gt: Date.now() }
     });
 
-    if (!user) return res.status(400).json({ message: "Invalid or Expired OTP!" });
+    if (!user) return res.status(400).json({ message: "Invalid or Expired OTP! ❌" });
 
     user.password = newPassword;
     user.resetOTP = undefined;
@@ -113,14 +139,21 @@ const registerUser = async (req, res) => {
     }
 };
 
+// ==========================================================
+// 3. UNIVERSAL LOGIN PROTOCOL (For Rajat)
+// ==========================================================
 const authUser = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password } = req.body; // Frontend abhi bhi email field mein bhejta hai
+    const searchKey = email.trim();
     
-    // 🔥 THE MASTER LOGIN FIX: Email ya Custom ID dono se login hoga! 🔥
+    // 🔥 MASTER LOGIN FIX: Email, Phone, CustomID, Enrollment sab se login hoga! 🔥
     const user = await User.findOne({ 
         $or: [
-            { email: email }, 
-            { customId: email } // Frontend se customId bhi email field mein hi aayegi
+            { email: searchKey.toLowerCase() },
+            { phone: searchKey },
+            { customId: searchKey.toLowerCase() },
+            { enrollmentNo: searchKey.toUpperCase() },
+            { employeeId: searchKey.toUpperCase() }
         ]
     }).populate('schoolId');
 
@@ -129,22 +162,20 @@ const authUser = async (req, res) => {
         if (user.role !== 'superadmin' && user.schoolId) {
             if (user.schoolId.subscription?.status === 'Terminated' || user.schoolId.isDeleted === true) {
                 return res.status(403).json({ 
-                    message: "Access Denied 🛑: Your institution's node is currently Terminated/Inactive. Contact administration." 
+                    message: "Access Denied 🛑: Your institution's node is currently Terminated/Inactive." 
                 });
             }
         }
 
         if (user.status === 'Alumni' || user.status === 'Left') {
-            return res.status(403).json({ 
-                message: "Account Archived 🎓: Alumni or Ex-Students cannot access the portal." 
-            });
+            return res.status(403).json({ message: "Account Archived 🎓: Ex-Students cannot access." });
         }
         
         res.json({
             _id: user._id,
             name: user.name,
             email: user.email,
-            customId: user.customId, // Extra detail
+            customId: user.customId,
             role: user.role,
             grade: user.grade,
             assignedClass: user.assignedClass,
