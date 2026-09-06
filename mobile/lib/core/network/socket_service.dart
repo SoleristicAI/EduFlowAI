@@ -52,4 +52,22 @@ class SocketService {
   void disconnect() {
     socket.disconnect();
   }
+
+  // ==========================================================
+  // 🔥 STUDENT / TRANSPORTER: RECEIVE LIVE LOCATION 🔥
+  // ==========================================================
+
+  // Location listen karne ke liye
+  void onReceiveLocation(Function(Map<String, dynamic>) callback) {
+    socket.on('receiveLocation', (data) {
+      // Data aate hi UI ko bhej dega
+      callback(Map<String, dynamic>.from(data));
+    });
+  }
+
+  // Listener ko kill karne ke liye (Taaki app background mein battery na khaye)
+  void offReceiveLocation() {
+    socket.off('receiveLocation');
+  }
+
 }

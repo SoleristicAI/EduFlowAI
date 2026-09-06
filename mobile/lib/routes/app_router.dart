@@ -202,7 +202,7 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/transport',
-      builder: (context, state) => const StudentTransport(),
+      builder: (context, state) => const StudentTransportScreen(),
     ),
 
     GoRoute(
