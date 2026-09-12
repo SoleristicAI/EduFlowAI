@@ -273,7 +273,7 @@ useEffect(() => {
                   )}
                   
                 </div>
-
+                
                 <span className="text-xs lg:text-sm font-bold text-slate-600 text-center leading-tight">
                   {sm.title}
                 </span>

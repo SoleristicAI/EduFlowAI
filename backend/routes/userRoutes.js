@@ -253,6 +253,10 @@ router.put('/update/:id', protect, adminOnly, uploadCloudinary.single('avatar'),
             };
         }
 
+        if (req.body.transportRoute && String(req.body.transportRoute) !== String(user.transportRoute)) {
+            user.transportStartDate = new Date(); // Aaj ki date set ho gayi!
+        }
+
         Object.assign(user, req.body);
         await user.save();
         res.json({ message: 'User updated successfully', user });
@@ -377,41 +381,57 @@ router.get('/finance/students-ledger/:grade', protect, async (req, res) => {
 
 // --- DAY 119 & 279: ADD PAYMENT BY ENROLLMENT NO (WITH STRICT SESSION TAGGING) ---
 router.post('/finance/add-payment', protect, async (req, res) => {
-    const { enrollmentNo, amountPaid, month, year, paymentMode, remarks, feeCategory } = req.body;
+    // 🔥 NAYA: feeType destructure kar liya frontend se
+    const { enrollmentNo, amountPaid, month, year, paymentMode, remarks, feeCategory, feeType } = req.body;
 
     try {
         const student = await User.findOne({
             enrollmentNo: enrollmentNo,
             schoolId: req.user.schoolId,
             role: 'student'
-        });
+        }).populate('transportRoute'); // 🔥 NAYA: Route nikalne ke liye populate kiya
 
         if (!student) {
             return res.status(404).json({ message: "Student Identity Not Found! Check Enrollment No. ❌" });
         }
 
-        // 🔥 CURRENT SESSION NIKAL RAHE HAIN 🔥
         const School = require('../models/School');
         const schoolData = await School.findById(req.user.schoolId).select('activeSession');
 
-        // 🔥 NAYI PAYMENT BANA RAHE HAIN (WITH SNAPSHOT & SESSION) 🔥
+        // 🔥 TRANSPORT VS ACADEMIC LOGIC 🔥
+        const isTransport = feeType === 'Transport';
+        const finalFeeCategory = isTransport ? 'Transport Fees' : (feeCategory || 'General');
+        
+        const routeName = student.transportRoute ? student.transportRoute.routeName : 'N/A';
+        const stopName = student.transportStop?.stopName || 'N/A';
+        
+        const finalRemarks = isTransport 
+            ? `TRANSPORT FEE - ROUTE: ${routeName} | STOP: ${stopName}` 
+            : (remarks || `PURPOSE: ${finalFeeCategory}`);
+
+        // 🔥 NAYI PAYMENT BANA RAHE HAIN 🔥
         const feeRecord = await Fee.create({
             schoolId: req.user.schoolId,
             student: student._id,
             amountPaid: Number(amountPaid),
 
-            // 👇🔥 YE RAHA TERA MASTER FIX 🔥👇
             session: schoolData.activeSession || '2027-2028',
             recordedGrade: student.grade,
             recordedEnrollmentNo: student.enrollmentNo,
+            
+            // 👇🔥 THE MASTER FIX: DATABASE KO CLEARLY BATA DIYA KYA HAI 🔥👇
+            feeType: feeType || 'Academic', 
+            recordedRoute: isTransport ? routeName : null,
+            recordedStop: isTransport ? stopName : null,
             // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
 
             month,
             year: Number(year),
             paymentMode,
-            remarks: `PURPOSE: ${feeCategory}`,
-            feeCategory: feeCategory,
-            date: new Date()
+            remarks: finalRemarks,
+            feeCategory: finalFeeCategory,
+            date: new Date(),
+            status: 'Verified' // School counter ki fees sidha verify hoti hai
         });
 
         res.status(201).json({

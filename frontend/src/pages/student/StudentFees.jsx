@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CreditCard, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft, Download, ChevronDown, X, Zap, History } from 'lucide-react';
+import { CreditCard, Calendar, Clock, CheckCircle, AlertCircle, TrendingUp, ArrowLeft, Download, ChevronDown, X, Zap, History ,Bus, ArrowRight} from 'lucide-react';
 import API from '../../api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable'; // Direct function import karein
@@ -283,6 +283,27 @@ const StudentFees = () => {
                             <CheckCircle size={30} className="opacity-50" />
                         </div>
                     )}
+                </div>
+
+                {/* 🔥 NAYA TRANSPORT / BUS FEES BUTTON 🔥 */}
+                <div className="mt-4 mb-4">
+                    <button  
+                       onClick={() => navigate('/student/transport-fees')}
+                        className="w-full bg-white p-5 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm flex items-center justify-between group hover:border-amber-400 hover:shadow-md transition-all active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                                <Bus size={24} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-[18px] font-black text-slate-800 uppercase italic leading-tight">Transport</h3>
+                                <p className="text-[13px] font-bold text-slate-400 capitalize">Bus fees & route status</p>
+                            </div>
+                        </div>
+                        <div className="p-3 bg-slate-50 text-slate-600 rounded-xl group-hover:text-amber-500 group-hover:bg-amber-100 transition-colors">
+                            <ArrowRight size={20} />
+                        </div>
+                    </button>
                 </div>
                 {/* --- STATS GRID: MONTHLY FOCUS --- */}
                 <div className="grid grid-cols-2 gap-4">

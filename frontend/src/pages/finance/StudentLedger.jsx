@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, AlertCircle, History, Wallet, User as UserIcon, Calendar, Layers, Zap, CheckCircle, ChevronDown } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, AlertCircle, History, Wallet, User as UserIcon, Calendar, Layers, Zap, CheckCircle, ChevronDown, Bus, ChevronRight } from 'lucide-react';
 import API from '../../api';
 import Loader from '../../components/Loader';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,7 +22,7 @@ const StudentLedger = () => {
                     const sessionRes = await API.get('/users/general/session-info');
                     setActiveSession(sessionRes.data.activeSession);
                     setAvailableSessions(sessionRes.data.allAvailableSessions);
-                    
+
                     const { data } = await API.get(`/fees/audit/${id}?session=${sessionRes.data.activeSession}`);
                     setAudit(data);
                 } else {
@@ -33,7 +33,7 @@ const StudentLedger = () => {
             } catch (err) {
                 console.error("Ledger decrypt error");
             } finally {
-                setLoading(false); 
+                setLoading(false);
             }
         };
         fetchAudit();
@@ -180,7 +180,25 @@ const StudentLedger = () => {
                     )}
                 </div>
             </div>
-
+            <div className="mb-10">
+                <button
+                    onClick={() => navigate(`/finance/transport-ledger/${id}`)}
+                    className="w-full bg-white p-5 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm flex items-center justify-between group hover:border-amber-400 hover:shadow-md transition-all active:scale-[0.98]"
+                >
+                    <div className="flex items-center gap-4">
+                        <div className="p-4 bg-amber-50 text-amber-500 rounded-2xl group-hover:bg-amber-500 group-hover:text-white transition-colors">
+                            <Bus size={24} />
+                        </div>
+                        <div className="text-left">
+                            <h3 className="text-[18px] font-black text-slate-800 uppercase italic leading-tight">Transport Ledger</h3>
+                            <p className="text-[13px] font-bold text-slate-400 capitalize">View bus route & pending transport dues</p>
+                        </div>
+                    </div>
+                    <div className="p-3 bg-slate-50 text-slate-300 rounded-xl group-hover:text-amber-500 group-hover:bg-amber-100 transition-colors">
+                        <ChevronRight size={20} />
+                    </div>
+                </button>
+            </div>
 
             {/* --- SPLIT REVIEW COMPONENTS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">

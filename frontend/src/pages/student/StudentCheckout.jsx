@@ -2,21 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, School, User, Hash, BookOpen, CreditCard, ChevronRight, Phone, Mail } from 'lucide-react';
 import API from '../../api';
+import { useLocation } from 'react-router-dom';
 import Loader from '../../components/Loader';
 
 const StudentCheckout = () => {
     const [summary, setSummary] = useState(null);
     const navigate = useNavigate();
 
+    const location = useLocation();
+    const feeType = location.state?.feeType || 'Academic';
+
     useEffect(() => {
         const fetchSummary = async () => {
             try {
-                const { data } = await API.get('/fees/student-summary');
+                // FeeType ke hisaab se API call
+                const endpoint = feeType === 'Transport' ? '/fees/transport-summary' : '/fees/student-summary';
+                const { data } = await API.get(endpoint);
                 setSummary(data);
             } catch (err) { console.error("Checkout Load Error"); }
         };
         fetchSummary();
-    }, []);
+    }, [feeType]);
 
     if (!summary) return <Loader />;
 
@@ -176,8 +182,8 @@ const StudentCheckout = () => {
                 </div>
 
                 {/* --- PAY NOW ACTION --- */}
-                <button
-                    onClick={() => navigate('/student/payment-methods')}
+               <button
+                    onClick={() => navigate('/student/payment-methods', { state: { feeType } })}
                     className="w-full py-6 bg-[#42A5F5] text-white rounded-[2.5rem] font-black uppercase tracking-widest text-[18px] flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-blue-200 mb-10"
                 >
                     <CreditCard size={20} />

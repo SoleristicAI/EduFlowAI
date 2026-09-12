@@ -106,6 +106,9 @@ import LiveTracking from './pages/transport/LiveTracking';
 import AssignTransport from './pages/transport/AssignTransport';
 import RouteStudents from './pages/transport/RouteStudents';
 import RouteAttendanceViewer from './pages/transport/RouteAttendanceViewer';
+import TransportFees from './pages/student/TransportFees';
+import TransportExemptions from './pages/transport/TransportExemptions';
+import TransportLedger from './pages/finance/TransportLedger';
 
 import { useTheme } from './context/ThemeContext';
 const VisualMatrix = () => {
@@ -494,6 +497,9 @@ function App() {
           <Route path="/transport/assign" element={<AssignTransport />} />
           <Route path="/transport/route-students" element={<RouteStudents />} />
           <Route path="/transport/attendance-viewer" element={<RouteAttendanceViewer />} />
+          <Route path="/student/transport-fees" element={<TransportFees />} />
+          <Route path="/transport/exemptions" element={<TransportExemptions />} />
+          <Route path="/finance/transport-ledger/:id" element={<TransportLedger />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />

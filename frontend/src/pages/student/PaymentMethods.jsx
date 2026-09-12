@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Loader2, CheckCircle2, Smartphone, Zap, ShieldCheck, Landmark, ArrowRight, ArrowLeft, Construction, ShieldAlert, Upload, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import API from '../../api';
+import { useLocation } from 'react-router-dom';
 import Loader from '../../components/Loader';
 
 const PaymentMethods = () => {
@@ -13,21 +14,25 @@ const PaymentMethods = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+    const location = useLocation();
+    const feeType = location.state?.feeType || 'Academic';
+
     // --- DAY 130: NEW SCREENSHOT STATES ---
     const [screenshot, setScreenshot] = useState(null);
     const [preview, setPreview] = useState(null);
 
     const navigate = useNavigate();
 
-    useEffect(() => {
+   useEffect(() => {
         const loadData = async () => {
             try {
-                const { data } = await API.get('/fees/student-summary');
+                const endpoint = feeType === 'Transport' ? '/fees/transport-summary' : '/fees/student-summary';
+                const { data } = await API.get(endpoint);
                 setSummary(data);
             } catch (err) { console.error("Payment Data Load Error", err); }
         };
         loadData();
-    }, []);
+    }, [feeType]);
 
     // --- DAY 130: FILE SELECTION LOGIC ---
     const handleFileChange = (e) => {
@@ -51,13 +56,15 @@ const PaymentMethods = () => {
         formData.append('screenshot', screenshot);
         formData.append('amount', summary.grandTotal);
         formData.append('method', selectedApp);
+        formData.append('feeType', feeType);
 
-        try {
-            // Backend route name: capture-with-screenshot
+       try {
             await API.post('/fees/capture-with-screenshot', formData);
             setToast({ show: true, message: "Payment Submitted Successfully!📡", type: 'success' });
             setTimeout(() => {
-                navigate('/student/fees', { replace: true });
+                // Wapas usi page par bhejo jahan se aaya tha
+                if(feeType === 'Transport') navigate('/student/transport-fees', { replace: true });
+                else navigate('/student/fees', { replace: true });
             }, 2000);
         } catch (err) {
             setToast({ show: true, message: "Upload Failed.", type: 'error' });

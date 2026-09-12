@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema({
         stopName: { type: String, default: null },
         price: { type: Number, default: 0 }
     },
+    transportStartDate: { 
+        type: Date, 
+        default: null 
+    },
     
     academicHistory: [{
         session: String,       

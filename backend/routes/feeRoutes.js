@@ -142,10 +142,10 @@ router.delete('/settings/gateway', protect, financeOnly, async (req, res) => {
     }
 });
 
-// --- DAY 130 & 279: CAPTURE WITH SCREENSHOT (WITH STRICT SESSION TAGGING) ---
+// --- UPDATED: CAPTURE WITH SCREENSHOT (HANDLES BOTH ACADEMIC & TRANSPORT) ---
 router.post('/capture-with-screenshot', protect, upload.single('screenshot'), async (req, res) => {
     try {
-        const { amount } = req.body;
+        const { amount, method, feeType } = req.body; // 🔥 feeType naya aaya frontend se ('Academic' or 'Transport')
         const studentId = req.user._id;
         const schoolId = req.user.schoolId;
 
@@ -153,28 +153,42 @@ router.post('/capture-with-screenshot', protect, upload.single('screenshot'), as
             return res.status(400).json({ message: 'Screenshot upload failed. Signal Lost! 🛡️' });
         }
 
-        // 🔥 CURRENT SESSION NIKAL RAHE HAIN 🔥
         const School = require('../models/School');
         const schoolData = await School.findById(schoolId).select('activeSession');
+
+        const User = require('../models/User');
+        const studentData = await User.findById(studentId).populate('transportRoute'); // Route ka naam nikalne ke liye
+
+        // 🔥 Dynamic Remarks & Category based on feeType 🔥
+        const isTransport = feeType === 'Transport';
+        const categoryLabel = isTransport ? 'Transport Monthly Fees' : 'Monthly Fees + Penalty';
+        const routeName = studentData.transportRoute ? studentData.transportRoute.routeName : 'N/A';
+       const stopName = studentData.transportStop?.stopName || 'N/A';
+        
+        const remarksLabel = isTransport 
+            ? `TRANSPORT FEE - ROUTE: ${routeName} | STOP: ${stopName}` 
+            : `ONLINE PAYMENT (INCLUDES PENALTY/LATE FEES)`;
 
         await Fee.create({
             schoolId,
             student: studentId,
             recordedGrade: req.user.grade,
             recordedEnrollmentNo: req.user.enrollmentNo,
+            
+            // 🔥 NAYA: Slip ke liye Transport Details lock kar di 🔥
+            feeType: feeType || 'Academic', 
+            recordedRoute: isTransport ? routeName : null,
+            recordedStop: isTransport ? stopName : null,
 
-            // 👇🔥 YE RHA TERA FIX 🔥👇
             session: schoolData.activeSession || '2027-2028', 
-            // 👆👆👆👆👆👆👆👆👆👆👆👆👆
-
             amountPaid: Number(amount) || 0,
             paymentScreenshot: `/uploads/${req.file.filename}`,
-            paymentMode: 'Online',
+            paymentMode: method || 'Online',
             date: new Date(), 
             month: new Date().toLocaleString('default', { month: 'long' }),
             year: new Date().getFullYear(),
-            remarks: `ONLINE PAYMENT (INCLUDES PENALTY/LATE FEES)`,
-            feeCategory: 'Monthly Fees + Penalty',
+            remarks: remarksLabel,
+            feeCategory: categoryLabel,
             status: 'Pending'
         });
 
@@ -348,6 +362,7 @@ router.get('/student-summary', protect, async (req, res) => {
         if (!student) return res.status(404).json({ message: 'Identity missing' });
 
         const schoolData = await School.findById(schoolId);
+        const adminUser = await User.findOne({ schoolId, role: 'admin' }).select('name email');
         
         // 1. Session Filter Logic (Legacy Support)
         const targetSession = requestedSession || schoolData.activeSession;
@@ -368,7 +383,8 @@ router.get('/student-summary', protect, async (req, res) => {
             student: studentId,
             schoolId: schoolId,
             status: 'Verified',
-            ...sessionFilter // Sirf is session ki payments uthao
+            feeType: { $ne: 'Transport' }, // 🔥 THE FIX: Transport ki fees academic se bahar nikal do!
+            ...sessionFilter
         }).sort({ date: -1 });
 
         let monthlyUnit = 0;
@@ -429,9 +445,10 @@ router.get('/student-summary', protect, async (req, res) => {
         let carryForwardDues = 0;
         let carryForwardAdvance = 0;
 
-        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+       if (!isPastSession && schoolData.activeSession !== '2026-2027') {
             const legacyPayments = await Fee.find({
                 student: studentId, schoolId, status: 'Verified',
+                feeType: { $ne: 'Transport' }, // 🔥 THE FIX: Yahan bhi transport exclude kar do
                 $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
             });
             const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
@@ -517,6 +534,8 @@ router.get('/student-summary', protect, async (req, res) => {
             studentName: student.name, enrollmentNo: student.enrollmentNo,
             fatherName: student.fatherName, mobile: student.phone, grade: student.grade,
             schoolName: student.schoolId?.schoolName || "N/A", schoolPhone: schoolData?.paymentSettings?.upiId || "N/A",
+            adminName: adminUser?.name || "N/A",
+            adminEmail: adminUser?.email || "N/A",
             currentMonth: calculationEndDate.toLocaleString('default', { month: 'long' }),
             totalPaidThisMonth: verifiedPayments.filter(p => p.month === calculationEndDate.toLocaleString('default', { month: 'long' }) && p.year === calculationEndDate.getFullYear()).reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0),
             lastActivity: verifiedPayments.length > 0 ? verifiedPayments[0].date : null,
@@ -888,11 +907,12 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
             className: classMatch
         });
 
-        const verifiedPayments = await Fee.find({
+       const verifiedPayments = await Fee.find({
             student: studentId,
             schoolId,
             status: 'Verified',
-            ...sessionFilter // Sirf is session ki payments uthao
+            feeType: { $ne: 'Transport' }, // 🔥 THE FIX: Isolate Academic
+            ...sessionFilter 
         }).sort({ date: -1 });
 
         let monthlyUnit = 0;
@@ -956,9 +976,10 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
         let carryForwardDues = 0;
         let carryForwardAdvance = 0;
 
-        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+      if (!isPastSession && schoolData.activeSession !== '2026-2027') {
             const legacyPayments = await Fee.find({
                 student: studentId, schoolId, status: 'Verified',
+                feeType: { $ne: 'Transport' }, // 🔥 THE FIX: Isolate Academic
                 $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
             });
             const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
@@ -1065,6 +1086,150 @@ router.get('/audit/:studentId', protect, financeOnly, async (req, res) => {
     }
 });
 
+// ==========================================================
+// 🔥 TRANSPORT LEDGER FOR FINANCE/ADMIN (READ-ONLY) 🔥
+// ==========================================================
+router.get('/audit-transport/:studentId', protect, financeOnly, async (req, res) => {
+    try {
+        const studentId = req.params.studentId;
+        const schoolId = req.user.schoolId;
+        const requestedSession = req.query.session;
+
+        const User = require('../models/User');
+        const School = require('../models/School');
+        
+        // Baccha dhoondho route ke sath
+        const student = await User.findOne({ _id: studentId, schoolId }).populate('transportRoute');
+        if (!student) return res.status(404).json({ message: 'Identity missing' });
+
+        const schoolData = await School.findById(schoolId);
+        const targetSession = requestedSession || schoolData.activeSession;
+        const isPastSession = targetSession !== schoolData.activeSession;
+        
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
+
+        // 1. Fetch Transport Ledger (Sirf Transport wali payments)
+        const verifiedPayments = await Fee.find({
+            student: studentId,
+            schoolId: schoolId,
+            status: 'Verified',
+            feeType: 'Transport',
+            ...sessionFilter
+        }).sort({ date: -1 });
+
+        // 🔥 PAST SESSION "NO BUS" LOGIC 🔥
+        const hadTransportInPast = verifiedPayments.length > 0;
+        if (isPastSession && !hadTransportInPast) {
+            return res.json({
+                student,
+                routeName: 'No Bus Assigned in this Session', stopName: 'N/A',
+                monthlyRate: 0, grandTotal: 0, advanceBalance: 0,
+                paymentHistory: {}, targetSession, isActiveSession: false
+            });
+        }
+
+        const transportMonthly = student.transportStop?.price || 0;
+        const joinDate = new Date(student.transportStartDate || student.createdAt);
+        let effectiveStartDate = new Date(joinDate);
+
+        // 15th Cutoff Rule
+        if (joinDate.getDate() > 15) {
+            effectiveStartDate.setMonth(effectiveStartDate.getMonth() + 1);
+            effectiveStartDate.setDate(1); 
+        }
+
+        let calculationEndDate = new Date();
+        if (isPastSession && schoolData.sessionStartDate) {
+            calculationEndDate = new Date(schoolData.sessionStartDate); 
+        }
+
+        // 🔥 EXEMPTED MONTHS BILLING LOOP 🔥
+        const exemptedMonths = schoolData.transportExemptMonths || []; 
+        let billableMonths = 0;
+        
+        let tempDate = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), 1);
+        let endLimit = new Date(calculationEndDate.getFullYear(), calculationEndDate.getMonth(), 1);
+        let loopLimit = 0;
+
+        while (tempDate <= endLimit && loopLimit < 12) {
+            const isExempted = exemptedMonths.some(ex => 
+                ex.monthIndex === tempDate.getMonth() && ex.year === tempDate.getFullYear()
+            );
+            if (!isExempted) billableMonths++;
+            tempDate.setMonth(tempDate.getMonth() + 1);
+            loopLimit++;
+        }
+
+        const currentSessionTarget = transportMonthly * billableMonths;
+        const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+        // 🔥 CARRY FORWARD LOGIC 🔥
+        let carryForwardDues = 0;
+        let carryForwardAdvance = 0;
+
+        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+            const legacyPayments = await Fee.find({
+                student: studentId, schoolId, status: 'Verified', feeType: 'Transport',
+                $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
+            });
+            const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+            const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(new Date().getFullYear(), 3, 1);
+            
+            let legacyBillable = 0;
+            let legTemp = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), 1);
+            let legLimitEnd = new Date(legacyEndDate.getFullYear(), legacyEndDate.getMonth(), 1);
+            let legCount = 0;
+
+            while(legTemp <= legLimitEnd && legCount < 12) {
+                const isExempted = exemptedMonths.some(ex => ex.monthIndex === legTemp.getMonth() && ex.year === legTemp.getFullYear());
+                if (!isExempted) legacyBillable++;
+                legTemp.setMonth(legTemp.getMonth() + 1);
+                legCount++;
+            }
+
+            if (joinDate > legacyEndDate) legacyBillable = 0;
+            const legacyExpected = transportMonthly * legacyBillable;
+            const legacyNet = legacyExpected - totalLegacyPaid;
+
+            if (legacyNet > 0) carryForwardDues = legacyNet;
+            else if (legacyNet < 0) carryForwardAdvance = Math.abs(legacyNet);
+        }
+
+        const totalTargetMonthly = currentSessionTarget + carryForwardDues;
+        const totalCombinedPayment = totalPaidCurrentSession + carryForwardAdvance;
+
+        let remainingMonthly = Math.max(0, totalTargetMonthly - totalCombinedPayment);
+        let finalAdvance = Math.max(0, totalCombinedPayment - totalTargetMonthly);
+
+        const groupedHistory = verifiedPayments.reduce((acc, pay) => {
+            const key = `${pay.month} ${pay.year}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push({
+                id: pay._id, amount: pay.amountPaid, category: pay.feeCategory || "TRANSPORT FEE", date: pay.date, mode: pay.paymentMode
+            });
+            return acc;
+        }, {});
+
+        res.json({
+            student,
+            routeName: student.transportRoute?.routeName || 'Not Assigned',
+            stopName: student.transportStop?.stopName || 'Not Assigned',
+            monthlyRate: transportMonthly,
+            grandTotal: remainingMonthly,
+            advanceBalance: finalAdvance,
+            paymentHistory: groupedHistory,
+            targetSession, 
+            isActiveSession: !isPastSession
+        });
+
+    } catch (error) {
+        console.error("AUDIT_TRANSPORT_ERROR:", error);
+        res.status(500).json({ message: 'Transport Ledger Reset Failed' });
+    }
+});
+
 // 1. Get all classes
 router.get('/setup/classes', protect, financeOnly, async (req, res) => {
     try {
@@ -1118,6 +1283,232 @@ router.get('/setup/fields/:grade', protect, financeOnly, async (req, res) => {
     } catch (error) {
         console.error("FIELDS_FETCH_ERROR:", error);
         res.status(500).json({ message: 'Fields Sync Error' });
+    }
+});
+
+// ==========================================================
+// 🔥 TRANSPORT MONTH TOGGLE ENGINE (24-HOUR LOCK SYSTEM) 🔥
+// ==========================================================
+
+// 1. GET all exemptions
+router.get('/settings/transport-exempt', protect, async (req, res) => {
+    try {
+        const School = require('../models/School');
+        const school = await School.findById(req.user.schoolId).select('transportExemptMonths');
+        res.json(school.transportExemptMonths || []);
+    } catch (error) { res.status(500).json({ message: 'Failed to fetch exemptions' }); }
+});
+
+// 2. ADD Exemption (Off karna)
+router.post('/settings/transport-exempt', protect, async (req, res) => {
+    try {
+        const { monthIndex, year } = req.body;
+        const School = require('../models/School');
+        
+        // Pehle check karo ki ye month already off toh nahi hai
+        const school = await School.findById(req.user.schoolId);
+        const exists = school.transportExemptMonths.some(e => e.monthIndex === monthIndex && e.year === year);
+        if (exists) return res.status(400).json({ message: 'Month is already exempted!' });
+
+        school.transportExemptMonths.push({ monthIndex, year, createdAt: new Date() });
+        await school.save();
+
+        res.json({ message: `Transport Fees turned OFF for selected month! 🛑` });
+    } catch (error) { res.status(500).json({ message: 'Failed to update system' }); }
+});
+
+// 3. DELETE Exemption (Wapas On karna - Only within 24 Hours)
+router.delete('/settings/transport-exempt/:id', protect, async (req, res) => {
+    try {
+        const School = require('../models/School');
+        const school = await School.findById(req.user.schoolId);
+        
+        const exemption = school.transportExemptMonths.id(req.params.id);
+        if (!exemption) return res.status(404).json({ message: 'Record not found' });
+
+        // 🔥 24-Hour Strict Check 🔥
+        const hoursPassed = (new Date() - new Date(exemption.createdAt)) / (1000 * 60 * 60);
+        if (hoursPassed > 24) {
+            return res.status(403).json({ message: 'Cannot undo! 24-hour limit has passed. 🔒' });
+        }
+
+        school.transportExemptMonths.pull(req.params.id);
+        await school.save();
+
+        res.json({ message: 'Exemption removed! Fees will be charged normally. ✅' });
+    } catch (error) { res.status(500).json({ message: 'Failed to undo exemption' }); }
+});
+
+// ==========================================================
+// 🔥 TRANSPORT FEES SUMMARY (ADVANCE, EXEMPTIONS & PAST SESSIONS) 🔥
+// ==========================================================
+router.get('/transport-summary', protect, async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const schoolId = req.user.schoolId;
+        const requestedSession = req.query.session;
+
+        const User = require('../models/User');
+        const School = require('../models/School');
+        const student = await User.findById(studentId).populate('schoolId').populate('transportRoute');
+        
+        if (!student) return res.status(404).json({ message: 'Identity missing' });
+
+        const schoolData = await School.findById(schoolId);
+        const adminUser = await User.findOne({ schoolId, role: 'admin' }).select('name email');
+        const targetSession = requestedSession || schoolData.activeSession;
+        const isPastSession = targetSession !== schoolData.activeSession;
+        
+        const sessionFilter = targetSession === '2026-2027' 
+            ? { $or: [{ session: targetSession }, { session: { $exists: false } }] }
+            : { session: targetSession };
+
+        // 1. Fetch Transport Ledger
+        const verifiedPayments = await Fee.find({
+            student: studentId,
+            schoolId: schoolId,
+            status: 'Verified',
+            feeType: 'Transport',
+            ...sessionFilter
+        }).sort({ date: -1 });
+
+        // 🔥 PAST SESSION "NO BUS" LOGIC 🔥
+        // Agar picchla session khola hai, aur wahan uski koi transport payment nahi hui, toh use bus assign nahi thi!
+        const hadTransportInPast = verifiedPayments.length > 0;
+        if (isPastSession && !hadTransportInPast) {
+            return res.json({
+                studentName: student.name, enrollmentNo: student.enrollmentNo,
+                routeName: 'No Bus Assigned in this Session', stopName: 'N/A',
+                monthlyRate: 0, currentMonth: 'N/A',
+                grandTotal: 0, advanceBalance: 0,
+                paymentHistory: {}, targetSession, isActiveSession: false, pendingSignal: null
+            });
+        }
+
+        const transportMonthly = student.transportStop?.price || 0;
+        const joinDate = new Date(student.transportStartDate || student.createdAt);
+        let effectiveStartDate = new Date(joinDate);
+
+        // 15th Cutoff Rule
+        if (joinDate.getDate() > 15) {
+            effectiveStartDate.setMonth(effectiveStartDate.getMonth() + 1);
+            effectiveStartDate.setDate(1); 
+        }
+
+        let calculationEndDate = new Date();
+        if (isPastSession && schoolData.sessionStartDate) {
+            calculationEndDate = new Date(schoolData.sessionStartDate); 
+        }
+
+        // 🔥 THE MAGIC: EXEMPTED MONTHS BILLING LOOP 🔥
+        const exemptedMonths = schoolData.transportExemptMonths || []; 
+        let billableMonths = 0;
+        
+        // Count valid months between start date and end date
+        let tempDate = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), 1);
+        let endLimit = new Date(calculationEndDate.getFullYear(), calculationEndDate.getMonth(), 1);
+        let loopLimit = 0;
+
+        while (tempDate <= endLimit && loopLimit < 12) {
+            // 🔥 NAYA: Month AND Year dono match karega
+            const isExempted = exemptedMonths.some(ex => 
+                ex.monthIndex === tempDate.getMonth() && ex.year === tempDate.getFullYear()
+            );
+            
+            if (!isExempted) {
+                billableMonths++;
+            }
+            tempDate.setMonth(tempDate.getMonth() + 1);
+            loopLimit++;
+        }
+
+        const currentSessionTarget = transportMonthly * billableMonths;
+        const totalPaidCurrentSession = verifiedPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+
+        // 🔥 CARRY FORWARD LOGIC (ADVANCE/DUES FROM PAST SESSIONS) 🔥
+        let carryForwardDues = 0;
+        let carryForwardAdvance = 0;
+
+        if (!isPastSession && schoolData.activeSession !== '2026-2027') {
+            const legacyPayments = await Fee.find({
+                student: studentId, schoolId, status: 'Verified', feeType: 'Transport',
+                $or: [{ session: '2026-2027' }, { session: { $exists: false } }]
+            });
+            const totalLegacyPaid = legacyPayments.reduce((sum, p) => sum + (Number(p.amountPaid) || 0), 0);
+            
+            const legacyEndDate = schoolData.sessionStartDate ? new Date(schoolData.sessionStartDate) : new Date(new Date().getFullYear(), 3, 1);
+            
+            let legacyBillable = 0;
+            let legTemp = new Date(effectiveStartDate.getFullYear(), effectiveStartDate.getMonth(), 1);
+            let legLimitEnd = new Date(legacyEndDate.getFullYear(), legacyEndDate.getMonth(), 1);
+            let legCount = 0;
+
+           while(legTemp <= legLimitEnd && legCount < 12) {
+                // 🔥 NAYA: Month AND Year dono check karega legacy (purane) months ke liye
+                const isExempted = exemptedMonths.some(ex => 
+                    ex.monthIndex === legTemp.getMonth() && ex.year === legTemp.getFullYear()
+                );
+
+                if (!isExempted) {
+                    legacyBillable++;
+                }
+                legTemp.setMonth(legTemp.getMonth() + 1);
+                legCount++;
+            }
+
+            if (joinDate > legacyEndDate) legacyBillable = 0;
+
+            const legacyExpected = transportMonthly * legacyBillable;
+            const legacyNet = legacyExpected - totalLegacyPaid;
+
+            if (legacyNet > 0) carryForwardDues = legacyNet;
+            else if (legacyNet < 0) carryForwardAdvance = Math.abs(legacyNet);
+        }
+
+        // 🔥 FINAL TOTAL ADJUSTMENTS 🔥
+        // Advance paisa current target ko kam karega!
+        const totalTargetMonthly = currentSessionTarget + carryForwardDues;
+        const totalCombinedPayment = totalPaidCurrentSession + carryForwardAdvance;
+
+        let remainingMonthly = Math.max(0, totalTargetMonthly - totalCombinedPayment);
+        let finalAdvance = Math.max(0, totalCombinedPayment - totalTargetMonthly);
+
+        const pendingPayment = await Fee.findOne({ student: studentId, status: 'Pending', feeType: 'Transport', ...sessionFilter }).sort({ createdAt: -1 });
+
+        const groupedHistory = verifiedPayments.reduce((acc, pay) => {
+            const key = `${pay.month} ${pay.year}`;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push({
+                id: pay._id, amount: pay.amountPaid, category: pay.feeCategory || "TRANSPORT FEE", date: pay.date, mode: pay.paymentMode
+            });
+            return acc;
+        }, {});
+
+        res.json({
+            // Checkout Page ke liye zaroori Details
+            studentName: student.name, enrollmentNo: student.enrollmentNo,
+            fatherName: student.fatherName, mobile: student.phone, grade: student.grade,
+            schoolName: student.schoolId?.schoolName || "N/A", schoolPhone: schoolData?.paymentSettings?.upiId || "N/A",
+            adminName: adminUser?.name || "N/A", adminEmail: adminUser?.email || "N/A",
+            
+            // Transport Details
+            routeName: student.transportRoute?.routeName || 'Not Assigned',
+            stopName: student.transportStop?.stopName || 'Not Assigned',
+            monthlyRate: transportMonthly,
+            currentMonth: calculationEndDate.toLocaleString('default', { month: 'long' }),
+            grandTotal: remainingMonthly,
+            advanceBalance: finalAdvance,
+            paymentHistory: groupedHistory,
+            targetSession, 
+            isActiveSession: !isPastSession,
+            pendingSignal: pendingPayment ? {
+                id: pendingPayment._id, amount: pendingPayment.amountPaid, screenshot: pendingPayment.paymentScreenshot, date: pendingPayment.date, status: pendingPayment.status
+            } : null
+        });
+
+    } catch (error) {
+        console.error("TRANSPORT_SUMMARY_ERROR:", error);
+        res.status(500).json({ message: 'Transport Logic Failed' });
     }
 });
 

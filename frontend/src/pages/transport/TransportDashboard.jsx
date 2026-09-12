@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Bus, Users, Navigation, Clock, AlertTriangle, ArrowRight,MapPin, RadioReceiver, ScanEye, Settings, LocateFixed, CalendarDays } from 'lucide-react';
+import { Bus, Users, Navigation, Clock, AlertTriangle, ArrowRight,MapPin, RadioReceiver, ScanEye, Settings, LocateFixed, CalendarDays, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
@@ -63,6 +63,9 @@ const TransportDashboard = () => {
                         {/* 👇 NAYA ATTENDANCE CHECKER BUTTON 👇 */}
                         <button onClick={() => navigate('/transport/attendance-viewer')} className="bg-emerald-500 text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-emerald-600 shadow-md shadow-emerald-500/20 transition-all active:scale-95 shrink-0">
                             <CalendarDays size={16} /> Student Attendance
+                        </button>
+                        <button onClick={() => navigate('/transport/exemptions')} className="bg-rose-500 text-white px-5 py-3 rounded-[1.2rem] font-black uppercase tracking-widest text-[11px] flex items-center gap-2 hover:bg-rose-600 shadow-md shadow-rose-500/20 transition-all active:scale-95 shrink-0">
+                            <ShieldCheck size={16} /> Fee Exemptions
                         </button>
                     </div>
                 </div>

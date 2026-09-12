@@ -30,6 +30,11 @@ const schoolSchema = new mongoose.Schema({
     activeSession: { type: String, default: '2026-2027' },
     sessionStartDate: { type: Date },
     upgradedClasses: { type: [String], default: [] },
+   transportExemptMonths: [{
+        monthIndex: { type: Number, required: true },
+        year: { type: Number, required: true },
+        createdAt: { type: Date, default: Date.now }
+    }],
     // --- DAY 95: PENALTY CONFIGURATION ---
     // School.js mein penaltySettings wala part update karo
     penaltySettings: {

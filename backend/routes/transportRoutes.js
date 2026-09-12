@@ -447,7 +447,10 @@ router.put('/assign-students', protect, transportAuth, async (req, res) => {
                 transportStop: {
                     stopName: assign.stopName,
                     price: assign.stopPrice
-                }
+                },
+                // 👇🔥 YE LINE MISSING THI BHAII 🔥👇
+                transportStartDate: new Date() // Naya assign hote hi aaj ki date lock!
+                // 👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆👆
             });
         }
 
@@ -619,7 +622,7 @@ router.get('/student/my-attendance', protect, async (req, res) => {
             if (studentRecord) {
                 if (studentRecord.status === 'Present') presentCount++;
                 if (studentRecord.status === 'Absent') absentCount++;
-                
+
                 history.push({
                     date: record.dateStr,
                     tripType: record.tripType,
@@ -673,7 +676,7 @@ router.get('/student-attendance/:studentId', protect, transportAuth, async (req,
             if (studentRecord) {
                 if (studentRecord.status === 'Present') presentCount++;
                 if (studentRecord.status === 'Absent') absentCount++;
-                
+
                 history.push({
                     date: record.dateStr,
                     tripType: record.tripType,
@@ -685,6 +688,23 @@ router.get('/student-attendance/:studentId', protect, transportAuth, async (req,
         res.json({ presentDays: presentCount, absentDays: absentCount, history });
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch student attendance.' });
+    }
+});
+
+// ==========================================================
+// 🔥 REMOVE STUDENT TRANSPORT ENGINE 🔥
+// ==========================================================
+router.put('/remove-student/:studentId', protect, transportAuth, async (req, res) => {
+    try {
+        await User.findByIdAndUpdate(req.params.studentId, {
+            transportRoute: null,
+            transportStop: { stopName: null, price: 0 },
+            transportStartDate: null // Reset transport date
+        });
+        res.json({ message: 'Transport access revoked! 🛑' });
+    } catch (error) {
+        console.error("Remove Transport Error:", error);
+        res.status(500).json({ message: 'Failed to remove student transport' });
     }
 });
 

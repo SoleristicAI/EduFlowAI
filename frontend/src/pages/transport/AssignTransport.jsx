@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Map, Users, CheckCircle, Save, X, Navigation, ArrowLeft, MapPin, IndianRupee, SearchX, ChevronRight, RefreshCw, AlertCircle, CheckSquare } from 'lucide-react';
+import { Search, Map, Users, CheckCircle, Save, X, Navigation, ArrowLeft, MapPin, IndianRupee, SearchX, ChevronRight, RefreshCw, AlertCircle, CheckSquare, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
 const AssignTransport = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); 
+    const [step, setStep] = useState(1);
     const [routes, setRoutes] = useState([]);
     const [classes, setClasses] = useState([]);
     const [students, setStudents] = useState([]);
     const [isLoadingStudents, setIsLoadingStudents] = useState(false);
-    
+
     const [selectedRoute, setSelectedRoute] = useState(null);
     const [selectedClass, setSelectedClass] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
-    
+
     const [pendingAssignments, setPendingAssignments] = useState({});
-    
+
     // 🔥 PERSISTENT STATES (Local Storage se hamesha yaad rakhega) 🔥
     const [completedRoutes, setCompletedRoutes] = useState(() => {
         const saved = localStorage.getItem('transport_completed_routes');
@@ -25,14 +25,17 @@ const AssignTransport = () => {
     });
     const [completedClasses, setCompletedClasses] = useState(() => {
         const saved = localStorage.getItem('transport_completed_classes');
-        return saved ? JSON.parse(saved) : {}; 
+        return saved ? JSON.parse(saved) : {};
     });
-    
-    const [activeStudent, setActiveStudent] = useState(null); 
+
+    const [activeStudent, setActiveStudent] = useState(null);
     const [selectedStop, setSelectedStop] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
-    const [showRouteConfirm, setShowRouteConfirm] = useState(false); 
+    const [showRouteConfirm, setShowRouteConfirm] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+    const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+    const [studentToRemove, setStudentToRemove] = useState(null);
 
     useEffect(() => {
         localStorage.setItem('transport_completed_routes', JSON.stringify(completedRoutes));
@@ -76,19 +79,19 @@ const AssignTransport = () => {
 
     const fetchClasses = async () => {
         try {
-            const res = await api.get('/users/grades/all'); 
-            setClasses(sortGrades(res.data)); 
+            const res = await api.get('/users/grades/all');
+            setClasses(sortGrades(res.data));
         } catch (error) { console.error(error); }
     };
 
     const fetchStudents = async () => {
         setIsLoadingStudents(true);
-        setStudents([]); 
+        setStudents([]);
         try {
             const res = await api.get(`/users/students/${encodeURIComponent(selectedClass)}`);
             setStudents(res.data);
-        } catch (error) { 
-            console.error("Failed to fetch students:", error); 
+        } catch (error) {
+            console.error("Failed to fetch students:", error);
         } finally {
             setIsLoadingStudents(false);
         }
@@ -101,7 +104,11 @@ const AssignTransport = () => {
             stopPrice: pendingAssignments[studentId].price
         }));
 
-        if (assignmentArray.length === 0) return alert("No new changes to save!");
+        if (assignmentArray.length === 0) {
+            setToast({ show: true, message: "No new changes to save! ⚠️", type: 'error' });
+            setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+            return;
+        }
 
         setIsUpdating(true);
         try {
@@ -109,21 +116,42 @@ const AssignTransport = () => {
                 routeId: selectedRoute._id,
                 assignments: assignmentArray
             });
-            
+
             setCompletedClasses(prev => {
                 const currentRouteClasses = prev[selectedRoute._id] || [];
-                return {
-                    ...prev,
-                    [selectedRoute._id]: [...new Set([...currentRouteClasses, selectedClass])]
-                };
+                return { ...prev, [selectedRoute._id]: [...new Set([...currentRouteClasses, selectedClass])] };
             });
-            
+
             setPendingAssignments({});
             setSearchQuery('');
-            setStep(2); 
-            
+            setStep(2);
+
         } catch (error) {
-            alert("Failed to save details.");
+            setToast({ show: true, message: "Failed to save details! ❌", type: 'error' });
+            setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleRemoveTransport = async () => {
+        setIsUpdating(true);
+        try {
+            await api.put(`/transport/remove-student/${studentToRemove._id}`);
+
+            // Local state se turant clear kar do taaki UI refresh ho jaye
+            setStudents(prev => prev.map(s =>
+                s._id === studentToRemove._id ? { ...s, transportRoute: null, transportStop: null } : s
+            ));
+
+            setToast({ show: true, message: "Transport removed successfully! 🗑️", type: 'success' });
+            setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
+
+            setShowRemoveConfirm(false);
+            setStudentToRemove(null);
+        } catch (error) {
+            setToast({ show: true, message: "Failed to remove transport! ❌", type: 'error' });
+            setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
         } finally {
             setIsUpdating(false);
         }
@@ -135,7 +163,7 @@ const AssignTransport = () => {
         setSearchQuery('');
         setSelectedClass('');
         setSelectedRoute(null);
-        setStep(1); 
+        setStep(1);
     };
 
     const filteredList = (list, key) => list.filter(item => {
@@ -164,7 +192,7 @@ const AssignTransport = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-40 font-sans italic text-slate-800 overscroll-none fixed inset-0 overflow-y-auto custom-scrollbar">
-            
+
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-32 rounded-b-[4rem] shadow-xl relative overflow-visible text-center">
                 <button onClick={() => navigate(-1)} className="absolute top-12 left-6 bg-white/20 p-3 rounded-2xl border border-white/30 text-white transition-all hover:bg-white/30 active:scale-90 shadow-sm backdrop-blur-md">
                     <ArrowLeft size={24} />
@@ -174,7 +202,7 @@ const AssignTransport = () => {
             </div>
 
             <div className="px-5 -mt-20 relative z-20 max-w-5xl mx-auto space-y-6">
-                
+
                 {/* 🔥 HEADER & DONE ROUTE BUTTON AT TOP NOW 🔥 */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 gap-4">
                     <div>
@@ -185,7 +213,7 @@ const AssignTransport = () => {
                             {step === 1 ? 'Choose an active route from the list' : step === 2 ? `Selected Route: ${selectedRoute?.routeName || ''}` : `Class: ${selectedClass} • Route: ${selectedRoute?.routeName || ''}`}
                         </p>
                     </div>
-                    
+
                     {/* 👇 YEH BUTTON AB UPAR AA GAYA HAI TAQKI NEECHE BLOCK NA HO 👇 */}
                     {step === 2 && (completedClasses[selectedRoute?._id] || []).length > 0 && (
                         <button onClick={() => setShowRouteConfirm(true)} className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3 rounded-full font-black uppercase tracking-widest text-[11px] shadow-md shadow-emerald-500/30 transition-all active:scale-95 shrink-0">
@@ -196,8 +224,8 @@ const AssignTransport = () => {
 
                 <div className="relative">
                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                    <input 
-                        type="text" 
+                    <input
+                        type="text"
                         placeholder={`Search ${step === 1 ? 'routes' : step === 2 ? 'classes' : 'students'}...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -208,54 +236,56 @@ const AssignTransport = () => {
                 {/* ================= ROUTES ================= */}
                 {step === 1 && (
                     filteredList(routes, 'routeName').length === 0 ? <EmptySearchState type="Routes" /> :
-                    <div className="space-y-4">
-                        {filteredList(routes, 'routeName').map((route, i) => {
-                            const isRouteCompleted = completedRoutes.includes(route._id);
-                            return (
-                            <motion.div 
-                                 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
-                                 key={route._id} onClick={() => setSelectedRoute(route)}
-                                 className={`p-6 bg-white border-2 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${selectedRoute?._id === route._id ? 'border-[#42A5F5] bg-blue-50 shadow-md' : isRouteCompleted ? 'border-emerald-400 bg-emerald-50/50 hover:bg-emerald-50' : 'border-slate-100 hover:border-blue-200'}`}>
-                                <div className="flex items-center gap-5">
-                                    <div className={`p-4 rounded-[1.5rem] transition-colors ${selectedRoute?._id === route._id ? 'bg-[#42A5F5] text-white shadow-lg shadow-blue-500/30' : isRouteCompleted ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-slate-50 text-slate-400'}`}>
-                                        <Map size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className={`font-black text-xl tracking-wide capitalize ${isRouteCompleted && selectedRoute?._id !== route._id ? 'text-emerald-700' : 'text-slate-800'}`}>{route.routeName}</h3>
-                                        <p className={`text-[11px] font-bold uppercase tracking-widest mt-1 ${isRouteCompleted && selectedRoute?._id !== route._id ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                            {isRouteCompleted ? 'Setup Done' : `Total Stops: ${route.stops?.length || 0}`}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedRoute?._id === route._id ? 'border-[#42A5F5] bg-[#42A5F5]' : isRouteCompleted ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}`}>
-                                    {(selectedRoute?._id === route._id || isRouteCompleted) && <CheckCircle size={14} className="text-white" />}
-                                </div>
-                            </motion.div>
-                        )})}
-                    </div>
+                        <div className="space-y-4">
+                            {filteredList(routes, 'routeName').map((route, i) => {
+                                const isRouteCompleted = completedRoutes.includes(route._id);
+                                return (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
+                                        key={route._id} onClick={() => setSelectedRoute(route)}
+                                        className={`p-6 bg-white border-2 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer transition-colors ${selectedRoute?._id === route._id ? 'border-[#42A5F5] bg-blue-50 shadow-md' : isRouteCompleted ? 'border-emerald-400 bg-emerald-50/50 hover:bg-emerald-50' : 'border-slate-100 hover:border-blue-200'}`}>
+                                        <div className="flex items-center gap-5">
+                                            <div className={`p-4 rounded-[1.5rem] transition-colors ${selectedRoute?._id === route._id ? 'bg-[#42A5F5] text-white shadow-lg shadow-blue-500/30' : isRouteCompleted ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20' : 'bg-slate-50 text-slate-400'}`}>
+                                                <Map size={24} />
+                                            </div>
+                                            <div>
+                                                <h3 className={`font-black text-xl tracking-wide capitalize ${isRouteCompleted && selectedRoute?._id !== route._id ? 'text-emerald-700' : 'text-slate-800'}`}>{route.routeName}</h3>
+                                                <p className={`text-[11px] font-bold uppercase tracking-widest mt-1 ${isRouteCompleted && selectedRoute?._id !== route._id ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                                    {isRouteCompleted ? 'Setup Done' : `Total Stops: ${route.stops?.length || 0}`}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${selectedRoute?._id === route._id ? 'border-[#42A5F5] bg-[#42A5F5]' : isRouteCompleted ? 'border-emerald-500 bg-emerald-500' : 'border-slate-300'}`}>
+                                            {(selectedRoute?._id === route._id || isRouteCompleted) && <CheckCircle size={14} className="text-white" />}
+                                        </div>
+                                    </motion.div>
+                                )
+                            })}
+                        </div>
                 )}
 
                 {/* ================= CLASSES ================= */}
                 {step === 2 && (
                     filteredList(classes, null).length === 0 ? <EmptySearchState type="Classes" /> :
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {filteredList(classes, null).map((cls, i) => {
-                            const isCompletedClass = (completedClasses[selectedRoute?._id] || []).includes(cls);
-                            return (
-                            <motion.div 
-                                 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
-                                 key={cls} onClick={() => setSelectedClass(cls)}
-                                 className={`relative p-6 border-2 rounded-[2rem] text-center cursor-pointer transition-colors ${selectedClass === cls ? 'border-[#42A5F5] bg-blue-50 shadow-md' : isCompletedClass ? 'border-emerald-400 bg-emerald-50' : 'bg-white border-slate-100 hover:border-blue-200'}`}>
-                                {isCompletedClass && (
-                                    <div className="absolute top-4 right-4 text-emerald-500 bg-white rounded-full"><CheckCircle size={20} /></div>
-                                )}
-                                <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 transition-colors ${selectedClass === cls ? 'bg-[#42A5F5] text-white shadow-lg shadow-blue-500/30' : isCompletedClass ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-400'}`}>
-                                    <Users size={28} />
-                                </div>
-                                <h3 className={`font-black text-2xl tracking-wide uppercase ${isCompletedClass ? 'text-emerald-700' : 'text-slate-800'}`}>{cls}</h3>
-                            </motion.div>
-                        )})}
-                    </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {filteredList(classes, null).map((cls, i) => {
+                                const isCompletedClass = (completedClasses[selectedRoute?._id] || []).includes(cls);
+                                return (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
+                                        key={cls} onClick={() => setSelectedClass(cls)}
+                                        className={`relative p-6 border-2 rounded-[2rem] text-center cursor-pointer transition-colors ${selectedClass === cls ? 'border-[#42A5F5] bg-blue-50 shadow-md' : isCompletedClass ? 'border-emerald-400 bg-emerald-50' : 'bg-white border-slate-100 hover:border-blue-200'}`}>
+                                        {isCompletedClass && (
+                                            <div className="absolute top-4 right-4 text-emerald-500 bg-white rounded-full"><CheckCircle size={20} /></div>
+                                        )}
+                                        <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 transition-colors ${selectedClass === cls ? 'bg-[#42A5F5] text-white shadow-lg shadow-blue-500/30' : isCompletedClass ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-400'}`}>
+                                            <Users size={28} />
+                                        </div>
+                                        <h3 className={`font-black text-2xl tracking-wide uppercase ${isCompletedClass ? 'text-emerald-700' : 'text-slate-800'}`}>{cls}</h3>
+                                    </motion.div>
+                                )
+                            })}
+                        </div>
                 )}
 
                 {/* ================= STUDENTS ================= */}
@@ -264,52 +294,62 @@ const AssignTransport = () => {
                         <button onClick={() => { setStep(2); setSearchQuery(''); setPendingAssignments({}); }} className="text-slate-400 font-black uppercase text-[11px] mb-2 hover:text-[#42A5F5] flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm border border-slate-100 w-max transition-all active:scale-95 tracking-widest">
                             <ArrowLeft size={16} /> Back to Classes
                         </button>
-                        
+
                         {isLoadingStudents ? (
                             <div className="flex flex-col items-center py-20">
                                 <RefreshCw className="animate-spin text-[#42A5F5] mb-4" size={40} />
                                 <p className="text-slate-500 font-bold uppercase tracking-widest text-[12px]">Fetching Students...</p>
                             </div>
                         ) : filteredList(students, 'name').length === 0 ? (
-                            <EmptySearchState type="Students" /> 
+                            <EmptySearchState type="Students" />
                         ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-20">
-                            {filteredList(students, 'name').map((student, i) => {
-                                const pending = pendingAssignments[student._id];
-                                const existing = student.transportRoute; 
-                                const isAssignedToThisBus = existing && existing._id === selectedRoute._id;
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pb-20">
+                                {filteredList(students, 'name').map((student, i) => {
+                                    const pending = pendingAssignments[student._id];
+                                    const existing = student.transportRoute;
+                                    const isAssignedToThisBus = existing && existing._id === selectedRoute._id;
 
-                                return (
-                                    <motion.div 
-                                        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
-                                        key={student._id} className={`p-6 bg-white border-2 rounded-[2rem] flex items-center justify-between transition-all group ${pending ? 'border-emerald-400 shadow-md bg-emerald-50/30' : existing ? 'border-amber-200 bg-amber-50/30' : 'border-slate-100 hover:border-blue-200'}`}>
-                                        <div className="flex-1 overflow-hidden pr-4">
-                                            <h3 className="font-black text-lg tracking-wide text-slate-800 capitalize truncate">{student.name}</h3>
-                                            
-                                            {pending ? (
-                                                <span className="mt-2 text-[10px] font-black text-emerald-600 bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 uppercase tracking-widest">
-                                                    <CheckCircle size={12} /> Ready to save: {pending.stopName}
-                                                </span>
-                                            ) : existing ? (
-                                                <span className={`mt-2 text-[10px] font-black px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 uppercase tracking-widest ${isAssignedToThisBus ? 'text-blue-600 bg-blue-100 border-blue-200' : 'text-amber-600 bg-amber-100 border-amber-200'}`}>
-                                                    <AlertCircle size={12} /> 
-                                                    {isAssignedToThisBus ? `Already in this bus: ${student.transportStop?.stopName}` : `In ${existing.routeName}: ${student.transportStop?.stopName}`}
-                                                </span>
-                                            ) : (
-                                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 truncate">
-                                                    <MapPin size={12} className="inline mr-1" /> {student.address?.fullAddress || 'No Address'}
-                                                </p>
-                                            )}
-                                        </div>
+                                    return (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }}
+                                            key={student._id} className={`p-6 bg-white border-2 rounded-[2rem] flex items-center justify-between transition-all group ${pending ? 'border-emerald-400 shadow-md bg-emerald-50/30' : existing ? 'border-amber-200 bg-amber-50/30' : 'border-slate-100 hover:border-blue-200'}`}>
+                                            <div className="flex-1 overflow-hidden pr-4">
+                                                <h3 className="font-black text-lg tracking-wide text-slate-800 capitalize truncate">{student.name}</h3>
 
-                                        <button onClick={() => { setActiveStudent(student); setSelectedStop(null); setShowConfirm(false); }} 
-                                             className={`shrink-0 px-4 h-12 rounded-[1.2rem] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-90 font-black uppercase text-[10px] tracking-widest ${pending ? 'bg-emerald-500 text-white shadow-md' : existing ? 'bg-amber-100 text-amber-600 border border-amber-200 hover:bg-amber-500 hover:text-white' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-[#42A5F5] hover:text-white'}`}>
-                                            {pending ? 'Added' : existing ? <><RefreshCw size={14} /> Change</> : <><Navigation size={14} /> Add to Bus</>}
-                                        </button>
-                                    </motion.div>
-                                )
-                            })}
-                        </div>
+                                                {pending ? (
+                                                    <span className="mt-2 text-[10px] font-black text-emerald-600 bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 uppercase tracking-widest">
+                                                        <CheckCircle size={12} /> Ready to save: {pending.stopName}
+                                                    </span>
+                                                ) : existing ? (
+                                                    <span className={`mt-2 text-[10px] font-black px-3 py-1.5 rounded-md inline-flex items-center gap-1.5 uppercase tracking-widest ${isAssignedToThisBus ? 'text-blue-600 bg-blue-100 border-blue-200' : 'text-amber-600 bg-amber-100 border-amber-200'}`}>
+                                                        <AlertCircle size={12} />
+                                                        {isAssignedToThisBus ? `Already in this bus: ${student.transportStop?.stopName}` : `In ${existing.routeName}: ${student.transportStop?.stopName}`}
+                                                    </span>
+                                                ) : (
+                                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1.5 truncate">
+                                                        <MapPin size={12} className="inline mr-1" /> {student.address?.fullAddress || 'No Address'}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex flex-col gap-2 shrink-0">
+                                                <button onClick={() => { setActiveStudent(student); setSelectedStop(null); setShowConfirm(false); }}
+                                                    className={`px-4 h-10 rounded-[1rem] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-90 font-black uppercase text-[10px] tracking-widest ${pending ? 'bg-emerald-500 text-white shadow-md' : existing ? 'bg-amber-100 text-amber-600 border border-amber-200 hover:bg-amber-500 hover:text-white' : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-[#42A5F5] hover:text-white'}`}>
+                                                    {pending ? 'Added' : existing ? <><RefreshCw size={14} /> Change</> : <><Navigation size={14} /> Add to Bus</>}
+                                                </button>
+
+                                                {/* 🔥 NAYA REMOVE BUTTON 🔥 */}
+                                                {existing && !pending && (
+                                                    <button onClick={() => { setStudentToRemove(student); setShowRemoveConfirm(true); }}
+                                                        className="px-4 h-10 rounded-[1rem] flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-90 font-black uppercase text-[10px] tracking-widest bg-rose-50 text-rose-500 border border-rose-100 hover:bg-rose-500 hover:text-white shadow-sm">
+                                                        <Trash2 size={14} /> Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )
+                                })}
+                            </div>
                         )}
                     </motion.div>
                 )}
@@ -347,10 +387,10 @@ const AssignTransport = () => {
                 {activeStudent && !showConfirm && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-5">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setActiveStudent(null)} />
-                        
+
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-white rounded-[3rem] w-full max-w-md p-8 shadow-2xl z-10">
                             <button onClick={() => setActiveStudent(null)} className="absolute top-6 right-6 p-2 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-50 hover:text-rose-500 transition-colors"><X size={24} /></button>
-                            
+
                             <h2 className="text-2xl font-black tracking-wide mb-1 text-slate-800 capitalize">Select Bus Stop</h2>
                             <p className="text-[12px] font-bold text-[#42A5F5] uppercase tracking-widest mb-6">For: {activeStudent.name}</p>
 
@@ -368,7 +408,13 @@ const AssignTransport = () => {
                                 ))}
                             </div>
 
-                            <button onClick={() => { if(selectedStop) setShowConfirm(true); else alert('Please select a stop first!'); }} className="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[13px] shadow-lg transition-all active:scale-95">
+                            <button onClick={() => {
+                                if (selectedStop) setShowConfirm(true);
+                                else {
+                                    setToast({ show: true, message: 'Please select a stop first! 🛑', type: 'error' });
+                                    setTimeout(() => setToast({ show: false, message: '', type: 'error' }), 3000);
+                                }
+                            }} className="w-full bg-slate-800 hover:bg-slate-900 text-white py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[13px] shadow-lg transition-all active:scale-95">
                                 Continue
                             </button>
                         </motion.div>
@@ -381,18 +427,18 @@ const AssignTransport = () => {
                 {showConfirm && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-5">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
-                        
+
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-white rounded-[3rem] w-full max-w-sm p-8 shadow-2xl z-10 text-center">
-                            
+
                             <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200 }} className="w-24 h-24 bg-blue-50 text-[#42A5F5] rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-lg">
                                 <CheckCircle size={48} />
                             </motion.div>
-                            
+
                             <h2 className="text-2xl font-black tracking-wide mb-2 text-slate-800 capitalize">Are you sure?</h2>
                             <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mb-8 leading-relaxed">
                                 Add <span className="text-slate-800 font-black">{activeStudent.name}</span> to <span className="text-[#42A5F5] font-black">{selectedStop.stopName}</span>?
                             </p>
-                            
+
                             <div className="flex gap-4">
                                 <button onClick={() => setShowConfirm(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-slate-200 transition-colors active:scale-95">Cancel</button>
                                 <button onClick={() => {
@@ -414,24 +460,67 @@ const AssignTransport = () => {
                 {showRouteConfirm && (
                     <div className="fixed inset-0 z-[200] flex items-center justify-center p-5">
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowRouteConfirm(false)} />
-                        
+
                         <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-white rounded-[3rem] w-full max-w-sm p-8 shadow-2xl z-10 text-center">
-                            
+
                             <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200 }} className="w-24 h-24 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-lg">
                                 <CheckSquare size={48} />
                             </motion.div>
-                            
+
                             <h2 className="text-2xl font-black tracking-wide mb-2 text-slate-800 capitalize">Done with this Route?</h2>
                             <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mb-8 leading-relaxed">
                                 Are you sure you have added all students to <span className="text-emerald-500 font-black">{selectedRoute?.routeName}</span>?
                             </p>
-                            
+
                             <div className="flex gap-4">
                                 <button onClick={() => setShowRouteConfirm(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-slate-200 transition-colors active:scale-95">No</button>
                                 <button onClick={handleFinalizeRoute} className="flex-1 py-4 bg-emerald-500 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-emerald-600 shadow-lg shadow-emerald-500/30 transition-all active:scale-95">Yes, I'm Done</button>
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            {/* ================= MODAL: CONFIRM REMOVE TRANSPORT ================= */}
+            <AnimatePresence>
+                {showRemoveConfirm && studentToRemove && (
+                    <div className="fixed inset-0 z-[200] flex items-center justify-center p-5">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowRemoveConfirm(false)} />
+                        
+                        <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative bg-white rounded-[3rem] w-full max-w-sm p-8 shadow-2xl z-10 text-center">
+                            
+                            <motion.div initial={{ scale: 0, rotate: -180 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 200 }} className="w-24 h-24 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-lg">
+                                <Trash2 size={40} />
+                            </motion.div>
+                            
+                            <h2 className="text-2xl font-black tracking-wide mb-2 text-slate-800 capitalize">Remove Transport?</h2>
+                            <p className="text-[13px] font-bold text-slate-500 uppercase tracking-widest mb-8 leading-relaxed">
+                                Are you sure you want to remove <span className="text-rose-500 font-black">{studentToRemove.name}</span> from the bus?
+                            </p>
+                            
+                            <div className="flex gap-4">
+                                <button onClick={() => setShowRemoveConfirm(false)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-slate-200 transition-colors active:scale-95">Cancel</button>
+                                <button onClick={handleRemoveTransport} disabled={isUpdating} className="flex-1 py-4 bg-rose-500 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-rose-600 shadow-lg shadow-rose-500/30 transition-all active:scale-95">
+                                    {isUpdating ? 'Removing...' : 'Yes, Remove'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ================= TOAST NOTIFICATIONS ================= */}
+            <AnimatePresence>
+                {toast.show && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 40, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        className={`fixed top-0 left-1/2 -translate-x-1/2 z-[300] px-8 py-4 rounded-full font-black text-[13px] italic shadow-2xl flex items-center gap-3 ${toast.type === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}
+                    >
+                        {toast.type === 'success' ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
+                        {toast.message}
+                    </motion.div>
                 )}
             </AnimatePresence>
 
