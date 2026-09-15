@@ -7,16 +7,17 @@ import '../../../core/network/api_client.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../../shared/widgets/custom_loader.dart';
 
-class FinanceStudentLedger extends ConsumerStatefulWidget {
+class FinanceTransportLedger extends ConsumerStatefulWidget {
   final String studentId;
-  const FinanceStudentLedger({super.key, required this.studentId});
+  const FinanceTransportLedger({super.key, required this.studentId});
 
   @override
-  ConsumerState<FinanceStudentLedger> createState() =>
-      _FinanceStudentLedgerState();
+  ConsumerState<FinanceTransportLedger> createState() =>
+      _FinanceTransportLedgerState();
 }
 
-class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
+class _FinanceTransportLedgerState
+    extends ConsumerState<FinanceTransportLedger> {
   bool isInitialLoading = true;
   Map<String, dynamic>? audit;
   String? activeSession;
@@ -29,22 +30,25 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
     _fetchAudit();
   }
 
- Future<void> _fetchAudit({bool hideLoader = false, String? session}) async {
+  Future<void> _fetchAudit({bool hideLoader = false, String? session}) async {
     if (!hideLoader) setState(() => isInitialLoading = true);
 
     try {
       if (activeSession == null) {
-        final sessionRes = await ApiClient.dio.get('/users/general/session-info');
+        final sessionRes =
+            await ApiClient.dio.get('/users/general/session-info');
         activeSession = sessionRes.data['activeSession'];
-        availableSessions = List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
+        availableSessions =
+            List<String>.from(sessionRes.data['allAvailableSessions'] ?? []);
       }
 
       final query = session ?? activeSession;
-      final res = await ApiClient.dio.get('/fees/audit/${widget.studentId}?session=$query');
-      
+      final res = await ApiClient.dio
+          .get('/fees/audit-transport/${widget.studentId}?session=$query');
+
       if (mounted) setState(() => audit = res.data);
     } catch (e) {
-      _showToast("Ledger decryption error ❌", isError: true);
+      _showToast("Transport ledger decryption error ❌", isError: true);
     } finally {
       if (mounted) setState(() => isInitialLoading = false);
     }
@@ -81,8 +85,10 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
   }
 
   Widget _buildSessionDropdown(bool isDarkMode) {
-    if (availableSessions.isEmpty || activeSession == null) return const SizedBox.shrink();
-    
+    if (availableSessions.isEmpty || activeSession == null) {
+      return const SizedBox.shrink();
+    }
+
     return PopupMenuButton<String>(
       initialValue: activeSession,
       color: isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFF42A5F5),
@@ -94,20 +100,19 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
           activeSession = newValue;
           _isDropdownOpen = false;
         });
-        _fetchAudit(session: newValue); 
+        _fetchAudit(session: newValue);
       },
       itemBuilder: (BuildContext context) {
         return availableSessions.map((String session) {
           return PopupMenuItem<String>(
             value: session,
-            child: Text(
-              session, 
-              style: TextStyle(
-                fontWeight: FontWeight.w900, 
-                fontStyle: FontStyle.italic,
-                color: activeSession == session ? Colors.white : Colors.white70, 
-              )
-            ),
+            child: Text(session,
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontStyle: FontStyle.italic,
+                  color:
+                      activeSession == session ? Colors.white : Colors.white70,
+                )),
           );
         }).toList();
       },
@@ -116,7 +121,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.2), 
+          color: Colors.white.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
         ),
@@ -125,12 +130,18 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
           children: [
             const Icon(Icons.history, color: Colors.white, size: 16),
             const SizedBox(width: 8),
-            Text(activeSession!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 1.5)),
+            Text(activeSession!,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
+                    letterSpacing: 1.5)),
             const SizedBox(width: 4),
             AnimatedRotation(
               turns: _isDropdownOpen ? 0.5 : 0.0,
               duration: const Duration(milliseconds: 300),
-              child: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 20),
+              child: const Icon(Icons.arrow_drop_down,
+                  color: Colors.white, size: 20),
             ),
           ],
         ),
@@ -141,8 +152,10 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
   @override
   Widget build(BuildContext context) {
     if (isInitialLoading) return const CustomLoader();
-    if (audit == null)
-      return const Scaffold(body: Center(child: Text("Ledger not found.")));
+    if (audit == null) {
+      return const Scaffold(
+          body: Center(child: Text("Transport Ledger not found.")));
+    }
 
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
@@ -157,20 +170,18 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
     final Color textColorSecondary =
         isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
 
-    // Ledger Calculations
-    final num monthlyOut = audit?['monthlyOutstanding'] ?? 0;
-    final num oneTimeOut = audit?['oneTimeOutstanding'] ?? 0;
-    final num advanceBal = audit?['advanceBalance'] ?? 0;
-    final num finalRemaining = monthlyOut + oneTimeOut;
-    final bool isFeesDone = finalRemaining <= 0;
-    final String statusText = isFeesDone ? "COMPLETED" : "PAYMENT REQUIRED";
+    final num grandTotal = audit?['grandTotal'] ?? 0;
+    final num advanceBalance = audit?['advanceBalance'] ?? 0;
+    final bool isFeesDone = grandTotal <= 0;
+    final String statusText = isFeesDone ? "Clear" : "Dues Pending";
 
-    // Split Review Data
-    List<dynamic> monthlyDetails = audit?['structureDetails']?['monthly'] ?? [];
-    List<dynamic> oneTimeDetails = audit?['structureDetails']?['oneTime'] ?? [];
-    Map<String, dynamic> historyMap = audit?['history'] ?? {};
+    final String routeName = audit?['routeName'] ?? 'Not Assigned';
+    final String stopName = audit?['stopName'] ?? 'Not Assigned';
+    final Map<String, dynamic> historyMap =
+        Map<String, dynamic>.from(audit?['paymentHistory'] ?? {});
 
-    // Dynamic Colors for Status
+    final student = audit?['student'] ?? {};
+
     final Color statusBg = isFeesDone
         ? (isDarkMode ? const Color(0xFF064E3B) : const Color(0xFFECFDF5))
         : (isDarkMode ? const Color(0xFF4C0519) : const Color(0xFFFFF1F2));
@@ -193,7 +204,6 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
         color: bgColor,
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          // 🔥 EXACT REFRESH INDICATOR & SCROLL VIEW STRUCTURE 🔥
           body: RefreshIndicator(
             color: const Color(0xFF42A5F5),
             backgroundColor: cardColor,
@@ -206,7 +216,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // --- PREMIUM HEADER ---
+                      // --- HEADER WITH AMBER/YELLOW ACCENT (TRANSPORT THEME) ---
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.only(
@@ -258,9 +268,9 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                     color: Colors.white, size: 24),
                               ),
                             ),
-                           Column(
+                            Column(
                               children: [
-                                const Text("Student Ledger",
+                                const Text("Transport Ledger",
                                     style: TextStyle(
                                         fontSize: 26,
                                         fontWeight: FontWeight.w900,
@@ -268,7 +278,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                         fontStyle: FontStyle.italic,
                                         letterSpacing: -1)),
                                 const SizedBox(height: 8),
-                                _buildSessionDropdown(isDarkMode), // 🔥 YAHAN ADD KIYA
+                                _buildSessionDropdown(isDarkMode),
                               ],
                             ),
                             Container(
@@ -279,14 +289,14 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                 border: Border.all(
                                     color: Colors.white.withOpacity(0.3)),
                               ),
-                              child: const Icon(Icons.account_balance_wallet,
+                              child: const Icon(Icons.directions_bus,
                                   color: Colors.white, size: 24),
                             ),
                           ],
                         ),
                       ).animate().slideY(begin: -0.2, duration: 500.ms),
 
-                      // --- BODY CONTENT OVERLAPPING THE HEADER ---
+                      // --- BODY CONTENT OVERLAPPING HEADER ---
                       Transform.translate(
                         offset: const Offset(0, -40),
                         child: Padding(
@@ -309,6 +319,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                           offset: Offset(0, 4))
                                     ]),
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       mainAxisAlignment:
@@ -322,7 +333,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                  audit?['student']?['name']
+                                                  student['name']
                                                           ?.toString()
                                                           .toUpperCase() ??
                                                       'UNKNOWN',
@@ -336,7 +347,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                       letterSpacing: -0.5)),
                                               const SizedBox(height: 6),
                                               Text(
-                                                  "ADM NO: ${audit?['student']?['admissionNo'] ?? 'N/A'} • CLASS: ${audit?['student']?['grade'] ?? 'N/A'}",
+                                                  "ADM NO: ${student['admissionNo'] ?? 'N/A'} • CLASS: ${student['grade'] ?? 'N/A'}",
                                                   style: TextStyle(
                                                       fontSize: 9,
                                                       fontWeight:
@@ -374,13 +385,61 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                       letterSpacing: 1)),
                                             ],
                                           ),
-                                        )
-                                            .animate(
-                                                target: isFeesDone ? 0 : 1,
-                                                onPlay: (c) =>
-                                                    c.repeat(reverse: true))
-                                            .fade(begin: 1, end: 0.7),
+                                        ),
                                       ],
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                            alpha: isDarkMode ? 0.05 : 0.6),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: cardBorder),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                                color: const Color(0xFF42A5F5),
+                                                borderRadius:
+                                                    BorderRadius.circular(14)),
+                                            child: const Icon(
+                                                Icons.directions_bus,
+                                                color: Colors.white,
+                                                size: 18),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text("ASSIGNED ROUTE",
+                                                    style: TextStyle(
+                                                        fontSize: 8,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color:
+                                                            textColorSecondary,
+                                                        letterSpacing: 1)),
+                                                const SizedBox(height: 2),
+                                                Text("$routeName • $stopName",
+                                                    maxLines: 1,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w900,
+                                                        color:
+                                                            textColorPrimary)),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -388,8 +447,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
 
                               const SizedBox(height: 20),
 
-                              // 2. LEDGER STATUS SECTION (Monthly & One-Time)
-                              // Box 1: Monthly Dues
+                              // 2. LEDGER STATUS SECTION (Pending Dues / Surplus)
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
@@ -413,7 +471,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text("MONTHLY DUES",
+                                            Text("PENDING TRANSPORT DUES",
                                                 style: TextStyle(
                                                     fontSize: 10,
                                                     fontWeight: FontWeight.w900,
@@ -423,11 +481,11 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                         FontStyle.italic)),
                                             const SizedBox(height: 8),
                                             Text(
-                                                "₹${NumberFormat('#,##,###').format(monthlyOut)}",
+                                                "₹${NumberFormat('#,##,###').format(grandTotal)}",
                                                 style: TextStyle(
                                                     fontSize: 32,
                                                     fontWeight: FontWeight.w900,
-                                                    color: monthlyOut > 0
+                                                    color: grandTotal > 0
                                                         ? const Color(
                                                             0xFFF43F5E)
                                                         : const Color(
@@ -440,7 +498,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
-                                              color: monthlyOut > 0
+                                              color: grandTotal > 0
                                                   ? (isDarkMode
                                                       ? const Color(0xFF4C0519)
                                                       : const Color(0xFFFFF1F2))
@@ -452,7 +510,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                   BorderRadius.circular(20)),
                                           child: Icon(Icons.calendar_today,
                                               size: 24,
-                                              color: monthlyOut > 0
+                                              color: grandTotal > 0
                                                   ? const Color(0xFFF43F5E)
                                                   : const Color(0xFF10B981)),
                                         )
@@ -460,9 +518,9 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                     ),
                                     const SizedBox(height: 12),
                                     Text(
-                                        monthlyOut > 0
-                                            ? "Includes current month + any unpaid previous months."
-                                            : "Monthly fees is fully up to date.",
+                                        grandTotal > 0
+                                            ? "Includes current month + unpaid backlog + exemptions logic."
+                                            : "Transport fees are fully up to date.",
                                         style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
@@ -472,93 +530,8 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                 ),
                               ).animate().fadeIn().slideY(begin: 0.1),
 
-                              const SizedBox(height: 16),
-
-                              // Box 2: One-Time Charges
-                              Container(
-                                padding: const EdgeInsets.all(24),
-                                decoration: BoxDecoration(
-                                    color: cardColor,
-                                    borderRadius: BorderRadius.circular(35),
-                                    border: Border.all(color: cardBorder),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                          color: Colors.black12,
-                                          blurRadius: 10,
-                                          offset: Offset(0, 4))
-                                    ]),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text("ONE-TIME YEARLY CHARGES",
-                                                style: TextStyle(
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.w900,
-                                                    color: textColorSecondary,
-                                                    letterSpacing: 2,
-                                                    fontStyle:
-                                                        FontStyle.italic)),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                                "₹${NumberFormat('#,##,###').format(oneTimeOut)}",
-                                                style: TextStyle(
-                                                    fontSize: 32,
-                                                    fontWeight: FontWeight.w900,
-                                                    color: oneTimeOut > 0
-                                                        ? const Color(
-                                                            0xFFF59E0B)
-                                                        : const Color(
-                                                            0xFF10B981),
-                                                    letterSpacing: -1,
-                                                    fontStyle:
-                                                        FontStyle.italic)),
-                                          ],
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: BoxDecoration(
-                                              color: oneTimeOut > 0
-                                                  ? (isDarkMode
-                                                      ? const Color(0xFF451A03)
-                                                      : const Color(0xFFFFFBEB))
-                                                  : (isDarkMode
-                                                      ? const Color(0xFF064E3B)
-                                                      : const Color(
-                                                          0xFFECFDF5)),
-                                              borderRadius:
-                                                  BorderRadius.circular(20)),
-                                          child: Icon(Icons.flash_on,
-                                              size: 24,
-                                              color: oneTimeOut > 0
-                                                  ? const Color(0xFFF59E0B)
-                                                  : const Color(0xFF10B981)),
-                                        )
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                        oneTimeOut > 0
-                                            ? "Fixed annual charges pending for this academic year."
-                                            : "One-time charges cleared/Zero balance.",
-                                        style: TextStyle(
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                            color: textColorSecondary,
-                                            fontStyle: FontStyle.italic)),
-                                  ],
-                                ),
-                              ).animate().fadeIn().slideY(begin: 0.1),
-
-                              // Box 3: Advance Credit
-                              if (advanceBal > 0) ...[
+                              // Surplus Credit Box
+                              if (advanceBalance > 0) ...[
                                 const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.all(24),
@@ -589,7 +562,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                   letterSpacing: 2)),
                                           const SizedBox(height: 4),
                                           Text(
-                                              "₹${NumberFormat('#,##,###').format(advanceBal)}",
+                                              "₹${NumberFormat('#,##,###').format(advanceBalance)}",
                                               style: const TextStyle(
                                                   fontSize: 24,
                                                   fontWeight: FontWeight.w900,
@@ -605,200 +578,13 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                 ).animate().fadeIn().slideY(begin: 0.1),
                               ],
 
-                              const SizedBox(height: 16),
-                              GestureDetector(
-                                onTap: () => context.push('/finance/transport-ledger/${widget.studentId}'),
-                                child: Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: cardColor,
-                                    borderRadius: BorderRadius.circular(30),
-                                    border: Border.all(color: cardBorder),
-                                    boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4))],
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.all(12),
-                                            decoration: BoxDecoration(
-                                              color: isDarkMode ? const Color(0xFF451A03) : const Color(0xFFFFFBEB),
-                                              borderRadius: BorderRadius.circular(16),
-                                            ),
-                                            child: const Icon(Icons.directions_bus, color: Color(0xFFF59E0B), size: 20),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text("TRANSPORT LEDGER", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                                              const SizedBox(height: 4),
-                                              Text("View bus route & pending transport dues", style: TextStyle(fontSize: 7, fontWeight: FontWeight.bold, color: textColorSecondary)),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                      Icon(Icons.chevron_right, color: textColorSecondary, size: 20),
-                                    ],
-                                  ),
-                                ),
-                              ).animate().fadeIn().slideY(begin: 0.1),
-
-                              const SizedBox(height: 24),
-
-                              // 3. SPLIT REVIEW COMPONENTS
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Monthly Split
-                                  Container(
-                                    width: double
-                                        .infinity, // Pura width cover karne ke liye
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                        color: cardColor,
-                                        borderRadius: BorderRadius.circular(30),
-                                        border: Border.all(color: cardBorder),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                              color: Colors.black12,
-                                              blurRadius: 8,
-                                              offset: Offset(0, 4))
-                                        ]),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text("MONTHLY FEES SETUP",
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w900,
-                                                color: Color(0xFF42A5F5),
-                                                fontStyle: FontStyle.italic,
-                                                letterSpacing: 1)),
-                                        const SizedBox(height: 12),
-                                        ...monthlyDetails.map((item) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 8),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                    child: Text(
-                                                        item['label']
-                                                                ?.toString()
-                                                                .toUpperCase() ??
-                                                            '',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                            fontSize: 9,
-                                                            fontWeight:
-                                                                FontWeight.w900,
-                                                            color:
-                                                                textColorSecondary))),
-                                                Text(
-                                                    "₹${NumberFormat('#,##,###').format(item['amount'] ?? 0)}",
-                                                    style: TextStyle(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color:
-                                                            textColorPrimary)),
-                                              ],
-                                            ),
-                                          );
-                                        }),
-                                      ],
-                                    ),
-                                  ),
-
-                                  const SizedBox(
-                                      height:
-                                          16), // Width ki jagah Height kar diya
-
-                                  // One-Time Split
-                                  Container(
-                                    width: double
-                                        .infinity, // Pura width cover karne ke liye
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                        color: cardColor,
-                                        borderRadius: BorderRadius.circular(30),
-                                        border: Border.all(color: cardBorder),
-                                        boxShadow: const [
-                                          BoxShadow(
-                                              color: Colors.black12,
-                                              blurRadius: 8,
-                                              offset: Offset(0, 4))
-                                        ]),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text("ONE-TIME CHARGES SETUP",
-                                            style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w900,
-                                                color: Color(0xFFF59E0B),
-                                                fontStyle: FontStyle.italic,
-                                                letterSpacing: 1)),
-                                        const SizedBox(height: 12),
-                                        ...oneTimeDetails.map((item) {
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                                bottom: 8),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Expanded(
-                                                    child: Text(
-                                                        item['label']
-                                                                ?.toString()
-                                                                .toUpperCase() ??
-                                                            '',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: TextStyle(
-                                                            fontSize: 9,
-                                                            fontWeight:
-                                                                FontWeight.w900,
-                                                            color:
-                                                                textColorSecondary))),
-                                                Text(
-                                                    "₹${NumberFormat('#,##,###').format(item['amount'] ?? 0)}",
-                                                    style: TextStyle(
-                                                        fontSize: 11,
-                                                        fontWeight:
-                                                            FontWeight.w900,
-                                                        color:
-                                                            textColorPrimary)),
-                                              ],
-                                            ),
-                                          );
-                                        }),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ).animate().fadeIn().slideY(begin: 0.1),
-
                               const SizedBox(height: 32),
 
-                              // 4. LEDGER ENTRIES (HISTORY)
+                              // 3. LEDGER ENTRIES (HISTORY)
                               Row(
                                 children: [
-                                  const Icon(Icons.history,
-                                      size: 16, color: Color(0xFF42A5F5)),
+                                  Icon(Icons.history,
+                                      size: 16, color: Colors.amber.shade600),
                                   const SizedBox(width: 8),
                                   Text("VERIFIED TRANSACTIONS",
                                       style: TextStyle(
@@ -819,9 +605,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                   decoration: BoxDecoration(
                                       color: cardColor,
                                       borderRadius: BorderRadius.circular(35),
-                                      border: Border.all(
-                                          color: cardBorder,
-                                          style: BorderStyle.solid)),
+                                      border: Border.all(color: cardBorder)),
                                   child: Column(
                                     children: [
                                       Icon(Icons.warning_amber_rounded,
@@ -842,13 +626,13 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                               else
                                 ...historyMap.entries.map((entry) {
                                   String monthYear = entry.key;
-                                  List<dynamic> records = entry.value;
+                                  List<dynamic> records =
+                                      List<dynamic>.from(entry.value ?? []);
 
                                   return Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      // Month Divider
                                       Row(
                                         children: [
                                           Expanded(
@@ -872,8 +656,6 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                         ],
                                       ),
                                       const SizedBox(height: 16),
-
-                                      // Records
                                       ...records.map((h) {
                                         DateTime date = DateTime.tryParse(
                                                 h['date']?.toString() ?? '') ??
@@ -883,7 +665,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                         String category = h['category']
                                                 ?.toString()
                                                 .toUpperCase() ??
-                                            'GENERAL FEE';
+                                            'TRANSPORT FEE';
                                         String mode = h['mode']
                                                 ?.toString()
                                                 .toUpperCase() ??
@@ -925,7 +707,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                                                             BorderRadius
                                                                 .circular(16)),
                                                     child: const Icon(
-                                                        Icons.calendar_today,
+                                                        Icons.directions_bus,
                                                         size: 16,
                                                         color:
                                                             Color(0xFF42A5F5)),
@@ -1014,7 +796,7 @@ class _FinanceStudentLedgerState extends ConsumerState<FinanceStudentLedger> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 50), // 🔥 BOTTOM 50px LOCKED 🔥
+                      const SizedBox(height: 50),
                     ],
                   ),
                 ),

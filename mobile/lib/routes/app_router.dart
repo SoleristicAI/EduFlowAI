@@ -53,6 +53,7 @@ import '../features/finance/screens/finance_fee_setup.dart';
 import '../features/finance/screens/finance_fees_notice.dart';
 import '../features/finance/screens/finance_fees_tracker.dart';
 import '../features/finance/screens/finance_student_ledger.dart';
+import '../features/finance/screens/finance_transport_ledger.dart';
 import '../features/finance/screens/finance_gateway.dart';
 import '../features/transporter/transporter_dashboard.dart';
 import '../features/transporter/manage_fleet_screen.dart';
@@ -370,6 +371,14 @@ final appRouter = GoRouter(
         return FinanceStudentLedger(studentId: id);
       },
     ),
+
+    GoRoute(
+  path: '/finance/transport-ledger/:studentId',
+  builder: (context, state) {
+    final studentId = state.pathParameters['studentId']!;
+    return FinanceTransportLedger(studentId: studentId);
+  },
+),
 
     GoRoute(
       path: '/finance/gateway',

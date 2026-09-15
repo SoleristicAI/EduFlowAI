@@ -36,6 +36,9 @@ const AddPayment = () => {
         remarks: ''
     });
 
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -62,10 +65,35 @@ const AddPayment = () => {
         fetchSettings();
     }, []);
 
-    useEffect(() => {
+   useEffect(() => {
         const fetchClasses = async () => {
             const { data } = await API.get('/fees/setup/classes');
-            setClasses(data);
+            
+            // 🔥 NAYA: Custom Sorting Logic (Nursery se 12th tak order mein) 🔥
+            const sortGrades = (gradesList) => {
+                const getVal = (g) => {
+                    const str = String(g).toUpperCase().trim();
+                    if (str.includes('NUR')) return -3;
+                    if (str.includes('LKG')) return -2;
+                    if (str.includes('UKG')) return -1;
+                    if (str.includes('PREP')) return 0;
+                    const match = str.match(/\d+/);
+                    if (match) return parseInt(match[0], 10);
+                    return 999; // Agar koi aur string ho toh last mein jaye
+                };
+                
+                return [...gradesList].sort((a, b) => {
+                    const valA = getVal(a);
+                    const valB = getVal(b);
+                    // Agar class same hai (e.g. 10 A aur 10 B), toh Section wise sort karo
+                    if (valA === valB) {
+                        return a.localeCompare(b);
+                    }
+                    return valA - valB;
+                });
+            };
+
+            setClasses(sortGrades(data));
         };
         fetchClasses();
     }, []);
@@ -97,13 +125,21 @@ const AddPayment = () => {
         }
     }, [feeType, formData.enrollmentNo, students]);
 
-    const handlePayment = async (e) => {
+    // 1. Form submit hone par sirf Modal open karega
+    const handlePaymentClick = (e) => {
         e.preventDefault();
+        setShowConfirmModal(true);
+    };
+
+    // 2. Modal mein 'Confirm' karne par asli payment log hogi
+    const confirmAndSubmitPayment = async () => {
+        setIsSubmitting(true);
         try {
             const payload = { ...formData, feeType };
             const { data } = await API.post('/users/finance/add-payment', payload);
 
             setMsg("Payment synchronized! ✅");
+            setShowConfirmModal(false); // Modal close kar do
 
             setTimeout(() => {
                 navigate(`/finance/receipt/${data.feeRecord._id}`);
@@ -111,6 +147,9 @@ const AddPayment = () => {
 
         } catch (err) {
             setMsg(err?.response?.data?.message || "Failed to log payment ❌");
+            setShowConfirmModal(false);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -129,7 +168,7 @@ const AddPayment = () => {
                 <h1 className="text-3xl font-black italic tracking-tight capitalize">Add Payment</h1>
             </div>
 
-            <form onSubmit={handlePayment} className="space-y-6">
+            <form onSubmit={handlePaymentClick} className="space-y-6">
 
                 {/* STEP 1: CLASS SELECTION */}
                 <div className="bg-white p-6 rounded-[2.5rem] border border-[#DDE3EA] shadow-sm">
@@ -384,9 +423,83 @@ const AddPayment = () => {
                         <button type="submit" className={`w-full text-white py-7 rounded-[2.5rem] font-black text-[16px] uppercase shadow-lg active:scale-95 transition-all mt-6 italic ${feeType === 'Transport' ? 'bg-amber-500 shadow-amber-100 hover:bg-amber-600' : 'bg-[#42A5F5] shadow-blue-100 hover:bg-blue-600'}`}>
                             Record Payment
                         </button>
-                    </>
+                   </>
                 )}
             </form>
+
+            {/* ================= CONFIRMATION MODAL ================= */}
+            <AnimatePresence>
+                {showConfirmModal && (
+                    <div className="fixed inset-0 z-[999] flex items-center justify-center p-5">
+                        {/* Background Overlay */}
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" 
+                            onClick={() => !isSubmitting && setShowConfirmModal(false)} 
+                        />
+                        
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+                            animate={{ opacity: 1, scale: 1, y: 0 }} 
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }} 
+                            className="relative bg-white rounded-[3rem] w-full max-w-sm p-8 shadow-2xl z-10 text-center border border-slate-100"
+                        >
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-lg ${feeType === 'Transport' ? 'bg-amber-50 text-amber-500' : 'bg-blue-50 text-[#42A5F5]'}`}>
+                                <CheckCircle2 size={40}/>
+                            </div>
+                            
+                            <h2 className="text-2xl font-black tracking-wide mb-6 text-slate-800 capitalize">Confirm Payment</h2>
+                            
+                            <div className="bg-slate-50 p-5 rounded-[2rem] text-left space-y-4 mb-8 border border-slate-100 shadow-inner">
+                                <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Student Name</span>
+                                    <span className="text-[14px] font-black text-slate-700 capitalize truncate max-w-[150px] text-right">
+                                        {students.find(s => s.enrollmentNo === formData.enrollmentNo)?.name || "Unknown"}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Class / Grade</span>
+                                    <span className="text-[14px] font-black text-slate-700 uppercase">
+                                        {formData.grade}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Fee Type</span>
+                                    <span className={`text-[10px] px-3 py-1.5 rounded-lg font-black uppercase tracking-widest ${feeType === 'Transport' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
+                                        {feeType}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center pt-1">
+                                    <span className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Total Amount</span>
+                                    <span className={`text-[24px] font-black tracking-tight ${feeType === 'Transport' ? 'text-amber-500' : 'text-[#42A5F5]'}`}>
+                                        ₹{formData.amountPaid}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className="flex gap-4">
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowConfirmModal(false)} 
+                                    disabled={isSubmitting}
+                                    className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] hover:bg-slate-200 transition-colors active:scale-95"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={confirmAndSubmitPayment} 
+                                    disabled={isSubmitting}
+                                    className={`flex-1 py-4 text-white rounded-[1.5rem] font-black uppercase tracking-widest text-[12px] shadow-lg active:scale-95 transition-all flex justify-center items-center gap-2 ${feeType === 'Transport' ? 'bg-amber-500 shadow-amber-500/30 hover:bg-amber-600' : 'bg-[#42A5F5] shadow-blue-500/30 hover:bg-blue-600'}`}
+                                >
+                                    {isSubmitting ? 'Recording...' : 'Confirm'}
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             {msg && <Toast message={msg} onClose={() => setMsg('')} />}
         </div>
     );

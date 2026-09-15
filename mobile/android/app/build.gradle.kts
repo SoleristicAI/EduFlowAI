@@ -17,17 +17,11 @@ plugins {
 android {
     namespace = "com.soleristicai.eduflowai"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "25.1.8937393"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    
-    packaging {
-        jniLibs {
-            keepDebugSymbols.add("**/*.so")
-        }
     }
     
     defaultConfig {

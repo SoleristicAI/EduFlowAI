@@ -44,6 +44,8 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
     _socketService.initSocket(); // 🔥 App khulte hi socket initialize hoga
   }
 
+
+
   @override
   void dispose() {
     _socketService.disconnect(); // 🔥 Memory leak se bachane ke liye
@@ -58,9 +60,70 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
     }
   }
 
-  // 🔥 LIVE GPS BROADCASTING ENGINE 🔥
+  // 🔥 PROMINENT DISCLOSURE & GPS CHECK FOR GOOGLE PLAY POLICY 🔥
+  Future<bool> _checkAndRequestLocationPermission() async {
+    
+    // 1. PEHLE CHECK KARO KI PHONE KA GPS (Location) ON HAI YA NAHI
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showToast("Please turn ON your phone's Location (GPS) first! 🛰️", isError: true);
+      await Geolocator.openLocationSettings(); // Seedha phone ki settings khol dega
+      return false; // Trip start nahi hogi jab tak GPS on nahi hota
+    }
+
+    // 2. AB PERMISSION CHECK KARO
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      // System popup aane se pehle custom popup dikhana mandatory hai
+      bool? userAccepted = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1E293B),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Row(
+            children: [
+              Icon(Icons.location_on, color: Color(0xFF42A5F5)),
+              SizedBox(width: 8),
+              Text("Location Required", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16)),
+            ],
+          ),
+          content: const Text(
+            "EduFlowAI collects location data to enable live bus tracking for parents and school administration even when the app is closed or not in use.",
+            style: TextStyle(color: Colors.white70, height: 1.5, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text("DENY", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text("ACCEPT", style: TextStyle(color: Color(0xFF42A5F5), fontWeight: FontWeight.w900)),
+            ),
+          ],
+        ),
+      );
+
+      if (userAccepted == true) {
+        // User ne apna popup accept kiya, ab system permission maango
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+          _showToast("Location permission denied! Tracking cannot start. 🛑", isError: true);
+          return false;
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
+    
+    // Agar sab kuch ON hai aur permission already mili hui hai
+    return true; 
+  }
+
   void _startLocationBroadcasting() {
-    // Har 5 second mein location utha kar socket se bhejega
     _locationTimer = Timer.periodic(const Duration(seconds: 5), (timer) async {
       if (!isTripActive || vehicleData == null) {
         timer.cancel();
@@ -68,19 +131,11 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
       }
 
       try {
-        // 1. Permission check karo
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-          if (permission == LocationPermission.denied) return;
-        }
-
-        // 2. Current GPS Position nikalo
+        // 🔥 Sirf location uthao, permission trip start hone se pehle check ho chuki hai
         Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
         );
 
-        // 3. Socket service ke through server ko phek do
         _socketService.sendLocation(
           vehicleId: vehicleData!['_id'],
           latitude: position.latitude,
@@ -88,8 +143,7 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
           speed: position.speed,
         );
 
-        debugPrint(
-            "📍 GPS Broadcasted -> Lat: ${position.latitude}, Lng: ${position.longitude}");
+        debugPrint("📍 GPS Broadcasted -> Lat: ${position.latitude}, Lng: ${position.longitude}");
       } catch (e) {
         debugPrint("GPS Broadcast Error: $e");
       }
@@ -132,21 +186,25 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
 // 🔥 TRIP START / END API INTEGRATION 🔥
   String? activeTripId; // Trip ki ID store karne ke liye
 
-  void _toggleTrip(String type) async {
+void _toggleTrip(String type) async {
     if (vehicleData == null || routeData == null) {
-      _showToast(
-          "You need an active Bus & Route assignment to start a trip! ⚠️",
-          isError: true);
+      _showToast("You need an active Bus & Route assignment to start a trip! ⚠️", isError: true);
       return;
     }
 
-    // Agar trip pehle se active hai, toh END karne ka dialog
     if (isTripActive) {
       _confirmEndTrip();
       return;
     }
 
-    // Agar trip shuru karni hai, toh START API hit karo
+    // 🔥 1. GOOGLE PLAY DISCLOSURE CHECK 🔥
+    bool hasPermission = await _checkAndRequestLocationPermission();
+    if (!hasPermission) {
+      _showToast("Background location permission is strictly required to start tracking! 🛑", isError: true);
+      return;
+    }
+
+    // 🔥 2. START API HIT 🔥
     setState(() => isSubmitting = true);
     try {
       final res = await ApiClient.dio.post('/transport/trips/start', data: {
@@ -164,13 +222,12 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
         });
 
         _socketService.joinBusRoom(vehicleData!['_id']);
-        _startLocationBroadcasting(); // 🔥 Yahan se GPS loop chalu ho jayega!
+        _startLocationBroadcasting(); 
         _showToast("$type Trip Started Successfully! 🚀");
       }
     } catch (e) {
       if (mounted) {
         setState(() => isSubmitting = false);
-        // 🔥 FIX: DioException mein cast kar diya taaki .response error na de
         String errorMsg = "Failed to start trip! 🛡️";
         if (e is DioException) {
           errorMsg = e.response?.data['message'] ?? errorMsg;
@@ -234,9 +291,9 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
     );
   }
 
-  void _triggerSOS() {
-    _showToast("SOS ALERT SENT TO MANAGER! 🚨", isError: true);
-  }
+  // void _triggerSOS() {
+  //   _showToast("SOS ALERT SENT TO MANAGER! 🚨", isError: true);
+  // }
 
   void _showToast(String message, {bool isError = false}) {
     final overlay = Overlay.of(context);
@@ -572,31 +629,31 @@ class _DriverHomeState extends ConsumerState<DriverHome> {
 
           const SizedBox(height: 40),
 
-          // --- EMERGENCY SOS BUTTON ---
-          GestureDetector(
-            onLongPress: _triggerSOS,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: Colors.redAccent.withValues(alpha: 0.3))),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-                  SizedBox(width: 10),
-                  Text("LONG PRESS FOR SOS",
-                      style: TextStyle(
-                          color: Colors.redAccent,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2)),
-                ],
-              ),
-            ),
-          ),
+          // // --- EMERGENCY SOS BUTTON ---
+          // GestureDetector(
+          //   onLongPress: _triggerSOS,
+          //   child: Container(
+          //     width: double.infinity,
+          //     padding: const EdgeInsets.symmetric(vertical: 20),
+          //     decoration: BoxDecoration(
+          //         color: Colors.redAccent.withValues(alpha: 0.1),
+          //         borderRadius: BorderRadius.circular(20),
+          //         border: Border.all(
+          //             color: Colors.redAccent.withValues(alpha: 0.3))),
+          //     child: const Row(
+          //       mainAxisAlignment: MainAxisAlignment.center,
+          //       children: [
+          //         Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+          //         SizedBox(width: 10),
+          //         Text("LONG PRESS FOR SOS",
+          //             style: TextStyle(
+          //                 color: Colors.redAccent,
+          //                 fontWeight: FontWeight.w900,
+          //                 letterSpacing: 2)),
+          //       ],
+          //     ),
+          //   ),
+          // ),
 
           const SizedBox(height: 100),
         ],
