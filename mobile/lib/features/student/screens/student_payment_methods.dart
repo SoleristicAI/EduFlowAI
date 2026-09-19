@@ -6,14 +6,14 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart'; // 🔥 NAYA IMPORT FOR THEME
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
-import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
+import '../../../core/theme/theme_provider.dart';
 
-// 🔥 ConsumerStatefulWidget for theme listening
 class StudentPaymentMethods extends ConsumerStatefulWidget {
-  const StudentPaymentMethods({super.key});
+  final String feeType; // NAYA PARAMETER
+  const StudentPaymentMethods({super.key, this.feeType = 'Academic'});
 
   @override
   ConsumerState<StudentPaymentMethods> createState() => _StudentPaymentMethodsState();
@@ -24,8 +24,8 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
   bool loading = true;
   bool isProcessing = false;
 
-  String? paymentMode; // 'upi' or 'netbanking'
-  String? selectedApp; // specific upi app
+  String? paymentMode; 
+  String? selectedApp; 
 
   File? screenshot;
 
@@ -37,13 +37,18 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
 
   Future<void> _loadData() async {
     try {
-      final response = await ApiClient.dio.get('/fees/student-summary');
+      // 🔥 DYNAMIC ENDPOINT BASED ON FEE TYPE 🔥
+      final endpoint = widget.feeType == 'Transport' 
+          ? '/fees/transport-summary' 
+          : '/fees/student-summary';
+          
+      final response = await ApiClient.dio.get(endpoint);
       setState(() {
         summary = response.data;
         loading = false;
       });
     } catch (e) {
-      print("Payment Data Load Error: $e");
+      debugPrint("Payment Data Load Error: $e");
       setState(() => loading = false);
     }
   }
@@ -89,15 +94,22 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
         'screenshot': await MultipartFile.fromFile(screenshot!.path),
         'amount': summary!['grandTotal'],
         'method': selectedApp,
+        'feeType': widget.feeType, // 🔥 PASSING FEETYPE TO BACKEND 🔥
       });
 
       await ApiClient.dio.post('/fees/capture-with-screenshot', data: formData);
       
       _showToast("Payment Submitted Successfully! 📡");
       
-      // Delay and navigate back to fees
       Future.delayed(const Duration(seconds: 2), () {
-        if (mounted) context.go('/student/fees'); // Replace state to fees
+        if (mounted) {
+           // 🔥 DYNAMIC REDIRECTION 🔥
+           if(widget.feeType == 'Transport') {
+              context.go('/student/transport-fees'); 
+           } else {
+              context.go('/student/fees');
+           }
+        }
       });
     } catch (e) {
       _showToast("Upload Failed. Check network.", isError: true);
@@ -105,7 +117,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
     }
   }
 
-  // --- SMART BACK NAVIGATION LOGIC ---
   void _handleBack() {
     if (selectedApp != null) {
       setState(() => selectedApp = null);
@@ -115,7 +126,8 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
       if (context.canPop()) {
         context.pop();
       } else {
-        context.go('/student/checkout');
+        // Safe fallback with extra
+        context.go('/student/checkout', extra: {'feeType': widget.feeType});
       }
     }
   }
@@ -125,29 +137,26 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
     if (loading) return const CustomLoader();
     if (summary == null) return const Scaffold(body: Center(child: Text("Error loading details.")));
 
-    // Generate UPI Link
     final grandTotal = summary!['grandTotal'] ?? 0;
     final schoolPhone = summary!['schoolPhone'] ?? '';
     final schoolName = summary!['schoolName'] ?? 'EduFlowAI';
     final String upiLink = "upi://pay?pa=$schoolPhone&pn=$schoolName&am=$grandTotal&cu=INR";
 
-    // 🔥 GLOBAL THEME SE DARK MODE CHECK KAR RAHE HAIN 🔥
     final themeMode = ref.watch(themeProvider);
     final bool isDarkMode = themeMode == ThemeMode.dark;
-
     final Color scaffoldBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
-        _handleBack(); // Hardware back button bhi UI layout ke hisaab se peeche jayega
+        _handleBack(); 
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         color: scaffoldBg,
         child: Scaffold(
-          backgroundColor: Colors.transparent, // Background se color lenge
+          backgroundColor: Colors.transparent, 
           body: SafeArea(
             child: Stack(
               children: [
@@ -167,24 +176,18 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
                         ),
                       );
                     },
-                    child: _buildCurrentState(upiLink, isDarkMode), // 🔥 isDarkMode pass kar diya
+                    child: _buildCurrentState(upiLink, isDarkMode), 
                   ),
                 ),
 
-                // --- FOOTER MESH ---
                 Positioned(
-                  bottom: 30,
-                  left: 0,
-                  right: 0,
+                  bottom: 30, left: 0, right: 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.security, size: 14, color: isDarkMode ? Colors.white38 : Colors.black38),
                       const SizedBox(width: 8),
-                      Text(
-                        "NEURAL ENCRYPTED GATEWAY",
-                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDarkMode ? Colors.white38 : Colors.black38, letterSpacing: 3),
-                      ),
+                      Text("NEURAL ENCRYPTED GATEWAY", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: isDarkMode ? Colors.white38 : Colors.black38, letterSpacing: 3)),
                     ],
                   ),
                 ),
@@ -196,9 +199,7 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
     );
   }
 
-  // --- STATE MACHINE UI RENDERER ---
   Widget _buildCurrentState(String upiLink, bool isDarkMode) {
-    // 🔥 DYNAMIC COLORS
     final Color cardBg = isDarkMode ? const Color(0xFF1E293B) : Colors.white;
     final Color textColorPrimary = isDarkMode ? const Color(0xFFF8FAFC) : const Color(0xFF1E293B);
     final Color textColorSecondary = isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8);
@@ -206,12 +207,10 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
     final Color iconBgLight = isDarkMode ? const Color(0xFF0F172A) : Colors.blue.shade50;
     final Color subtleBg = isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
 
-    // STEP 1: SELECT MODE
     if (paymentMode == null) {
       return Column(
         key: const ValueKey('step1_mode'),
         children: [
-          // Header
           Row(
             children: [
               GestureDetector(
@@ -228,7 +227,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
           ),
           const SizedBox(height: 30),
 
-          // UPI Button
           GestureDetector(
             onTap: () => setState(() => paymentMode = 'upi'),
             child: Container(
@@ -255,7 +253,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
           ),
           const SizedBox(height: 20),
 
-          // Net Banking Button (Disabled)
           GestureDetector(
             onTap: () => setState(() => paymentMode = 'netbanking'),
             child: Opacity(
@@ -286,7 +283,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
       );
     }
 
-    // STEP 2: NETBANKING CONSTRUCTION
     if (paymentMode == 'netbanking') {
       return Column(
         key: const ValueKey('step2_netbank'),
@@ -320,7 +316,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
       );
     }
 
-    // STEP 2: UPI APP SELECTION
     if (paymentMode == 'upi' && selectedApp == null) {
       return Column(
         key: const ValueKey('step2_upiapps'),
@@ -363,7 +358,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
       );
     }
 
-    // STEP 3: QR & SCREENSHOT UPLOAD PANEL
     return Container(
       key: const ValueKey('step3_qr'),
       width: double.infinity,
@@ -397,28 +391,23 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
                       Text("SECURE CHECKOUT", style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 2)),
                     ],
                   ),
-                  const SizedBox(width: 32), // Placeholder to balance row
+                  const SizedBox(width: 32),
                 ],
               ),
               const SizedBox(height: 30),
 
-             // QR Code Render (Force light background for better scanability)
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white, // 🔥 QR hamesha white background pe rehna chahiye warna scan nahi hoga
+                  color: Colors.white, 
                   borderRadius: BorderRadius.circular(40),
                   border: Border.all(color: isDarkMode ? const Color(0xFF334155) : const Color(0xFFDDE3EA), width: 2),
                   gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFE2E8F0), 
-                      Colors.white, 
-                    ],
+                    begin: Alignment.topLeft, end: Alignment.bottomRight,
+                    colors: [Color(0xFFE2E8F0), Colors.white],
                   ),
                 ),
-                child: summary!['schoolPhone'] != null
+                child: summary!['schoolPhone'] != null && summary!['schoolPhone'].toString().isNotEmpty
                     ? QrImageView(data: upiLink, version: QrVersions.auto, size: 180, foregroundColor: const Color(0xFF1E293B))
                     : Column(
                         children: [
@@ -431,22 +420,21 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
               const SizedBox(height: 24),
 
               Text("₹${NumberFormat('#,##0').format(summary!['grandTotal'] ?? 0)}", style: const TextStyle(fontSize: 36, fontWeight: FontWeight.w900, fontStyle: FontStyle.italic, color: Color(0xFF42A5F5), letterSpacing: -1)),
-              if (summary!['schoolPhone'] != null)
+              if (summary!['schoolPhone'] != null && summary!['schoolPhone'].toString().isNotEmpty)
                 Text("UPI ID: ${summary!['schoolPhone']}", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: textColorSecondary, letterSpacing: 2))
               else
                 const Text("GATEWAY NOT CONFIGURED", style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic, color: Colors.redAccent, letterSpacing: 2)),
               
               const SizedBox(height: 30),
 
-              // Upload Section
-              if (summary!['schoolPhone'] != null) ...[
+              if (summary!['schoolPhone'] != null && summary!['schoolPhone'].toString().isNotEmpty) ...[
                 if (screenshot == null)
                   GestureDetector(
                     onTap: _pickImage,
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(30),
-                      decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.3) : Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(35), border: Border.all(color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100, width: 2)),
+                      decoration: BoxDecoration(color: isDarkMode ? const Color(0xFF1E3A8A).withValues(alpha: 0.3) : Colors.blue.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(35), border: Border.all(color: isDarkMode ? const Color(0xFF1E3A8A) : Colors.blue.shade100, width: 2)),
                       child: Column(
                         children: [
                           const Icon(Icons.cloud_upload, color: Color(0xFF42A5F5), size: 36).animate(onPlay: (c) => c.repeat(reverse: true)).slideY(begin: -0.1, end: 0.1),
@@ -496,7 +484,6 @@ class _StudentPaymentMethodsState extends ConsumerState<StudentPaymentMethods> {
                     ],
                   ),
                 
-                // Final Submit Button
                 if (screenshot != null)
                   GestureDetector(
                     onTap: _handleFinalSubmit,

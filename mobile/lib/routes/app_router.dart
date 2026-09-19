@@ -61,6 +61,7 @@ import '../features/driver/driver_home.dart';
 import '../features/transporter/live_tracking_screen.dart';
 import '../features/transporter/assign_transport_screen.dart';
 import '../features/transporter/route_students_screen.dart';
+import '../features/student/screens/student_transport_fees.dart';
 import '../features/transporter/bus_attendance_screen.dart';
 import '../features/transporter/route_attendance_viewer_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
@@ -131,15 +132,25 @@ final appRouter = GoRouter(
       builder: (context, state) => const StudentFees(),
     ),
 
-    GoRoute(
-      path: '/student/checkout',
-      builder: (context, state) => const StudentCheckout(),
-    ),
+   GoRoute(
+          path: '/student/checkout',
+          builder: (context, state) {
+            // Extra data safely nikal rahe hain
+            final extra = state.extra as Map<String, dynamic>?;
+            final feeType = extra?['feeType'] ?? 'Academic';
+            return StudentCheckout(feeType: feeType);
+          },
+        ),
 
     GoRoute(
-      path: '/student/payment-methods',
-      builder: (context, state) => const StudentPaymentMethods(),
-    ),
+          path: '/student/payment-methods',
+          builder: (context, state) {
+            // Extra data safely nikal rahe hain
+            final extra = state.extra as Map<String, dynamic>?;
+            final feeType = extra?['feeType'] ?? 'Academic';
+            return StudentPaymentMethods(feeType: feeType);
+          },
+        ),
 
     GoRoute(
       path: '/class-diary',
@@ -443,6 +454,11 @@ final appRouter = GoRouter(
       path: '/transport/attendance-viewer',
       builder: (context, state) => const RouteAttendanceViewerScreen(),
     ),
+
+    GoRoute(
+  path: '/student/transport-fees',
+  builder: (context, state) => const StudentTransportFees(),
+),
   
     GoRoute(
       path: '/',
