@@ -64,6 +64,7 @@ import '../features/transporter/route_students_screen.dart';
 import '../features/student/screens/student_transport_fees.dart';
 import '../features/transporter/bus_attendance_screen.dart';
 import '../features/transporter/route_attendance_viewer_screen.dart';
+import '../features/transporter/transport_exemptions_screen.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -97,7 +98,8 @@ final appRouter = GoRouter(
         if (role == 'finance') return '/finance/dashboard';
         if (role == 'teacher') return '/teacher/home';
         if (role == 'transport_incharge') return '/transporter/dashboard';
-        if (role == 'driver') return '/driver/home'; // 🔥 YE LINE ADD KARNI HAI 🔥
+        if (role == 'driver')
+          return '/driver/home'; // 🔥 YE LINE ADD KARNI HAI 🔥
 
         if (isGoingToLogin) return '/'; // Student
       }
@@ -132,25 +134,25 @@ final appRouter = GoRouter(
       builder: (context, state) => const StudentFees(),
     ),
 
-   GoRoute(
-          path: '/student/checkout',
-          builder: (context, state) {
-            // Extra data safely nikal rahe hain
-            final extra = state.extra as Map<String, dynamic>?;
-            final feeType = extra?['feeType'] ?? 'Academic';
-            return StudentCheckout(feeType: feeType);
-          },
-        ),
+    GoRoute(
+      path: '/student/checkout',
+      builder: (context, state) {
+        // Extra data safely nikal rahe hain
+        final extra = state.extra as Map<String, dynamic>?;
+        final feeType = extra?['feeType'] ?? 'Academic';
+        return StudentCheckout(feeType: feeType);
+      },
+    ),
 
     GoRoute(
-          path: '/student/payment-methods',
-          builder: (context, state) {
-            // Extra data safely nikal rahe hain
-            final extra = state.extra as Map<String, dynamic>?;
-            final feeType = extra?['feeType'] ?? 'Academic';
-            return StudentPaymentMethods(feeType: feeType);
-          },
-        ),
+      path: '/student/payment-methods',
+      builder: (context, state) {
+        // Extra data safely nikal rahe hain
+        final extra = state.extra as Map<String, dynamic>?;
+        final feeType = extra?['feeType'] ?? 'Academic';
+        return StudentPaymentMethods(feeType: feeType);
+      },
+    ),
 
     GoRoute(
       path: '/class-diary',
@@ -384,12 +386,12 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-  path: '/finance/transport-ledger/:studentId',
-  builder: (context, state) {
-    final studentId = state.pathParameters['studentId']!;
-    return FinanceTransportLedger(studentId: studentId);
-  },
-),
+      path: '/finance/transport-ledger/:studentId',
+      builder: (context, state) {
+        final studentId = state.pathParameters['studentId']!;
+        return FinanceTransportLedger(studentId: studentId);
+      },
+    ),
 
     GoRoute(
       path: '/finance/gateway',
@@ -400,8 +402,10 @@ final appRouter = GoRouter(
       path: '/transporter/dashboard',
       builder: (context, state) {
         return const LayoutWrapper(
-          role: 'transport_incharge', // 🔥 Is role ki wajah se Bottom Nav automatically HIDE ho jayega
-          child: TransporterDashboard(), // 🔥 Iski wajah se premium Navbar automatically AA jayega
+          role:
+              'transport_incharge', // 🔥 Is role ki wajah se Bottom Nav automatically HIDE ho jayega
+          child:
+              TransporterDashboard(), // 🔥 Iski wajah se premium Navbar automatically AA jayega
         );
       },
     ),
@@ -415,7 +419,8 @@ final appRouter = GoRouter(
       path: '/driver/home',
       builder: (context, state) {
         return const LayoutWrapper(
-          role: 'driver', // 🔥 Ye role pass hote hi LayoutWrapper BottomNav hide kar dega
+          role:
+              'driver', // 🔥 Ye role pass hote hi LayoutWrapper BottomNav hide kar dega
           child: DriverHome(), // 🔥 Yahan se Driver ka UI render hoga
         );
       },
@@ -456,10 +461,15 @@ final appRouter = GoRouter(
     ),
 
     GoRoute(
-  path: '/student/transport-fees',
-  builder: (context, state) => const StudentTransportFees(),
-),
-  
+      path: '/transport/exemptions',
+      builder: (context, state) => const TransportExemptionsScreen(),
+    ),
+
+    GoRoute(
+      path: '/student/transport-fees',
+      builder: (context, state) => const StudentTransportFees(),
+    ),
+
     GoRoute(
       path: '/',
       builder: (context, state) {

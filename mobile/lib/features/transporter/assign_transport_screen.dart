@@ -159,6 +159,41 @@ class _AssignTransportScreenState extends ConsumerState<AssignTransportScreen> {
     Navigator.pop(context);
   }
 
+  Map<String, dynamic>? studentToRemove; // Variable to hold student to remove
+
+  Future<void> handleRemoveTransport() async {
+    if (studentToRemove == null) return;
+    
+    setState(() => isUpdating = true);
+    Navigator.pop(context); // Dialog close karne ke liye
+
+    try {
+      await ApiClient.dio.put('/transport/remove-student/${studentToRemove!['_id']}');
+
+      setState(() {
+        // UI ko turant update karne ke liye local list se route/stop hata do
+        final index = students.indexWhere((s) => s['_id'] == studentToRemove!['_id']);
+        if (index != -1) {
+          students[index].remove('transportRoute');
+          students[index].remove('transportStop');
+        }
+        studentToRemove = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Transport removed successfully! 🗑️"),
+        backgroundColor: Colors.green,
+      ));
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Failed to remove transport! ❌"),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) setState(() => isUpdating = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // 🔥 DARK MODE THEME VARIABLES 🔥
@@ -436,10 +471,40 @@ class _AssignTransportScreenState extends ConsumerState<AssignTransportScreen> {
                 ],
               ),
             ),
-            ElevatedButton(
-              onPressed: () => _showStopSelectionModal(student, isDark, cardColor, textPrimary, textSec),
-              style: ElevatedButton.styleFrom(backgroundColor: pending != null ? Colors.green : const Color(0xFF42A5F5), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: Text(pending != null ? 'Added' : 'Add to Bus', style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                // Change / Add Button
+                ElevatedButton(
+                  onPressed: () => _showStopSelectionModal(student, isDark, cardColor, textPrimary, textSec),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: pending != null ? Colors.green : (existing != null ? Colors.orange : const Color(0xFF42A5F5)), 
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))
+                  ),
+                  child: Text(pending != null ? 'Added' : (existing != null ? 'Change' : 'Add to Bus'), style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900)),
+                ),
+                
+                // Remove Button (Only shows if student is already in a bus and no pending changes)
+                if (existing != null && pending == null) ...[
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() => studentToRemove = student);
+                      _showRemoveConfirmDialog(student, cardColor, textPrimary, textSec);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFFFF1F2),
+                      foregroundColor: const Color(0xFFF43F5E),
+                      elevation: 0,
+                      side: const BorderSide(color: Color(0xFFFFE4E6)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                    ),
+                    icon: const Icon(Icons.delete_outline, size: 14),
+                    label: const Text("Remove", style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                  ),
+                ]
+              ],
             ),
           ],
         ),
@@ -505,6 +570,50 @@ class _AssignTransportScreenState extends ConsumerState<AssignTransportScreen> {
             onPressed: handleFinalizeRoute,
             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
             child: const Text("Yes, I'm Done", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveConfirmDialog(Map<String, dynamic> student, Color cardColor, Color textPrimary, Color textSec) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+            const SizedBox(width: 10),
+            Text("Remove Transport?", style: TextStyle(fontWeight: FontWeight.w900, color: textPrimary, fontSize: 18, fontStyle: FontStyle.italic)),
+          ],
+        ),
+        content: RichText(
+          text: TextSpan(
+            style: TextStyle(color: textSec, fontSize: 13, fontWeight: FontWeight.bold),
+            children: [
+              const TextSpan(text: "Are you sure you want to remove "),
+              TextSpan(text: student['name'], style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w900)),
+              const TextSpan(text: " from the bus?"),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() => studentToRemove = null);
+              Navigator.pop(context);
+            },
+            child: Text("Cancel", style: TextStyle(color: textSec, fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: isUpdating ? null : handleRemoveTransport,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text("Yes, Remove", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
