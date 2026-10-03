@@ -261,4 +261,44 @@ router.put('/toggle-transport/:id', protect, superAdminOnly, async (req, res) =>
     }
 });
 
+// ==========================================================
+// 🔥 PREMIUM FEATURE TOGGLE: LIBRARY MODULE 🔥
+// ==========================================================
+router.put('/toggle-library/:id', protect, superAdminOnly, async (req, res) => {
+    try {
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ message: 'School not found' });
+
+        school.hasLibraryFeature = !school.hasLibraryFeature;
+        await school.save();
+
+        res.json({ 
+            message: `Library Feature is now ${school.hasLibraryFeature ? 'ON' : 'OFF'} for ${school.schoolName}`, 
+            hasLibraryFeature: school.hasLibraryFeature 
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to toggle library feature' });
+    }
+});
+
+// ==========================================================
+// 🔥 CORE ERP TOGGLE: ALL STANDARD MODULES 🔥
+// ==========================================================
+router.put('/toggle-standard/:id', protect, superAdminOnly, async (req, res) => {
+    try {
+        const school = await School.findById(req.params.id);
+        if (!school) return res.status(404).json({ message: 'School not found' });
+
+        school.hasStandardFeatures = !school.hasStandardFeatures;
+        await school.save();
+
+        res.json({ 
+            message: `Core ERP is now ${school.hasStandardFeatures ? 'ON' : 'OFF'} for ${school.schoolName}`, 
+            hasStandardFeatures: school.hasStandardFeatures 
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to toggle standard features' });
+    }
+});
+
 module.exports = router;

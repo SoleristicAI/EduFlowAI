@@ -177,39 +177,47 @@ const AdminHome = ({ searchQuery }) => {
         },
     ];
 
-    // 🔥 Modules mapped to Image Design (Added btnText, iconBg, btnColor) 🔥
-    const managementModules = [
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    
+    // 🔥 FEATURE ACCESS CHECKS 🔥
+    const hasStandardFeatures = currentUser?.schoolData?.hasStandardFeatures !== false; // Undefined/true = ON, False = OFF
+    const hasTransportAccess = currentUser?.schoolData?.hasTransportFeature || false;
+    const hasLibraryAccess = currentUser?.schoolData?.hasLibraryFeature || false;
+
+    // 1. BASE MODULE (Hamesha dikhega)
+    let managementModules = [
         { id: 'add-student', title: 'Classes & Students', btnText: 'Manage Students', icon: <PlusCircle size={24} />, desc: 'Enroll new students', iconBg: 'bg-blue-50 text-blue-500', btnColor: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200' },
-        { id: 'add-staff', title: 'Manage staff', btnText: 'Manage Teachers', icon: <Users size={24} />, desc: 'Assign roles & classes', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200' },
-        { id: 'attendance-report', title: 'Performance', btnText: 'View Reports', icon: <BarChart3 size={24} />, desc: 'Class wise performance', iconBg: 'bg-cyan-50 text-cyan-500', btnColor: 'bg-cyan-500 hover:bg-cyan-600 shadow-cyan-200' },
-        { id: 'notice', title: 'Publish notice', btnText: 'Send Notice', icon: <Megaphone size={24} />, desc: 'Send notice to all', iconBg: 'bg-orange-50 text-orange-500', btnColor: 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' },
-        { id: 'notice-feed', title: 'Notice archive', btnText: 'View Archive', icon: <ClipboardList size={24} />, desc: 'Manage & delete notices', iconBg: 'bg-red-50 text-red-500', btnColor: 'bg-red-500 hover:bg-red-600 shadow-red-200' },
-        { id: 'timetable', title: 'Timetable', btnText: 'Manage Matrix', icon: <Database size={24} />, desc: 'Schedule all classes', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
-        { id: 'edit-timetable', title: 'Edit timetable', btnText: 'Edit Timetable', icon: <Database size={24} />, desc: 'Modify existing schedules', iconBg: 'bg-rose-50 text-rose-500', btnColor: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' },
-        { id: 'faculty-tracking', title: 'Faculty schedule', btnText: 'Track Faculty', icon: <UserCheck size={24} />, desc: "View Teacher Schedules", iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' },
-        { id: 'datesheet-engine', title: 'Datesheet Engine', btnText: 'Create Exams', icon: <Calendar size={24} />, desc: 'Exam scheduler', iconBg: 'bg-violet-50 text-violet-500', btnColor: 'bg-violet-500 hover:bg-violet-600 shadow-violet-200' },
-        { id: 'admit-card', title: 'Admit Cards', btnText: 'Issue Cards', icon: <ClipboardCheck size={24} />, desc: 'Exam hall tickets', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200' },
-        { id: 'academic-calendar', title: 'Academic Calendar', btnText: 'View Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', iconBg: 'bg-rose-50 text-rose-500', btnColor: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' },
-        { id: 'feedback-engine', title: 'Feedback Engine', btnText: 'View Feedback', icon: <MessageSquare size={24} />, desc: 'Request teacher evaluations', iconBg: 'bg-teal-50 text-teal-500', btnColor: 'bg-teal-500 hover:bg-teal-600 shadow-teal-200' },
-        { id: 'manage-users', title: 'User Management', btnText: 'Manage Users', icon: <Users size={24} />, desc: 'Edit or Delete personnel', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
-        { id: 'session-upgrade', title: 'Session upgrade', btnText: 'Upgrade Now', icon: <Zap size={24} />, desc: 'Promote students to next class', iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' },
-        // { id: 'transport-setup', title: 'Transport Fleet', btnText: 'Manage Transport', icon: <Bus size={24} />, desc: 'Assign Incharge & Buses', iconBg: 'bg-amber-50 text-amber-500', btnColor: 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'},
     ];
 
-    // 🔥 DYNAMIC PREMIUM INJECTION 🔥
-    // LocalStorage se check kar rahe hain ki is school ko transport feature allowed hai ya nahi
-    const currentUser = JSON.parse(localStorage.getItem('user'));
-    const hasTransportAccess = currentUser?.schoolData?.hasTransportFeature || false;
+    // 2. CORE ERP MODULES (Sirf tab dikhenge jab SuperAdmin ne ON kiya ho)
+    if (hasStandardFeatures) {
+        managementModules.push(
+            { id: 'add-staff', title: 'Manage staff', btnText: 'Manage Teachers', icon: <Users size={24} />, desc: 'Assign roles & classes', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200' },
+            { id: 'attendance-report', title: 'Performance', btnText: 'View Reports', icon: <BarChart3 size={24} />, desc: 'Class wise performance', iconBg: 'bg-cyan-50 text-cyan-500', btnColor: 'bg-cyan-500 hover:bg-cyan-600 shadow-cyan-200' },
+            { id: 'notice', title: 'Publish notice', btnText: 'Send Notice', icon: <Megaphone size={24} />, desc: 'Send notice to all', iconBg: 'bg-orange-50 text-orange-500', btnColor: 'bg-orange-500 hover:bg-orange-600 shadow-orange-200' },
+            { id: 'notice-feed', title: 'Notice archive', btnText: 'View Archive', icon: <ClipboardList size={24} />, desc: 'Manage & delete notices', iconBg: 'bg-red-50 text-red-500', btnColor: 'bg-red-500 hover:bg-red-600 shadow-red-200' },
+            { id: 'timetable', title: 'Timetable', btnText: 'Manage Matrix', icon: <Database size={24} />, desc: 'Schedule all classes', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
+            { id: 'edit-timetable', title: 'Edit timetable', btnText: 'Edit Timetable', icon: <Database size={24} />, desc: 'Modify existing schedules', iconBg: 'bg-rose-50 text-rose-500', btnColor: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' },
+            { id: 'faculty-tracking', title: 'Faculty schedule', btnText: 'Track Faculty', icon: <UserCheck size={24} />, desc: "View Teacher Schedules", iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' },
+            { id: 'datesheet-engine', title: 'Datesheet Engine', btnText: 'Create Exams', icon: <Calendar size={24} />, desc: 'Exam scheduler', iconBg: 'bg-violet-50 text-violet-500', btnColor: 'bg-violet-500 hover:bg-violet-600 shadow-violet-200' },
+            { id: 'admit-card', title: 'Admit Cards', btnText: 'Issue Cards', icon: <ClipboardCheck size={24} />, desc: 'Exam hall tickets', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200' },
+            { id: 'academic-calendar', title: 'Academic Calendar', btnText: 'View Calendar', icon: <Calendar size={24} />, desc: 'Manage holidays, exams & PTMs', iconBg: 'bg-rose-50 text-rose-500', btnColor: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' },
+            { id: 'feedback-engine', title: 'Feedback Engine', btnText: 'View Feedback', icon: <MessageSquare size={24} />, desc: 'Request teacher evaluations', iconBg: 'bg-teal-50 text-teal-500', btnColor: 'bg-teal-500 hover:bg-teal-600 shadow-teal-200' },
+            { id: 'manage-users', title: 'User Management', btnText: 'Manage Users', icon: <Users size={24} />, desc: 'Edit or Delete personnel', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
+            { id: 'session-upgrade', title: 'Session upgrade', btnText: 'Upgrade Now', icon: <Zap size={24} />, desc: 'Promote students to next class', iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' }
+        );
+    }
 
+    // 3. PREMIUM MODULES (Individual checks)
     if (hasTransportAccess) {
         managementModules.push({
-            id: 'transport-setup',
-            title: 'Transport Fleet',
-            btnText: 'Manage Transport',
-            icon: <Bus size={24} />, 
-            desc: 'Assign Incharge & Buses',
-            iconBg: 'bg-amber-50 text-amber-500',
-            btnColor: 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
+            id: 'transport-setup', title: 'Transport Fleet', btnText: 'Manage Transport', icon: <Bus size={24} />, desc: 'Assign Incharge & Buses', iconBg: 'bg-amber-50 text-amber-500', btnColor: 'bg-amber-500 hover:bg-amber-600 shadow-amber-200'
+        });
+    }
+
+    if (hasLibraryAccess) {
+        managementModules.push({
+            id: 'library-setup', title: 'Digital Library', btnText: 'Manage Library', icon: <Database size={24} />, desc: 'Assign Librarian & Books', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200'
         });
     }
 

@@ -45,6 +45,48 @@ const SuperAdminDashboard = () => {
             alert("Failed to toggle feature. Please check your connection.");
         }
     };
+
+    const toggleLibraryFeature = async (schoolId, currentStatus) => {
+        setStats(prevStats => ({
+            ...prevStats,
+            schools: prevStats.schools.map(school => 
+                school._id === schoolId ? { ...school, hasLibraryFeature: !currentStatus } : school
+            )
+        }));
+        try {
+            await API.put(`/superadmin/toggle-library/${schoolId}`);
+        } catch (err) {
+            console.error("Toggle Error", err);
+            setStats(prevStats => ({
+                ...prevStats,
+                schools: prevStats.schools.map(school => 
+                    school._id === schoolId ? { ...school, hasLibraryFeature: currentStatus } : school
+                )
+            }));
+            alert("Failed to toggle Library feature. Please check your connection.");
+        }
+    };
+
+    const toggleStandardFeatures = async (schoolId, currentStatus) => {
+        setStats(prevStats => ({
+            ...prevStats,
+            schools: prevStats.schools.map(school => 
+                school._id === schoolId ? { ...school, hasStandardFeatures: !currentStatus } : school
+            )
+        }));
+        try {
+            await API.put(`/superadmin/toggle-standard/${schoolId}`);
+        } catch (err) {
+            console.error("Toggle Error", err);
+            setStats(prevStats => ({
+                ...prevStats,
+                schools: prevStats.schools.map(school => 
+                    school._id === schoolId ? { ...school, hasStandardFeatures: currentStatus } : school
+                )
+            }));
+            alert("Failed to toggle Core ERP. Please check your connection.");
+        }
+    };
     
     const [editingSchool, setEditingSchool] = useState(null);
     const [editData, setEditData] = useState({});
@@ -319,13 +361,36 @@ const SuperAdminDashboard = () => {
                                 <p className="text-xs text-slate-400 font-medium">Ref: {school.affiliationNo}</p>
                             </div>
                             
-                            {/* Toggle Button */}
-                            <button 
-                                onClick={() => toggleTransportFeature(school._id, school.hasTransportFeature)}
-                                className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${school.hasTransportFeature ? 'bg-amber-500' : 'bg-slate-600'}`}
-                            >
-                                <span className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-300 shadow-md ${school.hasTransportFeature ? 'left-7' : 'left-1'}`}></span>
-                            </button>
+                           {/* 🔥 DUAL PREMIUM TOGGLES 🔥 */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-between gap-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Transport</span>
+                                    <button 
+                                        onClick={() => toggleTransportFeature(school._id, school.hasTransportFeature)}
+                                        className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${school.hasTransportFeature ? 'bg-amber-500' : 'bg-slate-600'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${school.hasTransportFeature ? 'left-7' : 'left-1'}`}></span>
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Library</span>
+                                    <button 
+                                        onClick={() => toggleLibraryFeature(school._id, school.hasLibraryFeature)}
+                                        className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${school.hasLibraryFeature ? 'bg-indigo-500' : 'bg-slate-600'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${school.hasLibraryFeature ? 'left-7' : 'left-1'}`}></span>
+                                    </button>
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Core ERP</span>
+                                    <button 
+                                        onClick={() => toggleStandardFeatures(school._id, school.hasStandardFeatures)}
+                                        className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${school.hasStandardFeatures ? 'bg-emerald-500' : 'bg-slate-600'}`}
+                                    >
+                                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${school.hasStandardFeatures ? 'left-7' : 'left-1'}`}></span>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>

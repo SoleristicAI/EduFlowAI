@@ -7,6 +7,8 @@ const schoolSchema = new mongoose.Schema({
     logo: { type: String },
     // 🔥 PREMIUM FEATURE FLAGS 🔥
     hasTransportFeature: { type: Boolean, default: false },
+    hasLibraryFeature: { type: Boolean, default: false }, // 🔥 LIBRARY MODULE FLAG
+    hasStandardFeatures: { type: Boolean, default: true },
     adminDetails: {
         fullName: String,
         mobile: String,
