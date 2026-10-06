@@ -7,7 +7,8 @@ import 'dart:ui';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/custom_loader.dart';
 import '../../../core/theme/theme_provider.dart'; // 🔥 APNA GLOBAL THEME PROVIDER
-
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -30,6 +31,7 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
   String? activeSession;
   List<String> availableSessions = [];
   bool _isDropdownOpen = false;
+  bool hasTransportAccess = false;
 
   @override
   void initState() {
@@ -40,6 +42,12 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
   Future<void> _fetchSummary({String? session}) async {
     setState(() => loading = true);
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final userStr = prefs.getString('user');
+      if (userStr != null) {
+        final userData = jsonDecode(userStr);
+        hasTransportAccess = userData['schoolData']?['hasTransportFeature'] ?? false;
+      }
       // 1. Agar session load nahi hua hai, toh pehle usko laao
       if (activeSession == null) {
         final sessionRes = await ApiClient.dio.get('/users/general/session-info');
@@ -60,6 +68,7 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
       setState(() => loading = false);
     }
   }
+  
 
   Future<void> _downloadReceipt(String paymentId) async {
     try {
@@ -835,57 +844,60 @@ class _StudentFeesState extends ConsumerState<StudentFees> {
                         const SizedBox(height: 16),
 
                         // 🔥 NAYA TRANSPORT BUTTON 🔥
-                        GestureDetector(
-                          onTap: () => context.push('/student/transport-fees'),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 400),
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: cardColor, // 🔥 Dynamic
-                              borderRadius: BorderRadius.circular(35),
-                              border: Border.all(color: borderColor), // 🔥 Dynamic
-                              boxShadow: const [
-                                BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: isDarkMode ? const Color(0xFF78350F).withOpacity(0.3) : Colors.amber.shade50,
-                                        borderRadius: BorderRadius.circular(16),
+                        // 🔥 CONDITIONAL TRANSPORT BUTTON 🔥
+                        if (hasTransportAccess) ...[
+                          GestureDetector(
+                            onTap: () => context.push('/student/transport-fees'),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 400),
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: cardColor, // 🔥 Dynamic
+                                borderRadius: BorderRadius.circular(35),
+                                border: Border.all(color: borderColor), // 🔥 Dynamic
+                                boxShadow: const [
+                                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4))
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: isDarkMode ? const Color(0xFF78350F).withOpacity(0.3) : Colors.amber.shade50,
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Icon(Icons.directions_bus, color: Colors.amber.shade500, size: 24),
                                       ),
-                                      child: Icon(Icons.directions_bus, color: Colors.amber.shade500, size: 24),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text("TRANSPORT", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
-                                        const SizedBox(height: 4),
-                                        Text("Bus fees & route status", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColorSecondary)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(12),
+                                      const SizedBox(width: 16),
+                                      Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text("TRANSPORT", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: textColorPrimary, fontStyle: FontStyle.italic)),
+                                          const SizedBox(height: 4),
+                                          Text("Bus fees & route status", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: textColorSecondary)),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                  child: Icon(Icons.arrow_forward_ios, color: textColorSecondary, size: 16),
-                                ),
-                              ],
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(Icons.arrow_forward_ios, color: textColorSecondary, size: 16),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.2),
-                        const SizedBox(height: 24),
+                          ).animate().fadeIn(delay: 250.ms).slideY(begin: 0.2),
+                          const SizedBox(height: 24),
+                        ],
 
                         // --- STATS GRID ---
                         Row(
