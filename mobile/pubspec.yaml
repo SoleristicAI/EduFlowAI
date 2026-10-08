@@ -1,7 +1,7 @@
 name: mobile
 description: "EduFlowAI mobile application"
 publish_to: 'none'
-version: 1.0.0+8
+version: 1.0.0+10
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -55,10 +55,12 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon/app_logo.jpeg"
+  image_path: "assets/icon/app_logo_foreground.png"  # 🔥 Yahan fallback ke liye bhi naya PNG daal diya
+  adaptive_icon_background: "#FFFFFF"     
+  adaptive_icon_foreground: "assets/icon/app_logo_foreground.png" 
   min_sdk_android: 21
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/app_logo.jpeg
+    - assets/icon/app_logo_foreground.png # 🔥 Yahan se bhi purana jpeg hata diya
