@@ -145,13 +145,14 @@ const MyAccount = ({ user }) => {
                                 {user?.role === 'admin' ? 'Master node authorized' : 
                                  user?.role === 'student' ? `Class: ${user.grade}` : 
                                  user?.role === 'transport_incharge' ? 'Head of Transport' : 
+                                 user?.role === 'librarian' ? 'Chief Librarian' : 
                                  'Faculty member'}
                             </span>
                             
                             {user?.role !== 'admin' && (
                                 <span className="bg-blue-50 text-[#42A5F5] border border-blue-100 px-5 py-2 rounded-full text-[15px] font-black italic tracking-widest  shadow-sm">
                                     {user?.role === 'student' ? user.enrollmentNo : 
-                                     user?.role === 'transport_incharge' ? user.customId : 
+                                     (user?.role === 'transport_incharge' || user?.role === 'librarian') ? user.customId : 
                                      user.employeeId}
                                 </span>
                             )}
@@ -239,8 +240,8 @@ const MyAccount = ({ user }) => {
                                             </div>
                                         )}
 
-                                       {/* 🔥 HIDE FOR TRANSPORT INCHARGE 🔥 */}
-                                        {user?.role !== 'transport_incharge' && (
+                                       {/* 🔥 HIDE FOR TRANSPORT INCHARGE & LIBRARIAN 🔥 */}
+                                        {(user?.role !== 'transport_incharge' && user?.role !== 'librarian') && (
                                             <>
                                                 <div className="flex items-center gap-5">
                                                     <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><User size={22} /></div>
@@ -285,8 +286,8 @@ const MyAccount = ({ user }) => {
                                             </div>
                                         </div>
 
-                                        {/* 🔥 HIDE RELIGION FOR TRANSPORT INCHARGE 🔥 */}
-                                        {user?.role !== 'transport_incharge' && (
+                                        {/* 🔥 HIDE RELIGION FOR TRANSPORT INCHARGE & LIBRARIAN 🔥 */}
+                                        {(user?.role !== 'transport_incharge' && user?.role !== 'librarian') && (
                                             <div className="flex items-center gap-5">
                                                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-slate-400"><ShieldCheck size={22} /></div>
                                                 <div>
@@ -312,9 +313,9 @@ const MyAccount = ({ user }) => {
                                                     <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Registered email</p>
                                                     <p className="text-[15px] font-black text-[#42A5F5] lowercase italic">{user?.email}</p>
                                                 </>
-                                            ) : user?.role === 'transport_incharge' ? (
+                                            ) : (user?.role === 'transport_incharge' || user?.role === 'librarian') ? (
                                                 <>
-                                                    {/* 🔥 TRANSPORT INCHARGE EMAIL & CUSTOM ID 🔥 */}
+                                                    {/* 🔥 TRANSPORT INCHARGE & LIBRARIAN EMAIL & CUSTOM ID 🔥 */}
                                                     <p className="text-[16px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Registered email</p>
                                                     <p className="text-[15px] font-black text-slate-700 lowercase italic mb-3">{user?.email}</p>
                                                     

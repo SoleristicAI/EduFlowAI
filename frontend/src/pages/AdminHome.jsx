@@ -293,6 +293,7 @@ const AdminHome = ({ searchQuery }) => {
                                 if (m.id === 'feedback-engine') navigate('/admin/feedback');
                                 if (m.id === 'session-upgrade') navigate('/admin/session-upgrade');
                                 if (m.id === 'transport-setup') navigate('/admin/transport-setup');
+                                if (m.id === 'library-setup') navigate('/admin/library-setup');
                             }} 
                             className="bg-white rounded-[2rem] p-5 border border-slate-100 flex flex-col items-center text-center cursor-pointer group shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                         >

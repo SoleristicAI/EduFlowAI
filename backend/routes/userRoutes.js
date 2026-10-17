@@ -494,7 +494,7 @@ router.get('/check-finance-exists', protect, adminOnly, async (req, res) => {
         });
 
         // Agar mil gaya toh true, warna false
-        res.json({ exists: !!financeTeacher });
+        res.jsonf({ exists: !!financeTeacher });
     } catch (error) {
         res.status(500).json({ message: 'Error checking finance record' });
     }
@@ -513,6 +513,48 @@ router.get('/check-transport-incharge', protect, adminOnly, async (req, res) => 
         res.json({ exists: !!incharge, incharge });
     } catch (error) {
         res.status(500).json({ message: 'Error checking transport record' });
+    }
+});
+
+// ==========================================================
+// 🔥 LIBRARIAN CHECK ENGINE 🔥
+// ==========================================================
+router.get('/check-librarian', protect, adminOnly, async (req, res) => {
+    try {
+        const librarian = await User.findOne({
+            schoolId: req.user.schoolId,
+            role: 'librarian'
+        }).select('-password');
+
+        res.json({ exists: !!librarian, librarian });
+    } catch (error) {
+        res.status(500).json({ message: 'Error checking librarian record' });
+    }
+});
+
+// ==========================================================
+// 🔥 LIBRARIAN CREATION ENGINE 🔥
+// ==========================================================
+router.post('/add-librarian', protect, adminOnly, uploadCloudinary.single('avatar'), async (req, res) => {
+    try {
+        const { name, email, customId, password, phone, dob, gender, fullAddress, district, state, pincode } = req.body;
+        
+        const existingUser = await User.findOne({ $or: [{ email }, { customId }] });
+        if (existingUser) return res.status(400).json({ message: 'Email or Custom ID already taken!' });
+
+        const avatarPath = req.file ? req.file.path : 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+
+        const user = await User.create({
+            schoolId: req.user.schoolId,
+            name, email, customId, password, phone, dob, gender,
+            role: 'librarian',
+            avatar: avatarPath,
+            address: { fullAddress, district, state, pincode }
+        });
+
+        res.status(201).json(user);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to create librarian: ' + error.message });
     }
 });
 

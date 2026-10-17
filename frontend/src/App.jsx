@@ -97,6 +97,7 @@ import PaymentMethods from './pages/student/PaymentMethods';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsConditions from "./pages/TermsConditions";
+import LibrarySetup from './pages/LibrarySetup';
 
 // Transport Related file path
 import TransportDashboard from './pages/transport/TransportDashboard';
@@ -109,6 +110,9 @@ import RouteAttendanceViewer from './pages/transport/RouteAttendanceViewer';
 import TransportFees from './pages/student/TransportFees';
 import TransportExemptions from './pages/transport/TransportExemptions';
 import TransportLedger from './pages/finance/TransportLedger';
+
+// Librarian Dashboard
+import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
 
 import { useTheme } from './context/ThemeContext';
 const VisualMatrix = () => {
@@ -176,6 +180,8 @@ function App() {
         navigate("/finance/dashboard");
       } else if (data.role === 'transport_incharge') { // 🔥 NAYA REDIRECT
         navigate("/transport/dashboard");
+      } else if (data.role === 'librarian') { // 🔥 LIBRARIAN REDIRECT
+        navigate("/librarian/dashboard");
       } else {
         navigate("/");
       }
@@ -425,7 +431,7 @@ function App() {
     );
   }
 
- const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard", "/transport/dashboard"];
+ const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard", "/transport/dashboard", "/librarian/dashboard"];
   const isDashboard = dashboardPaths.includes(location.pathname);
 
   return (
@@ -448,16 +454,19 @@ function App() {
             user.role === 'superadmin' ? <SuperAdminDashboard /> :
               user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : 
                 user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : 
-                  user.role === 'transport_incharge' ? <TransportDashboard /> : // 🔥 YE LINE ADD KAR
-                  user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
-                    <StudentHome user={user} searchQuery={searchQuery} />
+                  user.role === 'transport_incharge' ? <TransportDashboard /> : 
+                    user.role === 'librarian' ? <LibrarianDashboard /> : // 🔥 LIBRARIAN HOME
+                    user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
+                      <StudentHome user={user} searchQuery={searchQuery} />
           } />
           <Route path="/dashboard" element={
             user.role === 'superadmin' ? <SuperAdminDashboard /> :
-              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : // <--- Prop Added
-                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : // <--- Prop Added
-                  user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : // <--- Prop Added
-                    <StudentHome user={user} searchQuery={searchQuery} />
+              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : 
+                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : 
+                  user.role === 'transport_incharge' ? <TransportDashboard /> : 
+                    user.role === 'librarian' ? <LibrarianDashboard /> : // 🔥 LIBRARIAN HOME
+                    user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
+                      <StudentHome user={user} searchQuery={searchQuery} />
           } />
 
           {/* SuperAdmin Specific Routes - Day 64 */}
@@ -500,6 +509,9 @@ function App() {
           <Route path="/student/transport-fees" element={<TransportFees />} />
           <Route path="/transport/exemptions" element={<TransportExemptions />} />
           <Route path="/finance/transport-ledger/:id" element={<TransportLedger />} />
+          <Route path="/admin/library-setup" element={<LibrarySetup />} />
+          {/* 🔥 LIBRARY ROUTE 🔥 */}
+          <Route path="/librarian/dashboard" element={<LibrarianDashboard />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
@@ -578,7 +590,7 @@ function App() {
       </AnimatePresence>
       {/* SuperAdmin, Admin aur Finance ke liye BottomNav nahi dikhega */}
      <div className="print:hidden fixed bottom-0 left-0 w-full z-40">
-        {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance' && user.role !== 'transport_incharge') && <BottomNav />}
+       {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance' && user.role !== 'transport_incharge' && user.role !== 'librarian') && <BottomNav />}
       </div>
     </div>
   );
