@@ -1,47 +1,54 @@
 const express = require('express');
 const router = express.Router();
 const Book = require('../models/Book');
+const LibraryTransaction = require('../models/LibraryTransaction');
+const User = require('../models/User');
 const { protect } = require('../middleware/authMiddleware');
 
-router.get('/', protect, async (req, res) => {
+// ==========================================================
+// 🔥 LIBRARIAN DASHBOARD STATS 🔥
+// ==========================================================
+router.get('/stats', protect, async (req, res) => {
     try {
-        const { search } = req.query;
-        let query = { schoolId: req.user.schoolId }; // FIXED: Base isolation
-        if (search) {
-            query.$or = [
-                { title: { $regex: search, $options: 'i' } },
-                { author: { $regex: search, $options: 'i' } },
-                { category: { $regex: search, $options: 'i' } }
-            ];
-        }
-        const books = await Book.find(query);
-        res.json(books);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching books' });
-    }
-});
+        const schoolId = req.user.schoolId;
 
-router.post('/add', protect, async (req, res) => {
-    try {
-        const newBook = await Book.create({
-            ...req.body,
-            schoolId: req.user.schoolId // FIXED
+        // 1. Total Books & Available Books Calculation
+        const books = await Book.find({ schoolId, isDeleted: false });
+        const totalBooks = books.reduce((sum, book) => sum + book.totalCopies, 0);
+        const availableBooks = books.reduce((sum, book) => sum + book.availableCopies, 0);
+
+        // 2. Issued & Overdue Calculation
+        const activeTransactions = await LibraryTransaction.find({ 
+            schoolId, 
+            status: { $in: ['Issued', 'Overdue'] } 
         });
-        res.status(201).json(newBook);
-    } catch (error) {
-        res.status(500).json({ message: 'Error adding book' });
-    }
-});
+        
+        let issuedBooks = 0;
+        let overdueBooks = 0;
+        const today = new Date();
 
-router.get('/ebooks', protect, async (req, res) => {
-    try {
-        const ebooks = await Book.find({ 
-            isDigital: true,
-            schoolId: req.user.schoolId // FIXED
-        }).sort({ createdAt: -1 });
-        res.json(ebooks);
+        activeTransactions.forEach(tx => {
+            issuedBooks++;
+            // Auto calculate overdue on the fly for stats
+            if (new Date(tx.dueDate) < today && tx.status !== 'Returned') {
+                overdueBooks++;
+            }
+        });
+
+        // 3. Total Members (For now, we count students who have a membership flag, assuming we'll add it to User model next)
+        const libraryMembers = await User.countDocuments({ schoolId, role: 'student', isLibraryMember: true });
+
+        res.json({
+            totalBooks,
+            availableBooks,
+            issuedBooks,
+            overdueBooks,
+            libraryMembers
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Error fetching digital material' });
+        console.error("Library Stats Error:", error);
+        res.status(500).json({ message: "Failed to fetch library stats" });
     }
 });
 
