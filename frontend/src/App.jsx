@@ -113,6 +113,8 @@ import TransportLedger from './pages/finance/TransportLedger';
 
 // Librarian Dashboard
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
+import BookCatalogue from './pages/librarian/BookCatalogue';
+import IssueReturn from './pages/librarian/IssueReturn';
 
 import { useTheme } from './context/ThemeContext';
 const VisualMatrix = () => {
@@ -512,6 +514,8 @@ function App() {
           <Route path="/admin/library-setup" element={<LibrarySetup />} />
           {/* 🔥 LIBRARY ROUTE 🔥 */}
           <Route path="/librarian/dashboard" element={<LibrarianDashboard />} />
+          <Route path="/library/catalogue" element={<BookCatalogue />} />
+          <Route path="/library/issue" element={<IssueReturn />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />

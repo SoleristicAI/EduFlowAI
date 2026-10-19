@@ -48,7 +48,7 @@ const LibrarianDashboard = () => {
 
     // 🔥 LIBRARY MODULES GRID 🔥
     const libraryModules = [
-        { id: 'issue-return', title: 'Issue & Return', btnText: 'Transact Now', icon: <ArrowRightLeft size={24} />, desc: 'Issue or collect books', iconBg: 'bg-indigo-50 text-indigo-500', btnColor: 'bg-indigo-500 hover:bg-indigo-600 shadow-indigo-200' },
+        { id: 'issue', title: 'Issue & Return', btnText: 'Transact Now', icon: <ArrowRightLeft size={24} />, desc: 'Issue or collect books', iconBg: 'bg-blue-50 text-[#42A5F5]', btnColor: 'bg-[#42A5F5] hover:bg-blue-600 shadow-blue-200' },
         { id: 'catalogue', title: 'Book Catalogue', btnText: 'Manage Books', icon: <BookOpen size={24} />, desc: 'Add, edit, or search books', iconBg: 'bg-blue-50 text-blue-500', btnColor: 'bg-blue-500 hover:bg-blue-600 shadow-blue-200' },
         { id: 'members', title: 'Library Members', btnText: 'View Members', icon: <Users size={24} />, desc: 'Manage student memberships', iconBg: 'bg-emerald-50 text-emerald-500', btnColor: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-200' },
         { id: 'overdue', title: 'Overdue Books', btnText: 'Check Defaulters', icon: <AlertCircle size={24} />, desc: 'Track pending returns & fines', iconBg: 'bg-rose-50 text-rose-500', btnColor: 'bg-rose-500 hover:bg-rose-600 shadow-rose-200' },
@@ -57,10 +57,10 @@ const LibrarianDashboard = () => {
     ];
 
     return (
-        <div className="bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 px-5 pt-6 relative z-10 max-w-6xl mx-auto">
+        <div className="bg-[#F8FAFC] min-h-screen pb-6 font-sans italic text-slate-800 px-4 pt-1 relative z-10 w-full max-w-none mx-auto">
             
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 px-2">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-3 px-1">
                 <div>
                     <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-800">Library Engine</h1>
                     <p className="text-[12px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2 mt-1">
@@ -89,7 +89,7 @@ const LibrarianDashboard = () => {
                 </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
                 
                 {/* 🔥 STATS GRID 🔥 */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -111,7 +111,7 @@ const LibrarianDashboard = () => {
                 </div>
 
                 {/* 🔥 LIBRARY MODULES GRID 🔥 */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-5 mt-8">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mt-5">
                     {libraryModules.map((m, i) => (
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.05 }}
