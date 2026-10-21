@@ -148,7 +148,6 @@ const StudentAdmitCard = ({ user }) => {
                         Examination Pass
                     </p>
                 </div>
-
             </div>
 
             <div className="px-5 -mt-10 relative z-20 space-y-6 max-w-lg mx-auto print:hidden">

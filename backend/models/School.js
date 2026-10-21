@@ -8,6 +8,10 @@ const schoolSchema = new mongoose.Schema({
     // 🔥 PREMIUM FEATURE FLAGS 🔥
     hasTransportFeature: { type: Boolean, default: false },
     hasLibraryFeature: { type: Boolean, default: false }, // 🔥 LIBRARY MODULE FLAG
+    librarySettings: {
+        defaultDueDays: { type: Number, default: 7 },
+        finePerDay: { type: Number, default: 5 }
+    },
     hasStandardFeatures: { type: Boolean, default: true },
     adminDetails: {
         fullName: String,

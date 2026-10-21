@@ -15,7 +15,7 @@
     "framer-motion": "^12.34.0",
     "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.1",
-    "jspdf-autotable": "^5.0.8",
+    "jspdf-autotable": "^5.0.9",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "qrcode.react": "^4.2.0",

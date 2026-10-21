@@ -258,4 +258,105 @@ router.put('/return/:id', protect, async (req, res) => {
     }
 });
 
+// ==========================================================
+// 🔥 OVERDUE, MEMBERS & SETTINGS ENGINE 🔥
+// ==========================================================
+
+// 1. GET OVERDUE BOOKS
+router.get('/overdue', protect, async (req, res) => {
+    try {
+        const today = new Date();
+        const transactions = await LibraryTransaction.find({
+            schoolId: req.user.schoolId,
+            status: { $in: ['Issued', 'Overdue'] },
+            dueDate: { $lt: today }
+        })
+        .populate('studentId', 'name enrollmentNo phone avatar grade')
+        .populate('bookId', 'title isbn')
+        .sort({ dueDate: 1 }); // Jo sabse purana due hai wo upar aayega
+
+        res.json(transactions);
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch overdue books." });
+    }
+});
+
+// 2. GET LIBRARY MEMBER CARD (History & Stats)
+router.get('/member/:studentId', protect, async (req, res) => {
+    try {
+        const student = await User.findOne({ _id: req.params.studentId, schoolId: req.user.schoolId })
+            .select('name enrollmentNo grade phone avatar fatherName');
+            
+        const history = await LibraryTransaction.find({ studentId: req.params.studentId, schoolId: req.user.schoolId })
+            .populate('bookId', 'title isbn category')
+            .sort({ issueDate: -1 });
+
+        res.json({ student, history });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch member details." });
+    }
+});
+
+// 3. GET & UPDATE SETTINGS
+router.get('/settings', protect, async (req, res) => {
+    try {
+        const school = await require('../models/School').findById(req.user.schoolId).select('librarySettings');
+        res.json(school.librarySettings || { defaultDueDays: 7, finePerDay: 5 });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch settings." });
+    }
+});
+
+router.put('/settings', protect, async (req, res) => {
+    try {
+        const school = await require('../models/School').findById(req.user.schoolId);
+        school.librarySettings = req.body;
+        await school.save();
+        res.json({ message: "Library settings updated! ⚙️", settings: school.librarySettings });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to update settings." });
+    }
+});
+
+// ==========================================================
+// 🔥 LIBRARY REPORTS ENGINE 🔥
+// ==========================================================
+
+router.get('/reports', protect, async (req, res) => {
+    try {
+        const { filter } = req.query; // 'all', '7days', '30days'
+        let query = { schoolId: req.user.schoolId };
+
+        // Date filtering logic
+        if (filter === '7days') {
+            const date = new Date();
+            date.setDate(date.getDate() - 7);
+            query.issueDate = { $gte: date };
+        } else if (filter === '30days') {
+            const date = new Date();
+            date.setDate(date.getDate() - 30);
+            query.issueDate = { $gte: date };
+        }
+
+        const transactions = await LibraryTransaction.find(query)
+            .populate('studentId', 'name enrollmentNo grade')
+            .populate('bookId', 'title isbn category')
+            .sort({ issueDate: -1 });
+
+        // Calculate dynamic metrics for the selected period
+        const today = new Date();
+        const stats = {
+            totalTransactions: transactions.length,
+            issued: transactions.filter(tx => tx.status === 'Issued').length,
+            returned: transactions.filter(tx => tx.status === 'Returned').length,
+            // Dynamically calculate overdue if status is Issued but due date is passed
+            overdue: transactions.filter(tx => tx.status === 'Overdue' || (tx.status === 'Issued' && new Date(tx.dueDate) < today)).length
+        };
+
+        res.json({ stats, transactions });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to generate reports." });
+    }
+});
+
 module.exports = router;

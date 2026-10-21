@@ -81,8 +81,8 @@ import Installments from './pages/finance/Installments';
 import FeesTracker from './pages/finance/FeesTracker';
 import FeesNoticeManager from './pages/finance/FeesNoticeManager';
 import StudentLedger from './pages/finance/StudentLedger';
-import FeeReports from './pages/finance/FeeReports'; 
-import FeeSetup from './pages/finance/FeeSetup'; 
+import FeeReports from './pages/finance/FeeReports';
+import FeeSetup from './pages/finance/FeeSetup';
 import TechnicalSupportModal from './components/TechnicalSupportModal';
 
 // Day 64: SuperAdmin Module Imports
@@ -90,8 +90,8 @@ import SuperAdminDashboard from './pages/SuperAdminDashboard';
 import SuperAdminOnboard from './pages/SuperAdminOnboard';
 import SuperAdminAccount from './pages/SuperAdminAccount';
 import SuperAdminTechnical from './pages/SuperAdminTechnical';
-import StudentCheckout from './pages/student/StudentCheckout'; 
-import PaymentMethods from './pages/student/PaymentMethods'; 
+import StudentCheckout from './pages/student/StudentCheckout';
+import PaymentMethods from './pages/student/PaymentMethods';
 
 // Landing page
 import LandingPage from './pages/LandingPage';
@@ -115,6 +115,10 @@ import TransportLedger from './pages/finance/TransportLedger';
 import LibrarianDashboard from './pages/librarian/LibrarianDashboard';
 import BookCatalogue from './pages/librarian/BookCatalogue';
 import IssueReturn from './pages/librarian/IssueReturn';
+import OverdueBooks from './pages/librarian/OverdueBooks';
+import LibraryMembers from './pages/librarian/LibraryMembers';
+import LibrarySettings from './pages/librarian/LibrarySettings';
+import LibraryReports from './pages/librarian/LibraryReports';
 
 import { useTheme } from './context/ThemeContext';
 const VisualMatrix = () => {
@@ -433,7 +437,7 @@ function App() {
     );
   }
 
- const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard", "/transport/dashboard", "/librarian/dashboard"];
+  const dashboardPaths = ["/", "/dashboard", "/superadmin/dashboard", "/finance/dashboard", "/transport/dashboard", "/librarian/dashboard"];
   const isDashboard = dashboardPaths.includes(location.pathname);
 
   return (
@@ -452,23 +456,23 @@ function App() {
       <main className={`relative z-0 pb-32 overflow-x-hidden ${isDashboard ? 'pt-20' : 'pt-6'} bg-[#F8FAFC]`}>
         <Routes>
           {/* Main Dashboard Logic based on Role */}
-         <Route path="/" element={
+          <Route path="/" element={
             user.role === 'superadmin' ? <SuperAdminDashboard /> :
-              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : 
-                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : 
-                  user.role === 'transport_incharge' ? <TransportDashboard /> : 
+              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> :
+                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> :
+                  user.role === 'transport_incharge' ? <TransportDashboard /> :
                     user.role === 'librarian' ? <LibrarianDashboard /> : // 🔥 LIBRARIAN HOME
-                    user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
-                      <StudentHome user={user} searchQuery={searchQuery} />
+                      user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> :
+                        <StudentHome user={user} searchQuery={searchQuery} />
           } />
           <Route path="/dashboard" element={
             user.role === 'superadmin' ? <SuperAdminDashboard /> :
-              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> : 
-                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> : 
-                  user.role === 'transport_incharge' ? <TransportDashboard /> : 
+              user.role === 'admin' ? <AdminHome searchQuery={searchQuery} /> :
+                user.role === 'finance' ? <FinanceDashboard searchQuery={searchQuery} /> :
+                  user.role === 'transport_incharge' ? <TransportDashboard /> :
                     user.role === 'librarian' ? <LibrarianDashboard /> : // 🔥 LIBRARIAN HOME
-                    user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> : 
-                      <StudentHome user={user} searchQuery={searchQuery} />
+                      user.role === 'teacher' ? <TeacherHome user={user} searchQuery={searchQuery} /> :
+                        <StudentHome user={user} searchQuery={searchQuery} />
           } />
 
           {/* SuperAdmin Specific Routes - Day 64 */}
@@ -512,10 +516,15 @@ function App() {
           <Route path="/transport/exemptions" element={<TransportExemptions />} />
           <Route path="/finance/transport-ledger/:id" element={<TransportLedger />} />
           <Route path="/admin/library-setup" element={<LibrarySetup />} />
+
           {/* 🔥 LIBRARY ROUTE 🔥 */}
           <Route path="/librarian/dashboard" element={<LibrarianDashboard />} />
           <Route path="/library/catalogue" element={<BookCatalogue />} />
           <Route path="/library/issue" element={<IssueReturn />} />
+          <Route path="/library/overdue" element={<OverdueBooks />} />
+          <Route path="/library/members" element={<LibraryMembers />} />
+          <Route path="/library/settings" element={<LibrarySettings />} />
+          <Route path="/library/reports" element={<LibraryReports />} />
 
           {/* Academic & Feature Routes */}
           <Route path="/assignments" element={<StudentAssignments user={user} />} />
@@ -593,8 +602,8 @@ function App() {
         )}
       </AnimatePresence>
       {/* SuperAdmin, Admin aur Finance ke liye BottomNav nahi dikhega */}
-     <div className="print:hidden fixed bottom-0 left-0 w-full z-40">
-       {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance' && user.role !== 'transport_incharge' && user.role !== 'librarian') && <BottomNav />}
+      <div className="print:hidden fixed bottom-0 left-0 w-full z-40">
+        {(user.role !== 'admin' && user.role !== 'superadmin' && user.role !== 'finance' && user.role !== 'transport_incharge' && user.role !== 'librarian') && <BottomNav />}
       </div>
     </div>
   );
