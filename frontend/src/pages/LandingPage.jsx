@@ -751,16 +751,16 @@ font-semibold
                 </p>
 
                 <div className="mt-6">
-                  <span className="text-5xl font-black">₹50</span>
+                  <span className="text-5xl font-black">₹20</span>
                   <span className="text-slate-500 text-lg"> / student / month</span>
                 </div>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Minimum Billing: ₹2,500/month
+                  Minimum Billing: ₹1,000/month
                 </p>
 
                 <p className="text-sm text-slate-500">
-                  One-Time Setup Fee: ₹9,999
+                  One-Time Setup Fee: ₹4,999
                 </p>
                 <br />
 
@@ -820,16 +820,16 @@ font-semibold
                 </p>
 
                 <div className="mt-6">
-                  <span className="text-5xl font-black">₹45</span>
+                  <span className="text-5xl font-black">₹15</span>
                   <span className="text-slate-500 text-lg"> / student / month</span>
                 </div>
 
                 <p className="mt-2 text-sm text-slate-500">
-                  Minimum Billing: ₹10,000/month
+                  Minimum Billing: ₹4,500/month
                 </p>
 
                 <p className="text-sm text-slate-500">
-                  One-Time Setup Fee: ₹24,999
+                  One-Time Setup Fee: ₹19,999  
                 </p>
                 <br />
 

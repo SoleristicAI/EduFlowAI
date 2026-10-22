@@ -58,6 +58,31 @@ const IssueReturn = () => {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        initializeDesk();
+    }, []);
+
+    // 🔥 FIX: Pehle Settings fetch karo, fir Calendar ki date set karo, aur fir list load karo
+    const initializeDesk = async () => {
+        try {
+            // 1. Backend se Settings uthao
+            const { data: settings } = await API.get('/library/settings');
+            const defaultDays = settings.defaultDueDays || 7; // Agar backend se nahi aaya toh 7 din default
+            
+            // 2. Calendar ki dates update karo
+            const d = new Date();
+            d.setDate(d.getDate() + defaultDays);
+            setDueDate(d.toISOString().split('T')[0]);
+            setViewDate(d);
+
+            // 3. Transactions ki list fetch karo
+            fetchActiveTransactions();
+        } catch (error) {
+            console.error("Init Error:", error);
+            fetchActiveTransactions(); // Agar error aaya toh bhi list toh load kardo
+        }
+    };
+
     const fetchActiveTransactions = async () => {
         try {
             const { data } = await API.get('/library/transactions/active');

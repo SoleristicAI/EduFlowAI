@@ -84,7 +84,7 @@ const Library = () => {
             {/* Footer Tag */}
             <div className="absolute bottom-10 flex items-center gap-2 opacity-30 text-slate-400">
                 <ShieldAlert size={16} />
-                <p className="text-[10px] font-black uppercase tracking-[0.4em]">EduFlowAI security mesh</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.4em]">EduFlowAI security</p>
             </div>
         </div>
     );
