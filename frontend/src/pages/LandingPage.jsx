@@ -948,7 +948,7 @@ font-semibold
 
               <p className="mt-4">
                 <strong>Billing Example:</strong> A school with <strong>500 students</strong> pays{" "}
-                <strong>₹22,500/month</strong> on the Professional plan (₹45 per student).
+                <strong>₹7500/month</strong> on the Professional plan (₹15 per student).
               </p>
             </div>
           </div>
