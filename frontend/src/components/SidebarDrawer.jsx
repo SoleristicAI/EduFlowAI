@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wallet, FileText, PieChart, AlertCircle, Clock, PlusCircle,MapPin, User, ShieldCheck, HelpCircle, Zap, Settings, LayoutDashboard, Bell, Bus, MessageSquare, ClipboardCheck, Users, X, Cpu, ChevronRight, LogOut, CreditCard, Layers, Check, CheckSquare, CalendarDays, Video, Bot, Megaphone, MessageCircle, Calendar, TrendingUp, GraduationCap, Book, Database, ClipboardList, BarChart3, BookOpen, BookOpenCheck } from 'lucide-react';
+import { Wallet, FileText, PieChart, AlertCircle, Clock, PlusCircle,MapPin, ArrowRightLeft,User, ShieldCheck, HelpCircle, Zap, Settings, LayoutDashboard, Bell, Bus, MessageSquare, ClipboardCheck, Users, X, Cpu, ChevronRight, LogOut, CreditCard, Layers, Check, CheckSquare, CalendarDays, Video, Bot, Megaphone, MessageCircle, Calendar, TrendingUp, GraduationCap, Book, Database, ClipboardList, BarChart3, BookOpen, BookOpenCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../App.css';
@@ -1328,6 +1328,97 @@ const SidebarDrawer = ({ isOpen, onClose, user }) => {
                                                                 <MapPin size={20} />
                                                             </div>
                                                             <span className="font-bold text-slate-700 text-[15px] italic">Route Directory</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* 🔥 LIBRARIAN MODULE 🔥 */}
+                                {user?.role === 'librarian' && (
+                                    <>
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
+                                                    <div className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, transparent 0%, #42A5F5 25%, transparent 50%, #42A5F5 75%, transparent 100%)' }} />
+                                                    <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
+                                                </div>
+
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Library Core</p>
+
+                                                <div className="space-y-3.5 relative z-10">
+                                                    <button onClick={() => handleNavigation('/library/dashboard')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-blue-50 text-[#42A5F5] p-3 rounded-2xl border border-blue-100 group-hover/item:scale-110 transition-all">
+                                                                <LayoutDashboard size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Dashboard</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+
+                                                    <button onClick={() => handleNavigation('/library/catalogue')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-blue-50 text-[#42A5F5] p-3 rounded-2xl border border-blue-100 group-hover/item:scale-110 transition-all">
+                                                                <BookOpen size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Book Catalogue</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+
+                                                    <button onClick={() => handleNavigation('/library/issue')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-blue-50 text-[#42A5F5] p-3 rounded-2xl border border-blue-100 group-hover/item:scale-110 transition-all">
+                                                                <ArrowRightLeft size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Issue & Return</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-4 px-5">
+                                            <div className="relative bg-white rounded-[2.4rem] p-3.5 shadow-md border border-slate-100 overflow-hidden group">
+                                                <div className="absolute inset-0 pointer-events-none z-0 rounded-[2.4rem] overflow-hidden">
+                                                    <div className="absolute inset-[-100%] animate-[snake-rotate_4s_linear_infinite]" style={{ background: 'conic-gradient(from 0deg, transparent 0%, #42A5F5 25%, transparent 50%, #42A5F5 75%, transparent 100%)' }} />
+                                                    <div className="absolute inset-[2px] bg-white rounded-[2.4rem] z-10" />
+                                                </div>
+
+                                                <p className="text-[15px] font-bold text-slate-400 uppercase tracking-widest mb-3.5 ml-2 italic text-left relative z-10">Members & Analytics</p>
+
+                                                <div className="space-y-3.5 relative z-10">
+                                                    <button onClick={() => handleNavigation('/library/overdue')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-rose-50 text-rose-500 p-3 rounded-2xl border border-rose-100 group-hover/item:scale-110 transition-all">
+                                                                <AlertCircle size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Defaulters</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+
+                                                    <button onClick={() => handleNavigation('/library/members')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-emerald-50 text-emerald-500 p-3 rounded-2xl border border-emerald-100 group-hover/item:scale-110 transition-all">
+                                                                <Users size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Students</span>
+                                                        </div>
+                                                        <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
+                                                    </button>
+
+                                                    <button onClick={() => handleNavigation('/library/reports')} className="w-full flex items-center justify-between group/item">
+                                                        <div className="flex items-center gap-4 text-left">
+                                                            <div className="bg-amber-50 text-amber-500 p-3 rounded-2xl border border-amber-100 group-hover/item:scale-110 transition-all">
+                                                                <FileText size={20} />
+                                                            </div>
+                                                            <span className="font-bold text-slate-700 text-[15px] italic">Audit Reports</span>
                                                         </div>
                                                         <ChevronRight size={20} className="text-black group-hover/item:translate-x-1 transition-transform" />
                                                     </button>

@@ -12,6 +12,7 @@ const libraryTransactionSchema = new mongoose.Schema({
         enum: ['Issued', 'Returned', 'Overdue'], 
         default: 'Issued' 
     },
+    renewalCount: { type: Number, default: 0 },
     fineAmount: { type: Number, default: 0 } // Configurable simple fine
 }, { timestamps: true });
 

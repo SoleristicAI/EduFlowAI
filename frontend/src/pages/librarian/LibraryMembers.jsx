@@ -30,6 +30,19 @@ const LibraryMembers = () => {
         } catch (error) { console.error(error); }
     };
 
+   // 🔥 DYNAMIC OVERDUE CHECKER FUNCTION 🔥
+    const checkIsOverdue = (tx) => {
+        if (tx.status === 'Returned') return false; 
+        if (tx.status === 'Overdue') return true;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(tx.dueDate);
+        due.setHours(0, 0, 0, 0);
+        
+        return due < today; 
+    };
+
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 overscroll-none fixed inset-0 overflow-y-auto custom-scrollbar">
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative text-center">
@@ -80,41 +93,60 @@ const LibraryMembers = () => {
 
                             {/* Stats */}
                             <div className="grid grid-cols-3 gap-4">
-                                <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
-                                    <BookOpen size={24} className="mx-auto text-[#42A5F5] mb-2"/>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Borrowed</p>
-                                    <p className="text-2xl font-black text-slate-800">{cardData.history.length}</p>
-                                </div>
-                                <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
-                                    <BookMarked size={24} className="mx-auto text-emerald-500 mb-2"/>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Returned</p>
-                                    <p className="text-2xl font-black text-slate-800">{cardData.history.filter(h=>h.status==='Returned').length}</p>
-                                </div>
-                                <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
-                                    <AlertCircle size={24} className="mx-auto text-rose-500 mb-2"/>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Defaulter Marks</p>
-                                    <p className="text-2xl font-black text-slate-800">{cardData.history.filter(h=>h.status==='Overdue').length}</p>
-                                </div>
+                            <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
+                                <BookOpen size={24} className="mx-auto text-[#42A5F5] mb-2"/>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Borrowed</p>
+                                <p className="text-2xl font-black text-slate-800">{cardData.history.length}</p>
                             </div>
+                            <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
+                                <BookMarked size={24} className="mx-auto text-emerald-500 mb-2"/>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Returned</p>
+                                <p className="text-2xl font-black text-slate-800">{cardData.history.filter(h => h.status === 'Returned').length}</p>
+                            </div>
+                            <div className="bg-white p-5 rounded-[2rem] text-center shadow-sm border border-slate-100">
+                                <AlertCircle size={24} className="mx-auto text-rose-500 mb-2"/>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Defaulter Marks</p>
+                                {/* Filter by checking dynamic overdue status */}
+                                <p className="text-2xl font-black text-slate-800">
+                                    {cardData.history.filter(h => checkIsOverdue(h)).length}
+                                </p>
+                            </div>
+                        </div>
 
                             {/* History Table */}
                             <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
-                                <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-6">Transaction History</h3>
-                                <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                                    {cardData.history.length === 0 ? <p className="text-slate-400 font-bold text-center py-6">No history found.</p> : 
-                                    cardData.history.map(tx => (
-                                        <div key={tx._id} className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100">
+                            <h3 className="text-xl font-black text-slate-800 uppercase tracking-tighter mb-6">Transaction History</h3>
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                                {cardData.history.length === 0 ? <p className="text-slate-400 font-bold text-center py-6">No history found.</p> : 
+                                cardData.history.map(tx => {
+                                    // Determine live status for display
+                                    const isLiveOverdue = checkIsOverdue(tx);
+                                    const displayStatus = tx.status === 'Returned' ? 'Returned' : isLiveOverdue ? 'Overdue' : 'Issued';
+                                    
+                                    return (
+                                        <div key={tx._id} className="p-4 bg-slate-50 rounded-2xl flex justify-between items-center border border-slate-100 hover:bg-slate-100 transition-colors">
                                             <div>
                                                 <p className="text-[14px] font-black text-slate-800 uppercase">{tx.bookId?.title}</p>
-                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Issued: {new Date(tx.issueDate).toLocaleDateString('en-GB')}</p>
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                                                    Issued: {new Date(tx.issueDate).toLocaleDateString('en-GB')} 
+                                                    {/* Agar overdue hai toh due date bhi dikhao */}
+                                                    {isLiveOverdue && ` | Due was: ${new Date(tx.dueDate).toLocaleDateString('en-GB')}`}
+                                                </p>
                                             </div>
-                                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-md border ${tx.status === 'Returned' ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : tx.status === 'Overdue' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-blue-50 text-[#42A5F5] border-blue-100'}`}>
-                                                {tx.status}
+                                            
+                                            {/* Dynamic Badge Styling */}
+                                            <span className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-md border ${
+                                                displayStatus === 'Returned' ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 
+                                                displayStatus === 'Overdue' ? 'bg-rose-50 text-rose-500 border-rose-100' : 
+                                                'bg-blue-50 text-[#42A5F5] border-blue-100'
+                                            }`}>
+                                                {displayStatus}
                                             </span>
                                         </div>
-                                    ))}
-                                </div>
+                                    );
+                                })}
                             </div>
+                        </div>
                         </div>
                     )}
                 </div>

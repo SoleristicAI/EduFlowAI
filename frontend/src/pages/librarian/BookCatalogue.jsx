@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Search, PlusCircle, BookOpen, Edit3, Trash2, X, Hash, Layers, AlertCircle, LibraryBig } from 'lucide-react';
+import { ArrowLeft, Search, PlusCircle, BookOpen, Edit3, Trash2, X, Hash, Layers, AlertCircle, LibraryBig, UploadCloud, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api';
 import Loader from '../../components/Loader';
@@ -21,6 +21,8 @@ const BookCatalogue = () => {
     // Custom Delete Confirmation Modal State
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [bookToDelete, setBookToDelete] = useState(null);
+
+    const fileInputRef = useRef(null); // Reference for CSV input
     
     const [formData, setFormData] = useState({
         _id: '', title: '', author: '', isbn: '', category: '', publisher: '', totalCopies: 1, rackNumber: ''
@@ -73,13 +75,11 @@ const BookCatalogue = () => {
         }
     };
 
-    // Trigger Custom Modal
     const handleDeleteClick = (book) => {
         setBookToDelete(book);
         setShowDeleteModal(true);
     };
 
-    // Actually Execute Delete
     const confirmDelete = async () => {
         setIsSubmitting(true);
         try {
@@ -96,6 +96,70 @@ const BookCatalogue = () => {
         }
     };
 
+    // 🔥 CSV FILE HANDLING LOGIC 🔥
+    const downloadSampleCSV = () => {
+        const csvContent = "title,author,isbn,category,publisher,totalCopies,rackNumber\nConcept of Physics,HC Verma,ISBN-101,Science,Bharti Bhawan,10,R-01\nHarry Potter,JK Rowling,ISBN-102,Fiction,Bloomsbury,5,R-02";
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "Library_Bulk_Sample.csv");
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setLoading(true);
+        const reader = new FileReader();
+        
+        reader.onload = async (event) => {
+            const csvText = event.target.result;
+            const lines = csvText.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            
+            const parsedBooks = [];
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue; // skip empty lines
+                const currentLine = lines[i].split(',').map(val => val.trim());
+                
+                let bookObj = {};
+                headers.forEach((header, index) => {
+                    bookObj[header] = currentLine[index];
+                });
+
+                // Validate basic required fields
+                if (bookObj.title && bookObj.author && bookObj.isbn && bookObj.category) {
+                    parsedBooks.push(bookObj);
+                }
+            }
+
+            if (parsedBooks.length === 0) {
+                setMsg("No valid data found in CSV!");
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const { data } = await API.post('/library/books/bulk', { books: parsedBooks });
+                setMsg(data.message);
+                fetchBooks();
+            } catch (error) {
+                setMsg(error.response?.data?.message || "Failed to upload bulk books.");
+            } finally {
+                setLoading(false);
+                fileInputRef.current.value = ""; // Reset input
+            }
+        };
+
+        reader.readAsText(file);
+    };
+
     // Filter books based on search
     const filteredBooks = books.filter(b => 
         b.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -109,12 +173,9 @@ const BookCatalogue = () => {
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 overscroll-none fixed inset-0 overflow-y-auto custom-scrollbar">
             
-            {/* HEADER - Light Blue Theme */}
+            {/* HEADER */}
             <div className="bg-[#42A5F5] text-white px-6 pt-12 pb-24 rounded-b-[4rem] shadow-xl relative overflow-visible text-center">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="absolute top-12 left-6 bg-white/20 p-3 rounded-2xl border border-white/30 text-white transition-all active:scale-90"
-                >
+                <button onClick={() => navigate(-1)} className="absolute top-12 left-6 bg-white/20 p-3 rounded-2xl border border-white/30 text-white transition-all active:scale-90">
                     <ArrowLeft size={24} />
                 </button>
                 <h1 className="text-4xl font-black uppercase tracking-tighter italic flex items-center justify-center gap-3 px-16 leading-tight">
@@ -126,8 +187,8 @@ const BookCatalogue = () => {
             <div className="px-5 -mt-10 relative z-20 max-w-6xl mx-auto">
                 
                 {/* TOOLBAR */}
-                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="relative w-full md:w-96">
+                <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8 flex flex-col lg:flex-row justify-between items-center gap-4">
+                    <div className="relative w-full lg:w-96">
                         <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                         <input 
                             type="text" 
@@ -137,9 +198,21 @@ const BookCatalogue = () => {
                             className="w-full pl-14 pr-6 py-4 rounded-[1.5rem] bg-slate-50 border border-slate-200 outline-none focus:border-[#42A5F5] focus:bg-white font-bold text-[14px] transition-all"
                         />
                     </div>
-                    <button onClick={() => handleOpenModal()} className="w-full md:w-auto bg-[#42A5F5] hover:bg-blue-600 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[13px] shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-3 active:scale-95 shrink-0">
-                        <PlusCircle size={20} /> Add New Book
-                    </button>
+                    
+                    <div className="flex flex-wrap gap-3 w-full lg:w-auto justify-center">
+                        <button onClick={downloadSampleCSV} className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0">
+                            <Download size={16} /> Sample CSV
+                        </button>
+
+                        <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+                        <button onClick={() => fileInputRef.current.click()} className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white px-6 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[11px] shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0">
+                            <UploadCloud size={16} /> Bulk Upload
+                        </button>
+
+                        <button onClick={() => handleOpenModal()} className="w-full sm:w-auto bg-[#42A5F5] hover:bg-blue-600 text-white px-8 py-4 rounded-[1.5rem] font-black uppercase tracking-widest text-[13px] shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0">
+                            <PlusCircle size={18} /> Add New
+                        </button>
+                    </div>
                 </div>
 
                 {/* BOOKS LIST */}

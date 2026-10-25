@@ -155,7 +155,13 @@ const IssueReturn = () => {
         }
     };
 
-    const isOverdue = (date) => new Date(date) < new Date();
+    const isOverdue = (date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(date);
+        due.setHours(0, 0, 0, 0);
+        return due < today;
+    };
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] pb-24 font-sans italic text-slate-800 overscroll-none fixed inset-0 overflow-y-auto custom-scrollbar">

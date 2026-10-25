@@ -72,6 +72,18 @@ const LibraryReports = () => {
     const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
 
+    const checkIsOverdue = (tx) => {
+        if (tx.status === 'Returned') return false;
+        if (tx.status === 'Overdue') return true;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(tx.dueDate);
+        due.setHours(0, 0, 0, 0);
+
+        return due < today;
+    };
+
     // 🔥 FIX: Extracting precise school data from user storage based on backend logic 🔥
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
@@ -169,7 +181,8 @@ const LibraryReports = () => {
                 const bookIsbn = tx.bookId?.isbn || 'N/A';
                 const bookString = `${bookTitle}\nISBN: ${bookIsbn}`;
 
-                const isOverdue = tx.status === 'Overdue' || (tx.status === 'Issued' && tx.dueDate && new Date(tx.dueDate) < new Date());
+                // 🔥 FIXED: Direct Helper use kiya
+                const isOverdue = checkIsOverdue(tx);
                 const status = tx.status === 'Returned' ? 'RETURNED' : isOverdue ? 'OVERDUE' : 'ISSUED';
 
                 tableRows.push([String(date), String(studentString), String(bookString), String(status)]);
@@ -285,13 +298,14 @@ const LibraryReports = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {reportData.transactions.length === 0 ? (
+                               {reportData.transactions.length === 0 ? (
                                     <tr>
                                         <td colSpan="4" className="text-center py-12 text-slate-400 font-bold">No transactions found for this period.</td>
                                     </tr>
                                 ) : (
                                     reportData.transactions.map((tx, i) => {
-                                        const isOverdue = tx.status === 'Overdue' || (tx.status === 'Issued' && new Date(tx.dueDate) < new Date());
+                                        // 🔥 FIXED: Direct helper function lagaya
+                                        const isOverdue = checkIsOverdue(tx);
                                         const displayStatus = tx.status === 'Returned' ? 'Returned' : isOverdue ? 'Overdue' : 'Issued';
 
                                         return (
@@ -312,8 +326,8 @@ const LibraryReports = () => {
                                                 </td>
                                                 <td className="py-4 px-6 border-y border-r border-slate-100 rounded-r-[1.5rem] text-center">
                                                     <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${displayStatus === 'Returned' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                            displayStatus === 'Overdue' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                                'bg-blue-50 text-[#42A5F5] border-blue-100'
+                                                        displayStatus === 'Overdue' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                            'bg-blue-50 text-[#42A5F5] border-blue-100'
                                                         }`}>
                                                         {displayStatus}
                                                     </span>

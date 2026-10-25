@@ -51,7 +51,12 @@ const OverdueBooks = () => {
     };
 
     const calculateDaysAndFine = (dueDate) => {
-        const diffTime = Math.abs(new Date() - new Date(dueDate));
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const due = new Date(dueDate);
+        due.setHours(0, 0, 0, 0);
+        
+        const diffTime = Math.abs(today - due);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         return { days: diffDays, fine: diffDays * settings.finePerDay };
     };

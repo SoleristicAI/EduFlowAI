@@ -18,19 +18,23 @@ router.get('/stats', protect, async (req, res) => {
         const availableBooks = books.reduce((sum, book) => sum + book.availableCopies, 0);
 
         // 2. Issued & Overdue Calculation
-        const activeTransactions = await LibraryTransaction.find({ 
-            schoolId, 
-            status: { $in: ['Issued', 'Overdue'] } 
+        const activeTransactions = await LibraryTransaction.find({
+            schoolId,
+            status: { $in: ['Issued', 'Overdue'] }
         });
-        
+
         let issuedBooks = 0;
         let overdueBooks = 0;
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         activeTransactions.forEach(tx => {
             issuedBooks++;
-            // Auto calculate overdue on the fly for stats
-            if (new Date(tx.dueDate) < today && tx.status !== 'Returned') {
+
+            const due = new Date(tx.dueDate);
+            due.setHours(0, 0, 0, 0); // Compare date-to-date, ignore time
+
+            if (due < today && tx.status !== 'Returned') {
                 overdueBooks++;
             }
         });
@@ -60,7 +64,7 @@ router.get('/stats', protect, async (req, res) => {
 router.post('/books', protect, async (req, res) => {
     try {
         const { title, author, isbn, category, publisher, totalCopies, rackNumber } = req.body;
-        
+
         // ISBN Check (Taaki duplicate book entry na ho jaye)
         const existingBook = await Book.findOne({ schoolId: req.user.schoolId, isbn, isDeleted: false });
         if (existingBook) {
@@ -78,6 +82,49 @@ router.post('/books', protect, async (req, res) => {
     } catch (error) {
         console.error("Add Book Error:", error);
         res.status(500).json({ message: "Failed to add book." });
+    }
+});
+
+// 🔥 BULK UPLOAD BOOKS (CSV) 🔥
+router.post('/books/bulk', protect, async (req, res) => {
+    try {
+        const { books } = req.body;
+        if (!books || !Array.isArray(books) || books.length === 0) {
+            return res.status(400).json({ message: "No valid books data found!" });
+        }
+
+        let addedCount = 0;
+        let duplicateCount = 0;
+
+        for (let book of books) {
+            // Check if book with same ISBN already exists
+            const existingBook = await Book.findOne({ schoolId: req.user.schoolId, isbn: book.isbn, isDeleted: false });
+
+            if (existingBook) {
+                duplicateCount++;
+                continue; // Skip duplicate
+            }
+
+            await Book.create({
+                schoolId: req.user.schoolId,
+                title: book.title,
+                author: book.author,
+                isbn: book.isbn,
+                category: book.category,
+                publisher: book.publisher || 'Unknown',
+                totalCopies: Number(book.totalCopies) || 1,
+                availableCopies: Number(book.totalCopies) || 1,
+                rackNumber: book.rackNumber || 'General'
+            });
+            addedCount++;
+        }
+
+        res.status(201).json({
+            message: `Bulk upload complete! Added: ${addedCount}, Skipped (Duplicates): ${duplicateCount}`
+        });
+    } catch (error) {
+        console.error("Bulk Upload Error:", error);
+        res.status(500).json({ message: "Failed to process bulk upload." });
     }
 });
 
@@ -102,7 +149,7 @@ router.put('/books/:id', protect, async (req, res) => {
         if (req.body.totalCopies) {
             const difference = Number(req.body.totalCopies) - book.totalCopies;
             req.body.availableCopies = book.availableCopies + difference;
-            
+
             // Available copies negative nahi ho sakti (Maan lo 5 issued hain, aur total 4 kar di)
             if (req.body.availableCopies < 0) {
                 return res.status(400).json({ message: "Cannot reduce total copies below currently issued copies!" });
@@ -222,9 +269,9 @@ router.get('/transactions/active', protect, async (req, res) => {
             schoolId: req.user.schoolId,
             status: { $in: ['Issued', 'Overdue'] }
         })
-        .populate('studentId', 'name enrollmentNo grade avatar')
-        .populate('bookId', 'title isbn author')
-        .sort({ issueDate: -1 });
+            .populate('studentId', 'name enrollmentNo grade avatar')
+            .populate('bookId', 'title isbn author')
+            .sort({ issueDate: -1 });
 
         res.json(transactions);
     } catch (error) {
@@ -266,6 +313,8 @@ router.put('/return/:id', protect, async (req, res) => {
 router.get('/overdue', protect, async (req, res) => {
     try {
         const today = new Date();
+        today.setHours(0, 0, 0, 0); // 🔥 FIX: Sirf aaj ke din shuru hone se purani dates aayengi
+
         const transactions = await LibraryTransaction.find({
             schoolId: req.user.schoolId,
             status: { $in: ['Issued', 'Overdue'] },
@@ -273,7 +322,7 @@ router.get('/overdue', protect, async (req, res) => {
         })
         .populate('studentId', 'name enrollmentNo phone avatar grade')
         .populate('bookId', 'title isbn')
-        .sort({ dueDate: 1 }); // Jo sabse purana due hai wo upar aayega
+        .sort({ dueDate: 1 }); 
 
         res.json(transactions);
     } catch (error) {
@@ -286,7 +335,7 @@ router.get('/member/:studentId', protect, async (req, res) => {
     try {
         const student = await User.findOne({ _id: req.params.studentId, schoolId: req.user.schoolId })
             .select('name enrollmentNo grade phone avatar fatherName');
-            
+
         const history = await LibraryTransaction.find({ studentId: req.params.studentId, schoolId: req.user.schoolId })
             .populate('bookId', 'title isbn category')
             .sort({ issueDate: -1 });
@@ -345,17 +394,116 @@ router.get('/reports', protect, async (req, res) => {
 
         // Calculate dynamic metrics for the selected period
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
         const stats = {
             totalTransactions: transactions.length,
             issued: transactions.filter(tx => tx.status === 'Issued').length,
             returned: transactions.filter(tx => tx.status === 'Returned').length,
-            // Dynamically calculate overdue if status is Issued but due date is passed
-            overdue: transactions.filter(tx => tx.status === 'Overdue' || (tx.status === 'Issued' && new Date(tx.dueDate) < today)).length
+            // 🔥 FIX: Strict midnight comparison
+            overdue: transactions.filter(tx => {
+                const due = new Date(tx.dueDate);
+                due.setHours(0, 0, 0, 0);
+                return tx.status === 'Overdue' || (tx.status === 'Issued' && due < today);
+            }).length
         };
 
         res.json({ stats, transactions });
     } catch (error) {
         res.status(500).json({ message: "Failed to generate reports." });
+    }
+});
+
+// ==========================================================
+// 🔥 STUDENT PORTAL APIs 🔥
+// ==========================================================
+
+// 1. GET MY LIBRARY DATA (For Student)
+router.get('/my-books', protect, async (req, res) => {
+    try {
+        const studentId = req.user._id;
+        const schoolId = req.user.schoolId;
+
+        // Fetch School Settings to calculate live fine
+        const school = await require('../models/School').findById(schoolId).select('librarySettings');
+        const finePerDay = school?.librarySettings?.finePerDay || 5;
+
+        // Fetch all transactions for this student
+        const transactions = await LibraryTransaction.find({ studentId, schoolId })
+            .populate('bookId', 'title author isbn category')
+            .sort({ issueDate: -1 });
+
+        // Categorize data
+        const active = [];
+        const overdue = [];
+        const history = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // 🔥 FIX: Strict day mapping
+
+        transactions.forEach(tx => {
+            if (tx.status === 'Returned') {
+                history.push(tx);
+            } else {
+                const due = new Date(tx.dueDate);
+                due.setHours(0, 0, 0, 0);
+
+                const isOverdue = tx.status === 'Overdue' || due < today;
+                
+                if (isOverdue) {
+                    const diffDays = Math.ceil((today - due) / (1000 * 60 * 60 * 24));
+                    tx._doc.pendingFine = diffDays * finePerDay;
+                    tx._doc.overdueDays = diffDays;
+                    overdue.push(tx);
+                } else {
+                    active.push(tx);
+                }
+            }
+        });
+
+        res.json({ active, overdue, history });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to fetch your library data." });
+    }
+});
+
+// 2. RENEW BOOK (Student Request - MAX 3 TIMES, 15 DAYS)
+router.put('/renew/:id', protect, async (req, res) => {
+    try {
+        const transaction = await LibraryTransaction.findOne({ _id: req.params.id, studentId: req.user._id });
+        if (!transaction || transaction.status === 'Returned') {
+            return res.status(400).json({ message: "Invalid transaction." });
+        }
+
+        // Rule 1: Max 3 Renewals Check
+        if (transaction.renewalCount >= 3) {
+            return res.status(400).json({ message: "Max renewal limit (3 times) reached." });
+        }
+
+        // Rule 2: Strict Due Date Check (Midnight comparison)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Aaj ki date (00:00:00)
+
+        const dueDate = new Date(transaction.dueDate);
+        dueDate.setHours(0, 0, 0, 0); // Due date (00:00:00)
+
+        // Agar aaj ki date due date ke barabar ya usse badi hai, toh block kardo
+        if (today >= dueDate) {
+            return res.status(400).json({ message: "Cannot renew on or after the due date. Please return the book." });
+        }
+
+        // Rule 3: Add 15 days for renewal
+        const newDueDate = new Date(transaction.dueDate);
+        newDueDate.setDate(newDueDate.getDate() + 15);
+        transaction.dueDate = newDueDate;
+
+        // Increase renewal count
+        transaction.renewalCount = (transaction.renewalCount || 0) + 1;
+
+        await transaction.save();
+
+        res.json({ message: `Book renewed for 15 more days! (${transaction.renewalCount}/3 used) 📅`, newDueDate });
+    } catch (error) {
+        res.status(500).json({ message: "Failed to renew book." });
     }
 });
 
