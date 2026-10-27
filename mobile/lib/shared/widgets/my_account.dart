@@ -192,165 +192,123 @@ class _MyAccountState extends ConsumerState<MyAccount> {
               ),
               const SizedBox(height: 16),
 
-              // Account List Loops
-              ...savedAccounts.map((acc) {
-                final bool isCurrent =
-                    (acc['_id'] ?? acc['id']) == (user?['_id'] ?? user?['id']);
-                final String avatarUrl = acc['avatar'] != null
-                    ? AppConfig.getAbsoluteUrl(acc['avatar'])
-                    : '';
+              // 🔥 FIXED: Scrollable area for accounts (Max 3 visible)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 230), // Approx height for 3 accounts
+                child: RawScrollbar(
+                  thumbColor: isDarkMode ? Colors.white24 : Colors.black26,
+                  radius: const Radius.circular(10),
+                  thickness: 4,
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.only(right: 8), // Scrollbar ke liye thodi jagah
+                    child: Column(
+                      children: savedAccounts.map((acc) {
+                        final bool isCurrent = (acc['_id'] ?? acc['id']) == (user?['_id'] ?? user?['id']);
+                        final String avatarUrl = acc['avatar'] != null ? AppConfig.getAbsoluteUrl(acc['avatar']) : '';
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: isCurrent
-                        ? const Color(0xFF42A5F5).withOpacity(0.1)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color:
-                            isCurrent ? const Color(0xFF42A5F5) : cardBorder),
-                  ),
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    leading: CircleAvatar(
-                      backgroundColor: const Color(0xFF42A5F5).withOpacity(0.2),
-                      backgroundImage:
-                          avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
-                      child: avatarUrl.isEmpty
-                          ? Text(acc['name']?[0]?.toUpperCase() ?? 'U',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF42A5F5)))
-                          : null,
-                    ),
-                    title: Text(
-                      (acc['name'] ?? 'User').toString().toUpperCase(),
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          color: textColorPrimary,
-                          fontStyle: FontStyle.italic),
-                    ),
-                    subtitle: Text(
-                      "CLASS: ${acc['grade'] ?? 'N/A'} • ${acc['role']?.toString().toUpperCase() ?? ''}",
-                      style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey),
-                    ),
-                    trailing: isCurrent
-                        ? const Icon(Icons.check_circle,
-                            color: Color(0xFF42A5F5))
-                        : IconButton(
-                            icon: const Icon(Icons.delete_outline,
-                                size: 20, color: Color(0xFFF43F5E)),
-                            onPressed: () {
-                              // 🔥 CONFIRMATION DIALOG 🔥
-                              showDialog(
-                                context: context,
-                                builder: (dialogCtx) => AlertDialog(
-                                  backgroundColor: isDarkMode
-                                      ? const Color(0xFF1E293B)
-                                      : Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(25)),
-                                  title: Row(
-                                    children: [
-                                      const Icon(Icons.warning_amber_rounded,
-                                          color: Color(0xFFF43F5E)),
-                                      const SizedBox(width: 10),
-                                      Text("Remove Account?",
-                                          style: TextStyle(
-                                              color: textColorPrimary,
-                                              fontWeight: FontWeight.w900,
-                                              fontSize: 16,
-                                              fontStyle: FontStyle.italic)),
-                                    ],
-                                  ),
-                                  content: Text(
-                                      "Are you sure you want to remove ${acc['name']} from saved accounts?",
-                                      style: TextStyle(
-                                          color: isDarkMode
-                                              ? const Color(0xFF94A3B8)
-                                              : const Color(0xFF64748B),
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13)),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(dialogCtx),
-                                      child: const Text("CANCEL",
-                                          style: TextStyle(
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.w900)),
-                                    ),
-                                    TextButton(
-                                      onPressed: () async {
-                                        Navigator.pop(
-                                            dialogCtx); // Dialog band karo
-                                        Navigator.pop(
-                                            ctx); // Bottom sheet band karo
-
-                                        setState(() =>
-                                            isSwitching = true); // Loader chalu
-                                        await Future.delayed(
-                                            const Duration(milliseconds: 600));
-
-                                        await ref
-                                            .read(authProvider.notifier)
-                                            .removeAccount(
-                                                acc['_id'] ?? acc['id']);
-                                        await _loadProfileData();
-
-                                        setState(() =>
-                                            isSwitching = false); // Loader band
-                                        _showToast("Account removed! 🗑️");
-                                      },
-                                      child: const Text("REMOVE",
-                                          style: TextStyle(
-                                              color: Color(0xFFF43F5E),
-                                              fontWeight: FontWeight.w900)),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: isCurrent ? const Color(0xFF42A5F5).withOpacity(0.1) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: isCurrent ? const Color(0xFF42A5F5) : cardBorder),
                           ),
-                    onTap: isCurrent
-                        ? null
-                        : () async {
-                            Navigator.pop(ctx); // Bottom sheet close
-                            setState(() => isSwitching = true); // 🔥 Loader ON
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFF42A5F5).withOpacity(0.2),
+                              backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+                              child: avatarUrl.isEmpty
+                                  ? Text(acc['name']?[0]?.toUpperCase() ?? 'U',
+                                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF42A5F5)))
+                                  : null,
+                            ),
+                            title: Text(
+                              (acc['name'] ?? 'User').toString().toUpperCase(),
+                              style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: textColorPrimary, fontStyle: FontStyle.italic),
+                            ),
+                            subtitle: Text(
+                              "CLASS: ${acc['grade'] ?? 'N/A'} \n${acc['role']?.toString().toUpperCase() ?? ''}",
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                            trailing: isCurrent
+                                ? const Icon(Icons.check_circle, color: Color(0xFF42A5F5))
+                                : IconButton(
+                                    icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFF43F5E)),
+                                    onPressed: () {
+                                      // 🔥 CONFIRMATION DIALOG 🔥
+                                      showDialog(
+                                        context: context,
+                                        builder: (dialogCtx) => AlertDialog(
+                                          backgroundColor: isDarkMode ? const Color(0xFF1E293B) : Colors.white,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                                          title: Row(
+                                            children: [
+                                              const Icon(Icons.warning_amber_rounded, color: Color(0xFFF43F5E)),
+                                              const SizedBox(width: 10),
+                                              Text("Remove Account?",
+                                                  style: TextStyle(color: textColorPrimary, fontWeight: FontWeight.w900, fontSize: 16, fontStyle: FontStyle.italic)),
+                                            ],
+                                          ),
+                                          content: Text(
+                                              "Are you sure you want to remove ${acc['name']} from saved accounts?",
+                                              style: TextStyle(color: isDarkMode ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontWeight: FontWeight.bold, fontSize: 13)),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(dialogCtx),
+                                              child: const Text("CANCEL", style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w900)),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                Navigator.pop(dialogCtx); 
+                                                Navigator.pop(ctx); 
 
-                            // 800ms wait UI aur DB sync ke liye
-                            await Future.delayed(
-                                const Duration(milliseconds: 800));
+                                                setState(() => isSwitching = true); 
+                                                await Future.delayed(const Duration(milliseconds: 600));
 
-                            await ref
-                                .read(authProvider.notifier)
-                                .switchAccount(acc);
+                                                await ref.read(authProvider.notifier).removeAccount(acc['_id'] ?? acc['id']);
+                                                await _loadProfileData();
 
-                            if (context.mounted) {
-                              // 🔥 FIX: Ab hum 'context.go' use karenge.
-                              // Ye automatically purane route tree ko wipe karke naya root banata hai,
-                              // jisse Navbar aur Sidebar 100% force refresh honge!
-                              final role = acc['role'];
-                              if (role == 'superadmin') {
-                                context.go('/superadmin/dashboard');
-                              } else if (role == 'finance') {
-                                context.go('/finance/dashboard');
-                              } else {
-                                context.go('/');
-                              }
-                            }
-                          },
+                                                setState(() => isSwitching = false);
+                                                _showToast("Account removed! 🗑️");
+                                              },
+                                              child: const Text("REMOVE", style: TextStyle(color: Color(0xFFF43F5E), fontWeight: FontWeight.w900)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
+                            onTap: isCurrent
+                                ? null
+                                : () async {
+                                    Navigator.pop(ctx);
+                                    setState(() => isSwitching = true);
+                                    await Future.delayed(const Duration(milliseconds: 800));
+
+                                    await ref.read(authProvider.notifier).switchAccount(acc);
+
+                                    if (context.mounted) {
+                                      final role = acc['role'];
+                                      if (role == 'superadmin') {
+                                        context.go('/superadmin/dashboard');
+                                      } else if (role == 'finance') {
+                                        context.go('/finance/dashboard');
+                                      } else if (role == 'librarian') {
+                                        context.go('/librarian/dashboard');
+                                      } else {
+                                        context.go('/');
+                                      }
+                                    }
+                                  },
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
-                );
-              }),
-
-              const SizedBox(height: 12),
-              // + Add Another Account Button
+                ),
+              ),
               GestureDetector(
                 onTap: () async {
                   Navigator.pop(ctx);
@@ -672,7 +630,7 @@ class _MyAccountState extends ConsumerState<MyAccount> {
                                 ),
                                 const SizedBox(height: 12),
 
-                                // --- BADGES DISAMBIGUATION --- (Inside main build method)
+                               // --- BADGES DISAMBIGUATION --- (Inside main build method)
                                 Wrap(
                                   spacing: 8, runSpacing: 8, alignment: WrapAlignment.center,
                                   children: [
@@ -682,24 +640,27 @@ class _MyAccountState extends ConsumerState<MyAccount> {
                                       child: Text(
                                         isAdmin ? 'MASTER NODE AUTHORIZED'
                                             : role == 'transport_incharge' ? 'TRANSPORT MANAGER'
-                                            : role == 'driver' ? 'Driver' // 🔥 Driver Badge
+                                            : role == 'driver' ? 'DRIVER' 
+                                            : role == 'librarian' ? 'CHIEF LIBRARIAN' 
                                             : role == 'student' ? 'CLASS: ${user?['grade'] ?? 'N/A'}'
                                             : 'FACULTY MEMBER',
                                         style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), fontStyle: FontStyle.italic),
                                       ),
                                     ),
-                                    if (!isAdmin)
+                                    
+                                    // 🔥 FIX: Added transport roles to hide this second badge for them too
+                                    if (!isAdmin && role != 'librarian' && role != 'transport_incharge' && role != 'driver') 
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                                         decoration: BoxDecoration(color: const Color(0xFF42A5F5).withOpacity(0.1), borderRadius: BorderRadius.circular(25), border: Border.all(color: const Color(0xFF42A5F5).withOpacity(0.2))),
                                         child: Text(
                                           (role == 'student' ? (user?['enrollmentNo'] ?? 'N/A')
-                                              : (role == 'transport_incharge' || role == 'driver') ? (user?['customId'] ?? 'N/A')
                                               : (user?['employeeId'] ?? 'N/A'))
                                               .toString().toUpperCase(),
                                           style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: Color(0xFF42A5F5), letterSpacing: 1),
                                         ),
                                       ),
+                                      
                                     if (role == 'teacher' && user?['assignedClass'] != null)
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
@@ -813,29 +774,44 @@ class _MyAccountState extends ConsumerState<MyAccount> {
     ];
   }
 
-  // --- RENDERING NODE: CLIENT (STUDENT/TEACHER/TRANSPORTER) ---
+  // --- RENDERING NODE: CLIENT (STUDENT/TEACHER/TRANSPORTER/LIBRARIAN) ---
   List<Widget> _buildClientFields(String role, bool isDarkMode, Color textPrimary, Color textSecondary, Color boxBg, Color cardBorder) {
     return [
-      if (role == 'transport_incharge' || role == 'driver') ...[
+      // 🔥 1. CUSTOM LOGIN ID (For Transport, Driver, and Librarian)
+      if (role == 'transport_incharge' || role == 'driver' || role == 'librarian') ...[
         _buildDataRow(Icons.badge, "CUSTOM LOGIN ID", (user?['customId'] ?? "N/A").toString().toLowerCase(), isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF), isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE), const Color(0xFF42A5F5), textSecondary),
         const SizedBox(height: 16),
       ],
+      
+      // 2. ADMISSION NUMBER (Only for Student)
       if (role == 'student') ...[
         _buildDataRow(Icons.tag, "ADMISSION NUMBER", (user?['admissionNo'] ?? "NOT_LOGGED").toString().toUpperCase(), isDarkMode ? const Color(0xFF1E3A8A).withOpacity(0.2) : const Color(0xFFEFF6FF), isDarkMode ? const Color(0xFF1E3A8A) : const Color(0xFFBFDBFE), const Color(0xFF42A5F5), textSecondary),
         const SizedBox(height: 16),
       ],
-      _buildDataRow(Icons.person_4_outlined, "FATHER'S NAME", (user?['fatherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
-      const SizedBox(height: 16),
-      _buildDataRow(Icons.favorite_border, "MOTHER'S NAME", (user?['motherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
-      const SizedBox(height: 16),
+      
+      // 🔥 3. FATHER & MOTHER NAME (Hidden for Librarian & Transport Staff)
+      if (role != 'librarian' && role != 'transport_incharge' && role != 'driver') ...[
+        _buildDataRow(Icons.person_4_outlined, "FATHER'S NAME", (user?['fatherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
+        const SizedBox(height: 16),
+        _buildDataRow(Icons.favorite_border, "MOTHER'S NAME", (user?['motherName'] ?? "UNSPECIFIED").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
+        const SizedBox(height: 16),
+      ],
+      
+      // 4. COMMON FIELDS (DOB, Gender, Phone)
       _buildDataRow(Icons.calendar_today, "DATE OF BIRTH", _formatDate(user?['dob']), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
       _buildDataRow(Icons.face_retouching_natural, "GENDER", (user?['gender'] ?? "N/A").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
       _buildDataRow(Icons.phone_android, "CONTACT NO.", (user?['phone'] ?? "N/A").toString(), boxBg, cardBorder, textPrimary, textSecondary),
       const SizedBox(height: 16),
-      _buildDataRow(Icons.verified_user_outlined, "RELIGION", (user?['religion'] ?? "N/A").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
-      const SizedBox(height: 16),
+      
+      // 🔥 5. RELIGION (Hidden for Librarian & Transport Staff)
+      if (role != 'librarian' && role != 'transport_incharge' && role != 'driver') ...[
+        _buildDataRow(Icons.verified_user_outlined, "RELIGION", (user?['religion'] ?? "N/A").toString().toUpperCase(), boxBg, cardBorder, textPrimary, textSecondary),
+        const SizedBox(height: 16),
+      ],
+
+      // 6. TEACHER SUBJECTS vs EMAIL
       if (role == 'teacher') ...[
         _buildTeacherSubjectsBox(isDarkMode, boxBg, cardBorder, textPrimary, textSecondary),
         const SizedBox(height: 16),
@@ -843,6 +819,8 @@ class _MyAccountState extends ConsumerState<MyAccount> {
         _buildDataRow(Icons.alternate_email, "REGISTERED EMAIL", (user?['email'] ?? "N/A").toString().toLowerCase(), boxBg, cardBorder, textPrimary, textSecondary),
         const SizedBox(height: 16),
       ],
+      
+      // 7. ADDRESS BOX
       _buildAddressBox(boxBg, cardBorder, textSecondary),
     ];
   }

@@ -65,6 +65,7 @@ import '../features/student/screens/student_transport_fees.dart';
 import '../features/transporter/bus_attendance_screen.dart';
 import '../features/transporter/route_attendance_viewer_screen.dart';
 import '../features/transporter/transport_exemptions_screen.dart';
+import '../features/librarian/screens/librarian_dashboard.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -468,6 +469,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/student/transport-fees',
       builder: (context, state) => const StudentTransportFees(),
+    ),
+
+    GoRoute(
+      path: '/librarian/dashboard',
+      builder: (context, state) {
+        return const LayoutWrapper(
+          role: 'librarian', 
+          child: LibrarianDashboard(), 
+        );
+      },
     ),
 
     GoRoute(

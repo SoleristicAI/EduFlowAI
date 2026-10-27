@@ -60,7 +60,7 @@ class _SidebarState extends ConsumerState<Sidebar> {
     }
   }
 
-void _handleLogout() async {
+  void _handleLogout() async {
     final prefs = await SharedPreferences.getInstance();
     final backup = prefs.getString('superadmin_backup');
     ref.read(themeProvider.notifier).resetTheme();
@@ -108,7 +108,7 @@ void _handleLogout() async {
             context.go('/superadmin/dashboard');
           } else if (role == 'finance') {
             context.go('/finance/dashboard');
-          } else if (role == 'transport_incharge') { 
+          } else if (role == 'transport_incharge') {
             context.go('/transporter/dashboard'); // 🔥 Transporter route added
           } else if (role == 'driver') {
             context.go('/driver/home'); // 🔥 Driver route added
@@ -542,7 +542,9 @@ void _handleLogout() async {
                                             ? Icons.chat_bubble_outline
                                             : role == 'driver'
                                                 ? Icons.directions_bus
-                                                : Icons.help_outline,
+                                                : role == 'librarian'
+                                                    ? Icons.sync_alt_rounded // 🔥 LIBRARIAN ICON
+                                                    : Icons.help_outline,
                                 label: role == 'finance'
                                     ? "Add Pay"
                                     : role == 'admin'
@@ -551,7 +553,9 @@ void _handleLogout() async {
                                             ? "Help desk"
                                             : role == 'driver'
                                                 ? "My Bus"
-                                                : "Support",
+                                                : role == 'librarian'
+                                                    ? "Issue" // 🔥 LIBRARIAN LABEL
+                                                    : "Support",
                                 onTap: () => _navigate(role == 'finance'
                                     ? '/finance/add-payment'
                                     : role == 'admin'
@@ -560,7 +564,9 @@ void _handleLogout() async {
                                             ? '/teacher/support'
                                             : role == 'driver'
                                                 ? '/driver/home'
-                                                : '/support')),
+                                                : role == 'librarian'
+                                                    ? '/library/issue-return' // 🔥 LIBRARIAN ROUTE
+                                                    : '/support')),
 
                           // 3. Settings Button
                           _QuickAction(
@@ -800,44 +806,125 @@ void _handleLogout() async {
               isDarkMode),
         ];
 
-      case 'transport_incharge':
+      case 'librarian':
         return [
           _buildCategory(
-              "Fleet Operations",
+              "Library Core",
               [
                 _MenuItem(
-                    icon: Icons.map_outlined,
-                    label: "Route Directory",
-                    path: '/transport/route-students',
+                    icon: Icons.menu_book_rounded,
+                    label: "Book Catalogue",
+                    path: '/library/catalogue',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
-                    icon: Icons.assignment_turned_in_outlined,
-                    label: "Assign Students",
-                    path: '/transport/assign',
+                    icon: Icons.sync_alt_rounded,
+                    label: "Issue & Return",
+                    path: '/library/issue-return',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.badge_rounded,
+                    label: "Library Cards",
+                    path: '/library/members',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Members & Analytics",
+              [
+                _MenuItem(
+                    icon: Icons.warning_rounded,
+                    label: "Defaulters",
+                    path: '/library/overdue',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.analytics_rounded,
+                    label: "Audit Reports",
+                    path: '/library/reports',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.settings_rounded,
+                    label: "Settings",
+                    path: '/library/settings',
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],
               isDarkMode),
         ];
 
+      // 🔥 TRANSPORT MANAGER MENU 🔥
+      case 'transport_incharge':
+        return [
+          _buildCategory(
+              "Fleet Operations",
+              [
+                _MenuItem(
+                    icon: Icons.dashboard_rounded,
+                    label: "Live Dashboard",
+                    path: '/transporter/dashboard',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.settings_rounded,
+                    label: "Manage Fleet",
+                    path: '/transporter/manage',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.map_rounded,
+                    label: "Route Directory",
+                    path: '/transport/route-students',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+          _buildCategory(
+              "Records & Exemptions",
+              [
+                _MenuItem(
+                    icon: Icons.person_add_rounded,
+                    label: "Assign Students",
+                    path: '/transport/assign',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.calendar_month_rounded,
+                    label: "Attendance Viewer",
+                    path: '/transport/attendance-viewer',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+                _MenuItem(
+                    icon: Icons.money_off_rounded,
+                    label: "Fee Exemptions",
+                    path: '/transport/exemptions',
+                    onTap: _navigate,
+                    isDarkMode: isDarkMode),
+              ],
+              isDarkMode),
+        ];
+
+      // 🔥 DRIVER / FLEET CAPTAIN MENU 🔥
       case 'driver':
         return [
           _buildCategory(
               "Fleet Operations",
               [
                 _MenuItem(
-                    icon: Icons.directions_bus_filled_outlined,
-                    label: "Live Trip",
-                    path: '/driver/home',
+                    icon: Icons.wb_sunny_rounded, // Morning Icon
+                    label: "Morning Pickups",
+                    path: '/driver/home', // Home pe jayega jahan se trip start hogi
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
                 _MenuItem(
-                    icon: Icons.map_outlined,
-                    label: "Route Map",
-                    path: '/driver/home',
+                    icon: Icons.nights_stay_rounded, // Evening Icon
+                    label: "Evening Drops",
+                    path: '/driver/home', // Home pe jayega jahan se trip start hogi
                     onTap: _navigate,
-                    isDarkMode: isDarkMode), // Future module
+                    isDarkMode: isDarkMode),
               ],
               isDarkMode),
           _buildCategory(
@@ -846,7 +933,7 @@ void _handleLogout() async {
                 _MenuItem(
                     icon: Icons.campaign_outlined,
                     label: "Notice Feed",
-                    path: '/notice-feed',
+                    path: '/notice-feed', // Ye waisa hi rahega
                     onTap: _navigate,
                     isDarkMode: isDarkMode),
               ],
