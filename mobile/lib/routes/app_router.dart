@@ -98,8 +98,8 @@ final appRouter = GoRouter(
         if (role == 'finance') return '/finance/dashboard';
         if (role == 'teacher') return '/teacher/home';
         if (role == 'transport_incharge') return '/transporter/dashboard';
-        if (role == 'driver')
-          return '/driver/home'; // 🔥 YE LINE ADD KARNI HAI 🔥
+        if (role == 'driver') return '/driver/home'; 
+        if (role == 'librarian') return '/librarian/dashboard';
 
         if (isGoingToLogin) return '/'; // Student
       }
@@ -211,7 +211,7 @@ final appRouter = GoRouter(
 
     GoRoute(
       path: '/library',
-      builder: (context, state) => const StudentLibrary(),
+      builder: (context, state) => const StudentLibraryScreen(),
     ),
 
     GoRoute(
