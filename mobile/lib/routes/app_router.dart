@@ -66,6 +66,8 @@ import '../features/transporter/bus_attendance_screen.dart';
 import '../features/transporter/route_attendance_viewer_screen.dart';
 import '../features/transporter/transport_exemptions_screen.dart';
 import '../features/librarian/screens/librarian_dashboard.dart';
+import '../features/librarian/screens/librarian_issue_return.dart';
+import '../features/librarian/screens/librarian_book_catalogue.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -479,6 +481,16 @@ final appRouter = GoRouter(
           child: LibrarianDashboard(), 
         );
       },
+    ),
+
+    GoRoute(
+      path: '/library/issue-return',
+      builder: (context, state) => const LibrarianIssueReturn(),
+    ),
+
+    GoRoute(
+      path: '/library/catalogue',
+      builder: (context, state) => const LibrarianBookCatalogue(),
     ),
 
     GoRoute(
