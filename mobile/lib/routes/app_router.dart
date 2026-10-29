@@ -70,6 +70,8 @@ import '../features/librarian/screens/librarian_issue_return.dart';
 import '../features/librarian/screens/librarian_book_catalogue.dart';
 import '../features/librarian/screens/librarian_members.dart';
 import '../features/librarian/screens/librarian_overdue_books.dart';
+import '../features/librarian/screens/librarian_settings.dart';
+import '../features/librarian/screens/librarian_reports.dart';
 import '../shared/widgets/layout_wrapper.dart';
 import '../splash_screen.dart';
 
@@ -503,6 +505,16 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/library/overdue',
       builder: (context, state) => const LibrarianOverdueBooks(),
+    ),
+
+    GoRoute(
+      path: '/library/settings',
+      builder: (context, state) => const LibrarianSettings(),
+    ),
+
+    GoRoute(
+      path: '/library/reports',
+      builder: (context, state) => const LibrarianReports(),
     ),
 
     GoRoute(
